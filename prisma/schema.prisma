@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +5,111 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model PurchaseTransaction {
+  id           String                @id @default(uuid())
+  external_id  String             @unique
+  reference_id String?
+  merchant_id  Int
+  provider_id  Int
+  agent_id     Int?
+  amount       Decimal
+  nettAmount   Decimal?
+  status       transaction_status @default(PENDING)
+  method       String
+  metadata     Json?
+  settled      Boolean            @default(false)
+
+  // Audit fields
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  created_by Int?
+  updated_by Int?
+
+  // Relasi
+  fee_details  FeeDetail[]
+  webhook_logs WebhookLog[]
+  audits       PurchaseTransactionAudit[]
+
+  @@index([merchant_id])
+  @@index([provider_id])
+  @@index([status])
+  @@map("purchase_transaction")
+}
+
+model FeeDetail {
+  id                      Int      @id @default(autoincrement())
+  purchase_transaction_id String
+  type                    fee_type
+  amount                  Decimal
+  percentage              Decimal
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  created_by Int?
+  updated_by Int?
+
+  // Relasi
+  transaction PurchaseTransaction @relation(fields: [purchase_transaction_id], references: [id], onDelete: Cascade)
+
+  @@index([purchase_transaction_id])
+  @@map("fee_detail")
+}
+
+model WebhookLog {
+  id             Int      @id @default(autoincrement())
+  transaction_id String
+  source         String // e.g. midtrans, xendit
+  payload        Json
+  raw_signature  String?
+  received_at    DateTime @default(now())
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  created_by Int?
+  updated_by Int?
+
+  transaction PurchaseTransaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+
+  @@index([transaction_id])
+  @@index([source])
+}
+
+model PurchaseTransactionAudit {
+  id             Int                @id @default(autoincrement())
+  transaction_id String
+  old_status     transaction_status
+  new_status     transaction_status
+  source         String // "webhook", "admin", etc
+  changed_at     DateTime           @default(now())
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+  created_by Int?
+  updated_by Int?
+
+  transaction PurchaseTransaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+
+  @@index([transaction_id])
+  @@map("purchase_transaction_audit")
+}
+
+enum transaction_status {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum fee_type {
+  AGENT
+  INTERNAL
+  PROVIDER
+  MERCHANT
 }
