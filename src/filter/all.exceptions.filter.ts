@@ -7,19 +7,19 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 
-import { MyLogger } from '../modules/logger/logger.service';
+// import { MyLogger } from '../module/logger/logger.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: any, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
 
-    const logger = new MyLogger();
-    logger.setContext(exception['name']);
-    logger.error(exception['message']);
+    // const logger = new MyLogger();
+    // logger.setContext(exception['name']);
+    // logger.error(exception['message']);
 
     const httpStatus =
       exception instanceof HttpException
