@@ -21,6 +21,8 @@ import { InvalidRequestExceptionFilter } from 'src/filter/invalid-request.except
 import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
 import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
 import { ReconciliationModule } from '../reconciliation/reconciliation.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { LoggerModule } from '../logger/logger.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { ReconciliationModule } from '../reconciliation/reconciliation.module';
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV}`, `.env`],
     }),
+    PrismaModule,
+    LoggerModule,
 
     /// Business Module
     TransactionsModule,
@@ -45,13 +49,13 @@ import { ReconciliationModule } from '../reconciliation/reconciliation.module';
     },
 
     /// FILTER
-    {
-      provide: APP_FILTER, // Lowest priority
-      useFactory: (httpAdapterHost: HttpAdapterHost) => {
-        return new AllExceptionsFilter(httpAdapterHost);
-      },
-      inject: [HttpAdapterHost],
-    },
+    // {
+    //   provide: APP_FILTER, // Lowest priority
+    //   useFactory: (httpAdapterHost: HttpAdapterHost) => {
+    //     return new AllExceptionsFilter(httpAdapterHost);
+    //   },
+    //   inject: [HttpAdapterHost],
+    // },
     {
       provide: APP_FILTER,
       useClass: PrismaClientKnownExceptionFilter,

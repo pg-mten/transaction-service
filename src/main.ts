@@ -1,10 +1,8 @@
-import { HttpAdapterHost, NestFactory } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './modules/app/app.module';
-import { MyLogger } from './modules/logger/logger.service';
 import { WinstonModule } from 'nest-winston';
 import 'winston-daily-rotate-file';
 import {
@@ -16,6 +14,7 @@ import {
 } from './shared/constant/global.constant';
 import { logger } from './shared/constant/logger.constant';
 import { useContainer } from 'class-validator';
+import { MyLogger } from './modules/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -39,7 +38,8 @@ async function bootstrap() {
     SwaggerModule.setup(API_PREFIX, app, document);
   }
 
-  await app.listen(PORT, async () => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.listen(PORT, async () => {
     const myLogger = await app.resolve(MyLogger);
     myLogger.log(`${APP_NAME} started listening: ${PORT}`);
     console.log(`${APP_NAME} started listening: ${PORT}`);
