@@ -21,7 +21,7 @@ export class TransactionsService {
         provider_id: dto.provider_id,
         agent_id: dto.agent_id,
         amount: new Prisma.Decimal(dto.amount),
-        nettAmount: dto.nettAmount
+        net_amount: dto.nettAmount
           ? new Prisma.Decimal(dto.nettAmount)
           : undefined,
         method: dto.method,

@@ -17,6 +17,7 @@ import { ResponseExceptionFilter } from 'src/filter/response.exception.filter';
 import { InvalidRequestExceptionFilter } from 'src/filter/invalid-request.exception.filter';
 import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
 import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
+import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 
 @Module({
   imports: [
@@ -26,7 +27,9 @@ import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
       envFilePath: [`.env.${process.env.NODE_ENV}`, `.env`],
     }),
 
+    /// Business Module
     TransactionsModule,
+    ReconciliationModule,
   ],
   controllers: [AppController],
   providers: [

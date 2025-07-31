@@ -1,4 +1,4 @@
-import { PrismaClient, transaction_status } from '@prisma/client';
+import { PrismaClient, TransactionStatusEnum } from '@prisma/client';
 
 function generateRandomString(length: number): string {
   const chars =
@@ -8,6 +8,10 @@ function generateRandomString(length: number): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+function getRandomNumber(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min) + min);
 }
 
 function getRandomDouble(min: number, max: number): number {
@@ -28,27 +32,26 @@ function getRandomDateTime(start: Date, end: Date): Date {
 }
 
 export async function purchaseTransactionSeed(prisma: PrismaClient) {
-  for (let i = 1; i <= 1000; i++) {
+  for (let i = 1; i <= 2000; i++) {
     const purchaseTransaction = await prisma.purchaseTransaction.create({
       data: {
         external_id: generateRandomString(10) + i,
         reference_id: generateRandomString(10),
-        merchant_id: i,
-        provider_id: i,
-        agent_id: i,
+        merchant_id: getRandomNumber(1, 100),
+        provider_id: getRandomNumber(1, 10),
+        agent_id: getRandomNumber(1, 100),
         amount: getRandomDouble(100.0, 1000.0),
-        nettAmount: getRandomDouble(100.0, 1000.0),
-        status: getRandomEnumValue(transaction_status),
+        net_amount: getRandomDouble(100.0, 1000.0),
+        status: getRandomEnumValue(TransactionStatusEnum),
         method: generateRandomString(10),
         metadata: {},
-        settled: true,
         created_at: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),
-          new Date('2025-08-05T23:59:59Z'),
+          new Date('2025-08-06T23:59:59Z'),
         ),
         updated_at: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),
-          new Date('2025-08-05T23:59:59Z'),
+          new Date('2025-08-07T23:59:59Z'),
         ),
       },
     });

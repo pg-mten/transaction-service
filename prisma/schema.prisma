@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["multiSchema", "typedSql"]
@@ -6,22 +12,23 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["transaction"]
+  schemas  = ["transaction", "settlement"]
 }
 
 model PurchaseTransaction {
-  id           String             @id @default(uuid())
-  external_id  String             @unique
-  reference_id String?
-  merchant_id  Int
-  provider_id  Int
-  agent_id     Int?
-  amount       Decimal
-  nettAmount   Decimal?
-  status       transaction_status @default(PENDING)
-  method       String
-  metadata     Json?
-  settled      Boolean            @default(false)
+  id                String                @id @default(uuid())
+  external_id       String                @unique
+  reference_id      String?
+  merchant_id       Int
+  provider_id       Int
+  agent_id          Int?
+  amount            Decimal
+  net_amount        Decimal?
+  status            TransactionStatusEnum @default(PENDING)
+  method            String
+  metadata          Json?
+  settlement_at     DateTime?
+  reconciliation_at DateTime?
 
   // Audit fields
   created_at DateTime  @default(now())
@@ -43,9 +50,9 @@ model PurchaseTransaction {
 }
 
 model FeeDetail {
-  id                      Int      @id @default(autoincrement())
+  id                      Int         @id @default(autoincrement())
   purchase_transaction_id String
-  type                    fee_type
+  type                    FeeTypeEnum
   amount                  Decimal
   percentage              Decimal
 
@@ -85,12 +92,12 @@ model WebhookLog {
 }
 
 model PurchaseTransactionAudit {
-  id             Int                @id @default(autoincrement())
+  id             Int                   @id @default(autoincrement())
   transaction_id String
-  old_status     transaction_status
-  new_status     transaction_status
+  old_status     TransactionStatusEnum
+  new_status     TransactionStatusEnum
   source         String // "webhook", "admin", etc
-  changed_at     DateTime           @default(now())
+  changed_at     DateTime              @default(now())
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -105,7 +112,7 @@ model PurchaseTransactionAudit {
   @@schema("transaction")
 }
 
-enum transaction_status {
+enum TransactionStatusEnum {
   PENDING
   SUCCESS
   FAILED
@@ -115,7 +122,7 @@ enum transaction_status {
   @@schema("transaction")
 }
 
-enum fee_type {
+enum FeeTypeEnum {
   AGENT
   INTERNAL
   PROVIDER
