@@ -1,15 +1,18 @@
 import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
-import { PrismaModule } from '../prisma/prisma.module';
-import { LoggerModule } from '../logger/logger.module';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from '../../middlewares/logger.middleware';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, HttpAdapterHost, Reflector } from '@nestjs/core';
+import {
+  APP_FILTER,
+  APP_INTERCEPTOR,
+  APP_PIPE,
+  HttpAdapterHost,
+  Reflector,
+} from '@nestjs/core';
 import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
 import { AllExceptionsFilter } from 'src/filter/all.exceptions.filter';
 import { PrismaClientKnownExceptionFilter } from 'src/filter/prisma-client-known.exception.filter';
