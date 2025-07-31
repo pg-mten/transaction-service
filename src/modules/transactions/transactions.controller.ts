@@ -23,6 +23,7 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
 import { ApiResponseDto } from '../common/dto/response.dto';
+import { FilterTransactionSettlementDto } from './dto/filter-transaction-settlement.dto';
 
 @ApiTags('Transactions')
 @ApiExtraModels(ApiResponseDto, TransactionResponseDto)
@@ -114,6 +115,13 @@ export class TransactionsController {
   })
   async findAll(@Query() filter: FilterTransactionDto) {
     return this.transactionsService.findAll(filter);
+  }
+
+  @Get('internal/settlement')
+  @ApiOperation({ summary: 'Settlement process hourly' })
+  async settlement(@Query() filter: FilterTransactionSettlementDto) {
+    console.log({ filter });
+    return this.transactionsService.internalTransactionSettlement(filter);
   }
 
   @Post('webhook')

@@ -6,6 +6,7 @@ import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { Prisma } from '@prisma/client';
 import axios from 'axios';
+import { FilterTransactionSettlementDto } from './dto/filter-transaction-settlement.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -170,6 +171,18 @@ export class TransactionsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async internalTransactionSettlement(filter: FilterTransactionSettlementDto) {
+    const { from, to } = filter;
+    return this.prisma.purchaseTransaction.findMany({
+      where: {
+        created_at: {
+          gte: new Date(from),
+          lte: new Date(to),
+        },
+      },
+    });
   }
 
   async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {

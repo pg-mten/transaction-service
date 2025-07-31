@@ -20,7 +20,7 @@ function getRandomEnumValue<T extends object>(enumObj: T): T[keyof T] {
   return values[randomIndex] as T[keyof T];
 }
 
-function getRandomDate(start: Date, end: Date): Date {
+function getRandomDateTime(start: Date, end: Date): Date {
   const startTime = start.getTime();
   const endTime = end.getTime();
   const randomTime = startTime + Math.random() * (endTime - startTime);
@@ -28,7 +28,7 @@ function getRandomDate(start: Date, end: Date): Date {
 }
 
 export async function purchaseTransactionSeed(prisma: PrismaClient) {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 1; i <= 1000; i++) {
     const purchaseTransaction = await prisma.purchaseTransaction.create({
       data: {
         external_id: generateRandomString(10) + i,
@@ -42,13 +42,13 @@ export async function purchaseTransactionSeed(prisma: PrismaClient) {
         method: generateRandomString(10),
         metadata: {},
         settled: true,
-        created_at: getRandomDate(
-          new Date('2025-07-01'),
-          new Date('2025-08-31'),
+        created_at: getRandomDateTime(
+          new Date('2025-08-01T00:00:00Z'),
+          new Date('2025-08-05T23:59:59Z'),
         ),
-        updated_at: getRandomDate(
-          new Date('2025-07-01'),
-          new Date('2025-08-31'),
+        updated_at: getRandomDateTime(
+          new Date('2025-08-01T00:00:00Z'),
+          new Date('2025-08-05T23:59:59Z'),
         ),
       },
     });
