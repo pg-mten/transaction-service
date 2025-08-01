@@ -20,7 +20,7 @@ model PurchaseTransaction {
   external_id       String                @unique
   reference_id      String?
   merchant_id       Int
-  provider_id       Int
+  provider          String
   agent_id          Int?
   amount            Decimal
   net_amount        Decimal?
@@ -43,7 +43,7 @@ model PurchaseTransaction {
   audits       PurchaseTransactionAudit[]
 
   @@index([merchant_id])
-  @@index([provider_id])
+  @@index([provider])
   @@index([status])
   @@map("purchase_transaction")
   @@schema("transaction")

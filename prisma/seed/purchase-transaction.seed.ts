@@ -31,6 +31,10 @@ function getRandomDateTime(start: Date, end: Date): Date {
   return new Date(randomTime);
 }
 
+const providers = ['NETZME', 'DANA', 'ALIPAY', 'STICPAY'];
+
+const paymentMethods = ['QRIS', 'GOPAY', 'OVO', 'BCA', 'MANDIRI', 'BRI'];
+
 export async function purchaseTransactionSeed(prisma: PrismaClient) {
   for (let i = 1; i <= 2000; i++) {
     const purchaseTransaction = await prisma.purchaseTransaction.create({
@@ -38,12 +42,12 @@ export async function purchaseTransactionSeed(prisma: PrismaClient) {
         external_id: generateRandomString(10) + i,
         reference_id: generateRandomString(10),
         merchant_id: getRandomNumber(1, 100),
-        provider_id: getRandomNumber(1, 10),
+        provider: providers[getRandomNumber(0, providers.length - 1)],
         agent_id: getRandomNumber(1, 100),
-        amount: getRandomDouble(100.0, 1000.0),
-        net_amount: getRandomDouble(100.0, 1000.0),
+        amount: getRandomDouble(100.0, 1000.0).toFixed(2),
+        net_amount: getRandomDouble(100.0, 1000.0).toFixed(2),
         status: getRandomEnumValue(TransactionStatusEnum),
-        method: generateRandomString(10),
+        method: paymentMethods[getRandomNumber(0, paymentMethods.length - 1)],
         metadata: {},
         created_at: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),

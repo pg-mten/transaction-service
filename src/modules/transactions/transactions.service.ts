@@ -18,7 +18,7 @@ export class TransactionsService {
         external_id: dto.external_id,
         reference_id: dto.reference_id,
         merchant_id: dto.merchant_id,
-        provider_id: dto.provider_id,
+        provider: dto.provider,
         agent_id: dto.agent_id,
         amount: new Prisma.Decimal(dto.amount),
         net_amount: dto.nettAmount

@@ -22,9 +22,9 @@ export class CreateTransactionDto {
   @IsInt()
   merchant_id: number;
 
-  @ApiProperty({ example: 2 })
-  @IsInt()
-  provider_id: number;
+  @ApiProperty({ example: 'NETZME' })
+  @IsString()
+  provider: string;
 
   @ApiProperty({ required: false, example: 3 })
   @IsOptional()

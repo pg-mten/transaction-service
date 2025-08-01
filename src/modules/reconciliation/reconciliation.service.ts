@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CellValue, Row, Worksheet } from 'exceljs';
+import { FilterReconciliationDto } from './dto/filter-reconciliation.dto';
+import { Prisma, TransactionStatusEnum } from '@prisma/client';
+import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 
 @Injectable()
 export class ReconciliationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  format(data: Worksheet) {
+  async processCSV(data: Worksheet, provider: string) {
     const list: string[][] = [];
     data.eachRow((row: Row) => {
       const cells = row.values as CellValue[];
@@ -23,14 +26,70 @@ export class ReconciliationService {
     console.log({ list });
     const [headers, ...values] = list;
     console.log({ headers, values });
-    return values.map((items) => {
-      console.log({ items });
-      console.log('aaa');
+    const recons: { id: string; amount: number; method: string }[] = values.map(
+      (items) => {
+        // console.log({ items });
+        return headers.reduce(
+          (prev, current, index) => {
+            // console.log({ prev, current, index });
+            return Object.assign(prev, { [current]: items[index] });
+          },
+          { id: '', amount: 0, method: '' },
+        );
+      },
+    );
+    console.log({ recons });
+    const datas = await Promise.all(
+      recons.map((recon) => {
+        return this.prisma.purchaseTransaction.update({
+          where: {
+            provider: provider,
+            external_id: recon.id,
+            amount: recon.amount,
+            method: recon.method,
+          },
+          data: {
+            reconciliation_at: new Date(),
+          },
+        });
+      }),
+    );
+    return datas;
+  }
 
-      return headers.reduce((prev, current, index) => {
-        console.log({ prev, current, index });
-        return Object.assign(prev, { [current]: items[index] });
-      }, {});
+  async findAll(pageable: Pageable, filter: FilterReconciliationDto) {
+    const { from, to, provider } = filter;
+
+    const where: Prisma.PurchaseTransactionWhereInput = {
+      status: TransactionStatusEnum.SUCCESS,
+      reconciliation_at: null,
+      created_at: {
+        gte: from,
+        lte: to,
+      },
+      ...(provider && { provider: provider }),
+    };
+
+    const { skip, take } = paging(pageable);
+
+    const [total, recons] = await Promise.all([
+      this.prisma.purchaseTransaction.count({
+        where,
+      }),
+      this.prisma.purchaseTransaction.findMany({
+        skip,
+        take,
+        where: where,
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
+    ]);
+
+    return new Page<object>({
+      data: recons,
+      pageable,
+      total,
     });
   }
 }
