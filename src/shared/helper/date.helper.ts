@@ -13,4 +13,9 @@ export class DateHelper {
   static fromISO(value: string): DateTime {
     return DateTime.fromISO(value, { zone: TIMEZONE });
   }
+
+  static fromJsDate(date: Date | null): DateTime | null {
+    if (!date) return null;
+    return DateTime.fromJSDate(date);
+  }
 }

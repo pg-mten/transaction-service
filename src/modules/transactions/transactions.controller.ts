@@ -16,6 +16,7 @@ import {
   ApiNotFoundResponse,
   ApiExtraModels,
   getSchemaPath,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 
 import { TransactionsService } from './transactions.service';
@@ -25,6 +26,7 @@ import { TransactionResponseDto } from './dto/transaction-response.dto';
 import { ApiResponseDto } from '../common/dto/response.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
+import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 
 @ApiTags('Transactions')
 @ApiExtraModels(ApiResponseDto, TransactionResponseDto)
@@ -88,32 +90,7 @@ export class TransactionsController {
 
   @Get()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
-  @ApiResponse({
-    status: 200,
-    description: 'List transaksi ditemukan',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: {
-              type: 'object',
-              properties: {
-                items: {
-                  type: 'array',
-                  items: { $ref: getSchemaPath(TransactionResponseDto) },
-                },
-                total: { type: 'number', example: 42 },
-                page: { type: 'number', example: 1 },
-                limit: { type: 'number', example: 10 },
-                totalPages: { type: 'number', example: 5 },
-              },
-            },
-          },
-        },
-      ],
-    },
-  })
+  @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAll(
     @Pagination() pageable: Pageable,
     @Query() filter: FilterTransactionDto,

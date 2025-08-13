@@ -11,6 +11,7 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import Decimal from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
+import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -143,7 +144,10 @@ export class TransactionsService {
     if (provider) whereClause.provider = provider;
     if (status) whereClause.status = status;
 
-    const [items, total] = await this.prisma.$transaction([
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.purchaseTransaction.count({
+        where: whereClause,
+      }),
       this.prisma.purchaseTransaction.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
@@ -153,13 +157,17 @@ export class TransactionsService {
           feeDetails: true,
         },
       }),
-      this.prisma.purchaseTransaction.count({
-        where: whereClause,
-      }),
     ]);
-    console.log({ items });
+    const data = items.map((item) => {
+      return new PurchaseTransactionDto({
+        ...item,
+        metadata: item.metadata as Record<string, unknown>,
+        settlementAt: DateHelper.fromJsDate(item.settlementAt),
+        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+      });
+    });
     return new Page<any>({
-      data: items,
+      data: data,
       pageable,
       total,
     });
