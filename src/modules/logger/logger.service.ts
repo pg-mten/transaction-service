@@ -2,6 +2,7 @@ import * as winston from 'winston';
 import * as chalk from 'chalk';
 import { createLogger, LoggerOptions } from 'winston';
 import { Injectable, LoggerService } from '@nestjs/common';
+import { DateHelper } from 'src/shared/helper/date.helper';
 
 @Injectable()
 export class MyLogger implements LoggerService {
@@ -45,9 +46,9 @@ export class MyLogger implements LoggerService {
 
   log(message: string): void {
     this.setLevel('info');
-    const currentDate = new Date();
+    const currentDate = DateHelper.now();
     this.logger.info(message, {
-      timestamp: currentDate.toISOString(),
+      timestamp: currentDate,
       context: this.context,
     });
 
@@ -56,10 +57,10 @@ export class MyLogger implements LoggerService {
 
   error(message: string, trace?: string): void {
     this.setLevel('error');
-    const currentDate = new Date();
+    const currentDate = DateHelper.now();
     // i think the trace should be JSON Stringified
     this.logger.error(`${message} -> (${trace || 'trace not provided !'})`, {
-      timestamp: currentDate.toISOString(),
+      timestamp: currentDate,
       context: this.context,
     });
     this.logToConsole('error', message);
@@ -67,9 +68,9 @@ export class MyLogger implements LoggerService {
 
   warn(message: string): void {
     this.setLevel('warn');
-    const currentDate = new Date();
+    const currentDate = DateHelper.now();
     this.logger.warn(message, {
-      timestamp: currentDate.toISOString(),
+      timestamp: currentDate,
       context: this.context,
     });
     this.logToConsole('warn', message);
@@ -77,9 +78,9 @@ export class MyLogger implements LoggerService {
 
   info(message: string): void {
     this.setLevel('info');
-    const currentDate = new Date();
+    const currentDate = DateHelper.now();
     this.logger.info(message, {
-      timestamp: currentDate.toISOString(),
+      timestamp: currentDate,
       context: this.context,
     });
     this.logToConsole('info', message);
@@ -87,9 +88,9 @@ export class MyLogger implements LoggerService {
 
   debug(message: string): void {
     this.setLevel('debug');
-    const currentDate = new Date();
+    const currentDate = DateHelper.now();
     this.logger.info(message, {
-      timestamp: currentDate.toISOString(),
+      timestamp: currentDate,
       context: this.context,
     });
     this.logToConsole('debug', message);
@@ -103,8 +104,8 @@ export class MyLogger implements LoggerService {
   private logToConsole(level: string, message: string): void {
     let result;
     const color = chalk;
-    const currentDate = new Date();
-    const time = `${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`;
+    const currentDate = DateHelper.now();
+    const time = `${currentDate.hour}:${currentDate.minute}:${currentDate.second}`;
 
     switch (level) {
       default:

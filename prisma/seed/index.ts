@@ -4,7 +4,7 @@ import { purchaseTransactionSeed } from './purchase-transaction.seed';
 const prisma = new PrismaClient();
 
 async function main() {
-  purchaseTransactionSeed(prisma);
+  await purchaseTransactionSeed(prisma);
 }
 
 main()

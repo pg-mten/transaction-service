@@ -23,6 +23,8 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
 import { ApiResponseDto } from '../common/dto/response.dto';
+import { Pagination } from 'src/shared/pagination/pagination.decorator';
+import { Pageable } from 'src/shared/pagination/pagination';
 
 @ApiTags('Transactions')
 @ApiExtraModels(ApiResponseDto, TransactionResponseDto)
@@ -112,8 +114,12 @@ export class TransactionsController {
       ],
     },
   })
-  async findAll(@Query() filter: FilterTransactionDto) {
-    return this.transactionsService.findAll(filter);
+  async findAll(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterTransactionDto,
+  ) {
+    console.log({ filter, pageable });
+    return this.transactionsService.findAll(pageable, filter);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu

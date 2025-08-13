@@ -4,6 +4,7 @@ import { CellValue, Row, Worksheet } from 'exceljs';
 import { FilterReconciliationDto } from './dto/filter-reconciliation.dto';
 import { Prisma, TransactionStatusEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
+import { DateHelper } from 'src/shared/helper/date.helper';
 
 @Injectable()
 export class ReconciliationService {
@@ -44,12 +45,12 @@ export class ReconciliationService {
         return this.prisma.purchaseTransaction.update({
           where: {
             provider: provider,
-            external_id: recon.id,
+            externalId: recon.id,
             amount: recon.amount,
             method: recon.method,
           },
           data: {
-            reconciliation_at: new Date(),
+            reconciliationAt: DateHelper.nowDate(),
           },
         });
       }),
@@ -62,8 +63,8 @@ export class ReconciliationService {
 
     const where: Prisma.PurchaseTransactionWhereInput = {
       status: TransactionStatusEnum.SUCCESS,
-      reconciliation_at: null,
-      created_at: {
+      reconciliationAt: null,
+      createdAt: {
         gte: from,
         lte: to,
       },
@@ -81,7 +82,7 @@ export class ReconciliationService {
         take,
         where: where,
         orderBy: {
-          created_at: 'desc',
+          createdAt: 'desc',
         },
       }),
     ]);

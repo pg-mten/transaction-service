@@ -1,22 +1,9 @@
-// src/transactions/dto/filter-transaction.dto.ts
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsOptional,
-  IsInt,
-  Min,
-  IsDateString,
-  IsEnum,
-  IsUUID,
-} from 'class-validator';
-
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  EXPIRED = 'EXPIRED',
-  CANCELED = 'CANCELED',
-}
+import { IsOptional, IsInt, Min, IsEnum } from 'class-validator';
+import { DateTime } from 'luxon';
+import { ToDateTimeNullable } from 'src/decorator/date.decorator';
+import { TransactionStatusEnum } from '@prisma/client';
 
 export class FilterTransactionDto {
   @ApiPropertyOptional({ example: 1 })
@@ -24,37 +11,36 @@ export class FilterTransactionDto {
   @Transform(({ value }) => parseInt(value))
   @IsInt()
   @Min(1)
-  page: number = 1;
+  page: number;
 
   @ApiPropertyOptional({ example: 10 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
   @IsInt()
   @Min(1)
-  limit: number = 10;
+  limit: number;
 
-  @ApiPropertyOptional({ example: '2025-06-24' })
+  @ApiProperty({ type: String, example: '2025-08-01', required: false })
   @IsOptional()
-  @IsDateString()
-  from?: string;
+  @ToDateTimeNullable()
+  from: DateTime;
 
-  @ApiPropertyOptional({ example: '2025-06-30' })
+  @ApiProperty({ type: String, example: '2025-08-02', required: false })
   @IsOptional()
-  @IsDateString()
-  to?: string;
+  @ToDateTimeNullable()
+  to: DateTime | null;
 
-  @ApiPropertyOptional({ example: 'merchant-uuid-1234' })
+  @ApiProperty({ type: Number, example: 1, required: false })
   @IsOptional()
-  @IsUUID()
-  merchantId?: string;
+  @Transform(({ value }) => parseInt(value))
+  merchantId: number | null;
 
-  @ApiPropertyOptional({ example: 'provider-uuid-5678' })
+  @ApiProperty({ type: String, example: 'NETZME', required: false })
   @IsOptional()
-  @IsUUID()
-  providerId?: string;
+  provider: string | null;
 
-  @ApiPropertyOptional({ enum: TransactionStatus })
+  @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()
-  @IsEnum(TransactionStatus)
-  status?: TransactionStatus;
+  @IsEnum(TransactionStatusEnum)
+  status: TransactionStatusEnum | null;
 }

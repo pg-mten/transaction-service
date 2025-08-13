@@ -16,99 +16,96 @@ datasource db {
 }
 
 model PurchaseTransaction {
-  id                String                @id @default(uuid())
-  external_id       String                @unique
-  reference_id      String?
-  merchant_id       Int
-  provider          String
-  agent_id          Int?
-  amount            Decimal
-  net_amount        Decimal?
-  status            TransactionStatusEnum @default(PENDING)
-  method            String
-  metadata          Json?
-  settlement_at     DateTime?
-  reconciliation_at DateTime?
+  id               String                @id @default(uuid())
+  externalId       String                @unique
+  referenceId      String?
+  merchantId       Int
+  provider         String
+  agentId          Int?
+  amount           Decimal
+  netAmount        Decimal?
+  status           TransactionStatusEnum @default(PENDING)
+  method           String
+  metadata         Json?
+  settlementAt     DateTime?
+  reconciliationAt DateTime?
 
   // Audit fields
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-  created_by Int?
-  updated_by Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
 
   // Relasi
-  fee_details  FeeDetail[]
-  webhook_logs WebhookLog[]
-  audits       PurchaseTransactionAudit[]
+  feeDetails  FeeDetail[]
+  webhookLogs WebhookLog[]
+  audits      PurchaseTransactionAudit[]
 
-  @@index([merchant_id])
+  @@index([merchantId])
   @@index([provider])
   @@index([status])
-  @@map("purchase_transaction")
   @@schema("transaction")
 }
 
 model FeeDetail {
-  id                      Int         @id @default(autoincrement())
-  purchase_transaction_id String
-  type                    FeeTypeEnum
-  amount                  Decimal
-  percentage              Decimal
+  id                    Int         @id @default(autoincrement())
+  purchaseTransactionId String
+  type                  FeeTypeEnum
+  amount                Decimal
+  percentage            Decimal
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-  created_by Int?
-  updated_by Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
 
   // Relasi
-  transaction PurchaseTransaction @relation(fields: [purchase_transaction_id], references: [id], onDelete: Cascade)
+  transaction PurchaseTransaction @relation(fields: [purchaseTransactionId], references: [id], onDelete: Cascade)
 
-  @@index([purchase_transaction_id])
-  @@map("fee_detail")
+  @@index([purchaseTransactionId])
   @@schema("transaction")
 }
 
 model WebhookLog {
-  id             Int      @id @default(autoincrement())
-  transaction_id String
-  source         String // e.g. midtrans, xendit
-  payload        Json
-  raw_signature  String?
-  received_at    DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  transactionId String
+  source        String // e.g. midtrans, xendit
+  payload       Json
+  rawSignature  String?
+  receivedAt    DateTime @default(now())
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-  created_by Int?
-  updated_by Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
 
-  transaction PurchaseTransaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+  transaction PurchaseTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
-  @@index([transaction_id])
+  @@index([transactionId])
   @@index([source])
   @@schema("transaction")
 }
 
 model PurchaseTransactionAudit {
-  id             Int                   @id @default(autoincrement())
-  transaction_id String
-  old_status     TransactionStatusEnum
-  new_status     TransactionStatusEnum
-  source         String // "webhook", "admin", etc
-  changed_at     DateTime              @default(now())
+  id            Int                   @id @default(autoincrement())
+  transactionId String
+  oldStatus     TransactionStatusEnum
+  newStatus     TransactionStatusEnum
+  source        String // "webhook", "admin", etc
+  changedAt     DateTime              @default(now())
 
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  deleted_at DateTime?
-  created_by Int?
-  updated_by Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
 
-  transaction PurchaseTransaction @relation(fields: [transaction_id], references: [id], onDelete: Cascade)
+  transaction PurchaseTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
-  @@index([transaction_id])
-  @@map("purchase_transaction_audit")
+  @@index([transactionId])
   @@schema("transaction")
 }
 

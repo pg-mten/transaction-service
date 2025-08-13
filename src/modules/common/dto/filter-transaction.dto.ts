@@ -10,13 +10,7 @@ import {
   IsUUID,
 } from 'class-validator';
 
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-  SUCCESS = 'SUCCESS',
-  FAILED = 'FAILED',
-  EXPIRED = 'EXPIRED',
-  CANCELED = 'CANCELED',
-}
+import { TransactionStatusEnum } from '@prisma/client';
 
 export class FilterTransactionDto {
   @ApiPropertyOptional({ example: 1 })
@@ -53,8 +47,8 @@ export class FilterTransactionDto {
   @IsUUID()
   providerId?: string;
 
-  @ApiPropertyOptional({ enum: TransactionStatus })
+  @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()
-  @IsEnum(TransactionStatus)
-  status?: TransactionStatus;
+  @IsEnum(TransactionStatusEnum)
+  status?: TransactionStatusEnum;
 }

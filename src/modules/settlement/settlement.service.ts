@@ -1,32 +1,35 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import axios from 'axios';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class SettlementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async setSettlement(merchantId: number) {
-    const now = new Date();
     const transactions = await this.prisma.purchaseTransaction.findMany({
       where: {
-        merchant_id: merchantId,
-        settlement_at: null,
+        merchantId: merchantId,
+        settlementAt: null,
       },
       include: {
-        fee_details: true,
+        feeDetails: true,
       },
     });
     if (!transactions) {
       throw new NotFoundException('Semua Transaksi sudah berhasil Settlement');
     }
-    const totalAmountMerchant = transactions.reduce(
-      (n, item) => n + parseInt(item.net_amount.toString()),
-      0,
-    );
+    const totalAmountMerchant = new Decimal(0);
     for (const trx of transactions) {
-      let feeAgent;
-      const totalAmountAgent = trx.fee_details.reduce((n, item) => {
+      if (trx.netAmount) totalAmountMerchant.plus(trx.netAmount);
+    }
+    // const totalAmountMerchant = transactions.reduce(
+    //   (n, item) => n + parseInt(item.net_amount.toString()),
+    //   0,
+    // );
+    for (const trx of transactions) {
+      const totalAmountAgent = trx.feeDetails.reduce((n, item) => {
         if (item.type == 'AGENT') {
           return n + parseInt(item.amount.toString());
         }

@@ -7,6 +7,10 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { Prisma } from '@prisma/client';
 import axios from 'axios';
 import { FilterTransactionSettlementDto } from './dto/filter-transaction-settlement.dto';
+import { DateHelper } from 'src/shared/helper/date.helper';
+import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
+import Decimal from 'decimal.js';
+import { TransactionStatusEnum } from '@prisma/client';
 
 @Injectable()
 export class TransactionsService {
@@ -15,15 +19,13 @@ export class TransactionsService {
   async create(dto: CreateTransactionDto) {
     const createdTransaction = await this.prisma.purchaseTransaction.create({
       data: {
-        external_id: dto.external_id,
-        reference_id: dto.reference_id,
-        merchant_id: dto.merchant_id,
+        externalId: dto.external_id,
+        referenceId: dto.reference_id,
+        merchantId: dto.merchant_id,
         provider: dto.provider,
-        agent_id: dto.agent_id,
-        amount: new Prisma.Decimal(dto.amount),
-        net_amount: dto.nettAmount
-          ? new Prisma.Decimal(dto.nettAmount)
-          : undefined,
+        agentId: dto.agent_id,
+        amount: new Decimal(dto.amount),
+        netAmount: dto.nettAmount ? new Decimal(dto.nettAmount) : undefined,
         method: dto.method,
         metadata: dto.metadata,
         status: 'PENDING',
@@ -40,10 +42,10 @@ export class TransactionsService {
       feeDetails.map(({ type, amount, percentage }) => {
         return this.prisma.feeDetail.create({
           data: {
-            purchase_transaction_id: createdTransaction.id,
+            purchaseTransactionId: createdTransaction.id,
             type: type as any,
-            amount: new Prisma.Decimal(amount),
-            percentage: new Prisma.Decimal(percentage),
+            amount: new Decimal(amount),
+            percentage: new Decimal(percentage),
           },
         });
       }),
@@ -114,27 +116,23 @@ export class TransactionsService {
     return this.prisma.purchaseTransaction.findUnique({
       where: { id },
       include: {
-        fee_details: true,
+        feeDetails: true,
       },
     });
   }
 
-  async findAll(query: FilterTransactionDto) {
-    const {
-      page = 1,
-      limit = 10,
-      from,
-      to,
-      merchantId,
-      providerId,
-      status,
-    } = query;
+  async findAll(pageable: Pageable, query: FilterTransactionDto) {
+    const { from, to, merchantId, provider, status } = query;
+    const { skip, take } = paging(pageable);
 
-    const skip = (page - 1) * limit;
-    const fromDate = from ? startOfDay(new Date(from)) : subDays(new Date(), 7);
-    const toDate = to ? endOfDay(new Date(to)) : endOfDay(new Date());
+    const fromDate = from
+      ? startOfDay(new Date(from.toJSDate()))
+      : subDays(new Date(), 7);
+    const toDate = to
+      ? endOfDay(new Date(to.toJSDate()))
+      : endOfDay(new Date());
 
-    const whereClause: any = {
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {
       createdAt: {
         gte: fromDate,
         lte: toDate,
@@ -142,42 +140,48 @@ export class TransactionsService {
     };
 
     if (merchantId) whereClause.merchantId = merchantId;
-    if (providerId) whereClause.providerId = providerId;
+    if (provider) whereClause.provider = provider;
     if (status) whereClause.status = status;
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.purchaseTransaction.findMany({
         where: whereClause,
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take,
         include: {
-          fee_details: true,
+          feeDetails: true,
         },
       }),
       this.prisma.purchaseTransaction.count({
         where: whereClause,
       }),
     ]);
+    console.log({ items });
+    return new Page<any>({
+      data: items,
+      pageable,
+      total,
+    });
 
-    return {
-      success: true,
-      message: 'Daftar transaksi',
-      data: {
-        items,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    // return {
+    //   success: true,
+    //   message: 'Daftar transaksi',
+    //   data: {
+    //     items,
+    //     total,
+    //     // page,
+    //     // limit,
+    //     totalPages: Math.ceil(total / take),
+    //   },
+    // };
   }
 
   async internalTransactionSettlement(filter: FilterTransactionSettlementDto) {
     const { from, to } = filter;
     return this.prisma.purchaseTransaction.findMany({
       where: {
-        created_at: {
+        createdAt: {
           gte: new Date(from),
           lte: new Date(to),
         },
@@ -187,7 +191,7 @@ export class TransactionsService {
 
   async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {
     const trx = await this.prisma.purchaseTransaction.findUnique({
-      where: { external_id },
+      where: { externalId: external_id },
     });
     if (!trx) throw new NotFoundException('Transaction not found');
 
@@ -196,29 +200,29 @@ export class TransactionsService {
     }
 
     const updated = await this.prisma.purchaseTransaction.update({
-      where: { external_id },
+      where: { externalId: external_id },
       data: {
         status: newStatus as any,
-        updated_at: new Date(),
+        updatedAt: DateHelper.nowDate(),
       },
     });
 
     await this.prisma.purchaseTransactionAudit.create({
       data: {
-        transaction_id: updated.id,
-        old_status: trx.status,
-        new_status: newStatus as any,
+        transactionId: updated.id,
+        oldStatus: trx.status,
+        newStatus: newStatus as any,
         source: 'webhook',
-        created_at: new Date(),
+        createdAt: DateHelper.nowDate(),
       },
     });
 
     await this.prisma.webhookLog.create({
       data: {
-        transaction_id: updated.id,
+        transactionId: updated.id,
         source: 'provider',
         payload: rawPayload,
-        received_at: new Date(),
+        receivedAt: DateHelper.nowDate(),
       },
     });
 

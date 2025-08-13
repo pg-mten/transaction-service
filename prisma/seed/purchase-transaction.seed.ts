@@ -39,21 +39,21 @@ export async function purchaseTransactionSeed(prisma: PrismaClient) {
   for (let i = 1; i <= 2000; i++) {
     const purchaseTransaction = await prisma.purchaseTransaction.create({
       data: {
-        external_id: generateRandomString(10) + i,
-        reference_id: generateRandomString(10),
-        merchant_id: getRandomNumber(1, 100),
+        externalId: generateRandomString(10) + i,
+        referenceId: generateRandomString(10),
+        merchantId: getRandomNumber(1, 100),
         provider: providers[getRandomNumber(0, providers.length - 1)],
-        agent_id: getRandomNumber(1, 100),
+        agentId: getRandomNumber(1, 100),
         amount: getRandomDouble(100.0, 1000.0).toFixed(2),
-        net_amount: getRandomDouble(100.0, 1000.0).toFixed(2),
+        netAmount: getRandomDouble(100.0, 1000.0).toFixed(2),
         status: getRandomEnumValue(TransactionStatusEnum),
         method: paymentMethods[getRandomNumber(0, paymentMethods.length - 1)],
         metadata: {},
-        created_at: getRandomDateTime(
+        createdAt: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),
           new Date('2025-08-06T23:59:59Z'),
         ),
-        updated_at: getRandomDateTime(
+        updatedAt: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),
           new Date('2025-08-07T23:59:59Z'),
         ),

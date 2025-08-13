@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './modules/app/app.module';
 import { WinstonModule } from 'nest-winston';
@@ -22,9 +21,15 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix(API_PREFIX);
-
-  app.useGlobalPipes(new ValidationPipe());
   useContainer(app.select(AppModule), { fallbackOnErrors: true }); // class-validator ngikut DI Nest
+
+  // TODO jangan sampai production, origin set true demi development dan testing
+  app.enableCors({
+    origin: true,
+    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS',
+    // allowedHeaders: 'Content-Type, Authorization',
+    credentials: true,
+  });
 
   if (IS_DEVELOPMENT) {
     const options = new DocumentBuilder()
