@@ -4,117 +4,137 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
-import { Prisma } from '@prisma/client';
+import { FeeTypeEnum, Prisma } from '@prisma/client';
 import axios from 'axios';
 import { FilterTransactionSettlementDto } from './dto/filter-transaction-settlement.dto';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import Decimal from 'decimal.js';
-import { TransactionStatusEnum } from '@prisma/client';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
+import { URL_CONFIG } from 'src/shared/constant/global.constant';
+import { ResponseDto } from 'src/shared/response.dto';
+import { PurchasingFeeDto } from './dto/fee/purchashing-fee.dto';
 
 @Injectable()
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateTransactionDto) {
-    const createdTransaction = await this.prisma.purchaseTransaction.create({
-      data: {
-        externalId: dto.external_id,
-        referenceId: dto.reference_id,
-        merchantId: dto.merchant_id,
-        provider: dto.provider,
-        agentId: dto.agent_id,
-        amount: new Decimal(dto.amount),
-        netAmount: dto.nettAmount ? new Decimal(dto.nettAmount) : undefined,
-        method: dto.method,
-        metadata: dto.metadata,
-        status: 'PENDING',
-      },
+    await this.prisma.$transaction(async (tx) => {
+      const createdTransaction = await tx.purchaseTransaction.create({
+        data: {
+          externalId: dto.externalId,
+          referenceId: dto.referenceId,
+          merchantId: dto.merchantId,
+          provider: dto.provider,
+          agentId: dto.agentId,
+          amount: dto.amount,
+          netAmount: dto.nettAmount,
+          paymentMethod: dto.paymentMethod,
+          metadata: dto.metadata,
+          status: 'PENDING',
+        },
+      });
+      const feeConfig: PurchasingFeeDto = await this.fetchFeeConfig({
+        merchantId: 1,
+        providerName: dto.provider,
+        paymentMethod: dto.paymentMethod,
+        amount: dto.amount,
+      });
+
+      const feeDetails = this.mapFeeDetailResponse(feeConfig);
+
+      const feeDetailPromises = [];
+      for (const feeDetail of feeDetails) {
+        const { type, amount, percentage } = feeDetail;
+        feeDetailPromises.push(
+          tx.purchaseFeeDetail.create({
+            data: {
+              purchaseTransactionId: createdTransaction.id,
+              type: type,
+              amount: amount,
+              percentage: percentage,
+            },
+          }),
+        );
+      }
+      await Promise.all(feeDetailPromises);
+
+      return createdTransaction;
     });
-    const feeConfig = await this.fetchFeeConfig(
-      1,
-      'NETZME',
-      'QRIS',
-      dto.amount,
-    );
-    const feeDetails = this.mapFeeDetailResponse(feeConfig);
-    await Promise.all(
-      feeDetails.map(({ type, amount, percentage }) => {
-        return this.prisma.feeDetail.create({
-          data: {
-            purchaseTransactionId: createdTransaction.id,
-            type: type as any,
-            amount: new Decimal(amount),
-            percentage: new Decimal(percentage),
-          },
-        });
-      }),
-    );
-    return createdTransaction;
   }
 
-  private async fetchFeeConfig(
-    merchantId: number,
-    providerName: string,
-    paymentMethod: string,
-    amount: string,
-  ) {
+  private async fetchFeeConfig({
+    merchantId,
+    providerName,
+    paymentMethod,
+    amount,
+  }: {
+    merchantId: number;
+    providerName: string;
+    paymentMethod: string;
+    amount: Decimal;
+  }) {
     try {
-      const { data } = await axios.get(
-        'http://192.168.18.176:3001/api/v1/fee/purchasing',
+      const { data } = await axios.get<ResponseDto<PurchasingFeeDto>>(
+        `${URL_CONFIG}/fee/purchasing`,
         {
           params: {
             merchantId: merchantId,
             providerName: providerName,
             paymentMethodName: paymentMethod,
-            nominal: amount,
+            nominal: amount.toFixed(2),
           },
         },
       );
-      return data.data;
+      return data.data!;
     } catch (error) {
       console.log(error);
+      throw error;
     }
   }
 
   private mapFeeDetailResponse(
-    response: any,
-  ): { type: string; amount: string; percentage: string }[] {
-    const result: { type: string; amount: string; percentage: string }[] = [];
-    if (response.internal?.nominal) {
+    feeConfig: PurchasingFeeDto,
+  ): { type: FeeTypeEnum; amount: Decimal; percentage: Decimal }[] {
+    const result: {
+      type: FeeTypeEnum;
+      amount: Decimal;
+      percentage: Decimal;
+    }[] = [];
+    if (feeConfig.internal?.nominal) {
       result.push({
         type: 'INTERNAL',
-        amount: response.internal.nominal,
-        percentage: response.internal.percentage,
+        amount: feeConfig.internal.nominal,
+        percentage: feeConfig.internal.percentage,
       });
     }
-    if (response.provider?.nominal) {
+    if (feeConfig.provider?.nominal) {
       result.push({
         type: 'PROVIDER',
-        amount: response.provider.nominal,
-        percentage: response.provider.percentage,
+        amount: feeConfig.provider.nominal,
+        percentage: feeConfig.provider.percentage,
       });
     }
-    if (response.agent?.nominal) {
+    if (feeConfig.agent?.nominal) {
       result.push({
         type: 'AGENT',
-        amount: response.agent.nominal,
-        percentage: response.agent.percentage,
+        amount: feeConfig.agent.nominal,
+        percentage: feeConfig.agent.percentage,
       });
     }
-    if (response.merchant?.merchantNetAmount) {
+    if (feeConfig.merchant?.merchantNetAmount) {
       result.push({
         type: 'MERCHANT',
-        amount: response.merchant.merchantNetAmount,
-        percentage: response.merchant.percentage,
+        amount: feeConfig.merchant.merchantNetAmount,
+        percentage: feeConfig.merchant.percentage,
       });
     }
     return result;
   }
 
-  async findOne(id: string) {
-    return this.prisma.purchaseTransaction.findUnique({
+  async findOneThrow(id: string) {
+    return this.prisma.purchaseTransaction.findUniqueOrThrow({
       where: { id },
       include: {
         feeDetails: true,
@@ -123,7 +143,7 @@ export class TransactionsService {
   }
 
   async findAll(pageable: Pageable, query: FilterTransactionDto) {
-    const { from, to, merchantId, provider, status } = query;
+    const { from, to, merchantId, provider, paymentMethod, status } = query;
     const { skip, take } = paging(pageable);
 
     const fromDate = from
@@ -143,6 +163,7 @@ export class TransactionsService {
     if (merchantId) whereClause.merchantId = merchantId;
     if (provider) whereClause.provider = provider;
     if (status) whereClause.status = status;
+    if (paymentMethod) whereClause.paymentMethod = paymentMethod;
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.purchaseTransaction.count({
@@ -171,18 +192,6 @@ export class TransactionsService {
       pageable,
       total,
     });
-
-    // return {
-    //   success: true,
-    //   message: 'Daftar transaksi',
-    //   data: {
-    //     items,
-    //     total,
-    //     // page,
-    //     // limit,
-    //     totalPages: Math.ceil(total / take),
-    //   },
-    // };
   }
 
   async internalTransactionSettlement(filter: FilterTransactionSettlementDto) {

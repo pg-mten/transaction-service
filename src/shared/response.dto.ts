@@ -4,6 +4,7 @@ import { PaginationDto } from './pagination/pagination';
 
 export enum ResponseStatus {
   CREATED = 'CREATED',
+  UPDATED = 'UPDATED',
   SUCCESS = 'SUCCESS',
   ERROR = 'ERROR',
   PARTIAL_SUCCESS = 'PARTIAL_SUCCESS',
@@ -20,31 +21,40 @@ export class ResponseDto<T> {
     error,
   }: {
     statusCode?: number | null;
-    status?: ResponseStatus | null;
-    message: string;
+    status: ResponseStatus;
+    message?: string;
     data?: T | null;
     pagination?: PaginationDto | null;
     meta?: unknown;
     error?: Record<string, unknown> | null;
   }) {
     let statusCodeTemp = HttpStatus.OK;
+    let messageTemp = '';
     switch (status) {
       case ResponseStatus.CREATED:
         statusCodeTemp = HttpStatus.CREATED;
+        messageTemp = 'Created';
+        break;
+      case ResponseStatus.UPDATED:
+        statusCodeTemp = HttpStatus.OK;
+        messageTemp = 'Updated';
         break;
       case ResponseStatus.SUCCESS:
         statusCodeTemp = HttpStatus.OK;
+        messageTemp = 'Request Successfully';
         break;
       case ResponseStatus.ERROR:
         statusCodeTemp = HttpStatus.BAD_REQUEST;
+        messageTemp = 'Error';
         break;
       case ResponseStatus.PARTIAL_SUCCESS:
         statusCodeTemp = HttpStatus.OK;
+        messageTemp = 'There is some error';
         break;
     }
     this.statusCode = statusCode ?? statusCodeTemp;
     this.status = status ?? ResponseStatus.SUCCESS;
-    this.message = message;
+    this.message = message ?? messageTemp;
     this.data = data;
     this.pagination = pagination;
     this.meta = meta;

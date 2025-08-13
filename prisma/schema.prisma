@@ -16,13 +16,13 @@ datasource db {
 }
 
 model TopUpTransaction {
-  id          String                @id @default(uuid())
-  merchantId  Int
-  referenceId String                @unique //reff id from bank
-  amount      Decimal
-  status      TransactionStatusEnum @default(PENDING)
-  method      String //transfer_bank, virtual_account
-  metadata    Json?
+  id            String                @id @default(uuid())
+  merchantId    Int
+  referenceId   String                @unique //reff id from bank
+  amount        Decimal
+  status        TransactionStatusEnum @default(PENDING)
+  paymentMethod String //transfer_bank, virtual_account
+  metadata      Json?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -41,6 +41,7 @@ model TopUpTransaction {
 
 model TopupFeeDetail {
   id                 Int         @id @default(autoincrement())
+  agentId            Int?
   topupTransactionId String
   type               FeeTypeEnum
   amount             Decimal
@@ -54,20 +55,19 @@ model TopupFeeDetail {
 
   topUpTransation TopUpTransaction @relation(fields: [topupTransactionId], references: [id], onDelete: Cascade)
 
-
   @@index([topupTransactionId])
   @@schema("transaction")
 }
 
 model WithdrawTransaction {
-  id         String                @id @default(uuid())
-  externalId String                @unique
-  merchantId Int
-  amount     Decimal
-  netAmount  Decimal? // amount setelah dipotong fee
-  status     TransactionStatusEnum @default(PENDING)
-  method     String // transfer_bank, virtual_account, dll
-  metadata   Json?
+  id            String                @id @default(uuid())
+  externalId    String                @unique
+  merchantId    Int
+  amount        Decimal
+  netAmount     Decimal? // amount setelah dipotong fee
+  status        TransactionStatusEnum @default(PENDING)
+  paymentMethod String // transfer_bank, virtual_account, dll
+  metadata      Json?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -88,6 +88,7 @@ model WithdrawTransaction {
 
 model WithdrawFeeDetail {
   id                    Int         @id @default(autoincrement())
+  agentId               Int?
   withdrawTransactionId String
   type                  FeeTypeEnum
   amount                Decimal
@@ -114,7 +115,7 @@ model DisbursementTransaction {
   amount           Decimal
   netAmount        Decimal?
   status           TransactionStatusEnum @default(PENDING)
-  method           String
+  paymentMethod    String
   metadata         Json?
 
   // Audit fields
@@ -136,6 +137,7 @@ model DisbursementTransaction {
 
 model DisbursementFeeDetail {
   id                        Int         @id @default(autoincrement())
+  agentId                   Int?
   disbursementTransactionId String
   type                      FeeTypeEnum
   amount                    Decimal
@@ -163,7 +165,7 @@ model PurchaseTransaction {
   amount           Decimal
   netAmount        Decimal?
   status           TransactionStatusEnum @default(PENDING)
-  method           String
+  paymentMethod    String
   metadata         Json?
   settlementAt     DateTime?
   reconciliationAt DateTime?
@@ -176,7 +178,7 @@ model PurchaseTransaction {
   updatedBy Int?
 
   // Relasi
-  feeDetails         FeeDetail[]
+  feeDetails         PurchaseFeeDetail[]
   webhookLogs        WebhookLog[]
   audits             PurchaseTransactionAudit[]
   MerchantBalanceLog MerchantBalanceLog[]
@@ -188,8 +190,9 @@ model PurchaseTransaction {
   @@schema("transaction")
 }
 
-model FeeDetail {
+model PurchaseFeeDetail {
   id                    Int         @id @default(autoincrement())
+  agentId               Int?
   purchaseTransactionId String
   type                  FeeTypeEnum
   amount                Decimal

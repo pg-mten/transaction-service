@@ -1,91 +1,39 @@
 // src/transactions/transactions.controller.ts
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Body,
-  NotFoundException,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
-  ApiNotFoundResponse,
-  ApiExtraModels,
-  getSchemaPath,
   ApiOkResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
-import { TransactionResponseDto } from './dto/transaction-response.dto';
-import { ApiResponseDto } from '../common/dto/response.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
+import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 
 @ApiTags('Transactions')
-@ApiExtraModels(ApiResponseDto, TransactionResponseDto)
 @Controller('transactions')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post('purchase')
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
-  @ApiResponse({
-    status: 201,
-    description: 'Transaksi berhasil dibuat',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(TransactionResponseDto) },
-          },
-        },
-      ],
-    },
-  })
-  async create(@Body() dto: CreateTransactionDto) {
-    const trx = await this.transactionsService.create(dto);
-    return {
-      success: true,
-      message: 'Transaksi berhasil dibuat',
-      data: trx,
-    };
+  @ApiBody({ type: CreateTransactionDto })
+  async create(@Body() body: CreateTransactionDto) {
+    await this.transactionsService.create(body);
+    return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
-  @ApiResponse({
-    status: 200,
-    description: 'Detail transaksi ditemukan',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ApiResponseDto) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(TransactionResponseDto) },
-          },
-        },
-      ],
-    },
-  })
-  @ApiNotFoundResponse({ description: 'Transaksi tidak ditemukan' })
   async findOne(@Param('id') id: string) {
-    const trx = await this.transactionsService.findOne(id);
-    if (!trx) throw new NotFoundException('Transaksi tidak ditemukan');
-
-    return {
-      success: true,
-      message: 'Detail transaksi ditemukan',
-      data: trx,
-    };
+    return await this.transactionsService.findOneThrow(id);
   }
 
   @Get()

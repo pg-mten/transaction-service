@@ -47,7 +47,7 @@ export class ReconciliationService {
             provider: provider,
             externalId: recon.id,
             amount: recon.amount,
-            method: recon.method,
+            paymentMethod: recon.method,
           },
           data: {
             reconciliationAt: DateHelper.nowDate(),

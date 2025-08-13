@@ -6,21 +6,23 @@ import {
   IsString,
   IsNumberString,
 } from 'class-validator';
+import { Decimal } from 'decimal.js';
+import { ToDecimal, ToDecimalNullable } from 'src/decorator/decimal.decorator';
 
 export class CreateTransactionDto {
   @ApiProperty({ example: 'trx_1234567890' })
   @IsString()
   @IsNotEmpty()
-  external_id: string;
+  externalId: string;
 
   @ApiProperty({ required: false, example: 'ref_abc123' })
   @IsOptional()
   @IsString()
-  reference_id?: string;
+  referenceId?: string;
 
   @ApiProperty({ example: 1 })
   @IsInt()
-  merchant_id: number;
+  merchantId: number;
 
   @ApiProperty({ example: 'NETZME' })
   @IsString()
@@ -29,14 +31,15 @@ export class CreateTransactionDto {
   @ApiProperty({ required: false, example: 3 })
   @IsOptional()
   @IsInt()
-  agent_id?: number;
+  agentId?: number;
 
   @ApiProperty({
     description: 'Amount in decimal string format, e.g. "10000.00"',
     example: '10000.00',
   })
   @IsNumberString()
-  amount: string;
+  @ToDecimal()
+  amount: Decimal;
 
   @ApiProperty({
     required: false,
@@ -45,17 +48,18 @@ export class CreateTransactionDto {
   })
   @IsOptional()
   @IsNumberString()
-  nettAmount?: string;
+  @ToDecimalNullable()
+  nettAmount: Decimal | null;
 
-  @ApiProperty({ example: 'VA_BCA' })
+  @ApiProperty({ example: 'QRIS' })
   @IsString()
-  method: string;
+  paymentMethod: string;
 
   @ApiProperty({
     required: false,
     example: {
-      customer_name: 'John Doe',
-      order_items: ['item1', 'item2'],
+      customerName: 'John Doe',
+      orderItems: ['item1', 'item2'],
     },
   })
   @IsOptional()

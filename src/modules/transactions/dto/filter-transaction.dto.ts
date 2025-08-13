@@ -39,6 +39,10 @@ export class FilterTransactionDto {
   @IsOptional()
   provider: string | null;
 
+  @ApiProperty({ type: String, example: 'QRIS', required: false })
+  @IsOptional()
+  paymentMethod: string | null;
+
   @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()
   @IsEnum(TransactionStatusEnum)
