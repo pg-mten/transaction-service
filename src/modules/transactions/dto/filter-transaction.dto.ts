@@ -30,7 +30,7 @@ export class FilterTransactionDto {
   @ToDateTimeNullable()
   to: DateTime | null;
 
-  @ApiProperty({ type: Number, example: 1, required: false })
+  @ApiProperty({ type: Number, required: false })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
   merchantId: number | null;

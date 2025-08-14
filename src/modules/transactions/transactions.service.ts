@@ -14,6 +14,7 @@ import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { URL_CONFIG } from 'src/shared/constant/global.constant';
 import { ResponseDto } from 'src/shared/response.dto';
 import { PurchasingFeeDto } from './dto/fee/purchashing-fee.dto';
+import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -147,11 +148,11 @@ export class TransactionsService {
     const { skip, take } = paging(pageable);
 
     const fromDate = from
-      ? startOfDay(new Date(from.toJSDate()))
-      : subDays(new Date(), 7);
+      ? startOfDay(from.toJSDate())
+      : subDays(DateHelper.nowDate(), 7);
     const toDate = to
-      ? endOfDay(new Date(to.toJSDate()))
-      : endOfDay(new Date());
+      ? endOfDay(to.toJSDate())
+      : endOfDay(DateHelper.nowDate());
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {
       createdAt: {
@@ -185,9 +186,12 @@ export class TransactionsService {
         metadata: item.metadata as Record<string, unknown>,
         settlementAt: DateHelper.fromJsDate(item.settlementAt),
         reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+        feeDetails: item.feeDetails.map((fee) => {
+          return new PurchaseFeeDetailDto({ ...fee });
+        }),
       });
     });
-    return new Page<any>({
+    return new Page<PurchaseTransactionDto>({
       data: data,
       pageable,
       total,

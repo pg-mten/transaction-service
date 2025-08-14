@@ -4,11 +4,11 @@ function getRandomDouble(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }
 
-export async function feeDetailSeed(prisma: PrismaClient) {
+export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
   const purchaseTransactions = await prisma.purchaseTransaction.findMany();
 
-  await Promise.all(
-    purchaseTransactions.map((purchase) => {
+  for (const purchase of purchaseTransactions) {
+    const fees = await Promise.all([
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
@@ -16,7 +16,7 @@ export async function feeDetailSeed(prisma: PrismaClient) {
           amount: getRandomDouble(100.0, 1000.0).toFixed(2),
           percentage: getRandomDouble(0, 10).toFixed(2),
         },
-      });
+      }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
@@ -24,7 +24,7 @@ export async function feeDetailSeed(prisma: PrismaClient) {
           amount: getRandomDouble(100.0, 1000.0).toFixed(2),
           percentage: getRandomDouble(0, 10).toFixed(2),
         },
-      });
+      }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
@@ -32,7 +32,7 @@ export async function feeDetailSeed(prisma: PrismaClient) {
           amount: purchase.amount,
           percentage: getRandomDouble(0, 10),
         },
-      });
+      }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
@@ -40,7 +40,8 @@ export async function feeDetailSeed(prisma: PrismaClient) {
           amount: purchase.amount,
           percentage: getRandomDouble(0, 10),
         },
-      });
-    }),
-  );
+      }),
+    ]);
+    console.log({ fees });
+  }
 }

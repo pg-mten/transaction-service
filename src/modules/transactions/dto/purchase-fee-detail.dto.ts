@@ -15,9 +15,6 @@ export class PurchaseFeeDetailDto {
   @ApiProperty({ type: Number, required: false })
   agentId: number | null;
 
-  @ApiProperty({ type: String })
-  purchaseTransactionId: string;
-
   @ApiProperty({ enum: FeeTypeEnum })
   type: FeeTypeEnum;
 
