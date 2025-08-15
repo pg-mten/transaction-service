@@ -1,18 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import axios from 'axios';
 import Decimal from 'decimal.js';
+import { DateHelper } from 'src/shared/helper/date.helper';
 
 @Injectable()
 export class SettlementService {
   constructor(private readonly prisma: PrismaService) {}
 
   async setSettlement(merchantId: number) {
+    const now = DateHelper.nowDate();
     const transactions = await this.prisma.purchaseTransaction.findMany({
-      where: {
-        merchantId: merchantId,
-        settlementAt: null,
-      },
+      where: { merchantId, settlementAt: null },
       include: {
         feeDetails: true,
       },
@@ -20,22 +18,55 @@ export class SettlementService {
     if (!transactions) {
       throw new NotFoundException('Semua Transaksi sudah berhasil Settlement');
     }
-    const totalAmountMerchant = new Decimal(0);
+    const lastLogBalanceMerchant =
+      await this.prisma.merchantBalanceLog.findFirst({
+        where: {
+          merchantId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    const lastBalance = lastLogBalanceMerchant?.balanceAfter || new Decimal(0);
     for (const trx of transactions) {
-      if (trx.netAmount) totalAmountMerchant.plus(trx.netAmount);
+      await this.prisma.merchantBalanceLog.create({
+        data: {
+          merchantId,
+          changeAmount: trx.netAmount || 0.0,
+          purchaseId: trx.id,
+          balanceAfter: lastBalance.plus(trx.netAmount || new Decimal(0)), //last balance + netAmount
+          reason: 'SETTLEMENT BY SYSTEM',
+        },
+      });
+      for (const fees of trx.feeDetails) {
+        if (!(fees.type == 'AGENT' && fees.agentId != null)) continue;
+        const lastBalanceAgent = await this.prisma.agentBalanceLog.findFirst({
+          where: {
+            agentId: fees.agentId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+        if (!lastBalanceAgent) continue;
+        await this.prisma.agentBalanceLog.create({
+          data: {
+            agentId: fees.agentId,
+            changeAmount: fees.amount,
+            purchaseId: trx.id,
+            balanceAfter: lastBalanceAgent?.balanceAfter.plus(fees.amount),
+            reason: 'SETTLEMENT BY SYSTEM',
+          },
+        });
+        await this.prisma.purchaseTransaction.update({
+          where: {
+            id: trx.id,
+          },
+          data: {
+            settlementAt: now,
+          },
+        });
+      }
     }
-    // const totalAmountMerchant = transactions.reduce(
-    //   (n, item) => n + parseInt(item.net_amount.toString()),
-    //   0,
-    // );
-    for (const trx of transactions) {
-      const totalAmountAgent = trx.feeDetails.reduce((n, item) => {
-        if (item.type == 'AGENT') {
-          return n + parseInt(item.amount.toString());
-        }
-      }, 0);
-    }
-    // update balance  in auth service
-    const updated = await axios.post('http://localhost:3000/auth');
   }
 }
