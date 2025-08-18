@@ -27,6 +27,7 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
           fee: getRandomDouble(0, 10).toFixed(2),
         },
       }),
+      // TODO Salah seeder
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,

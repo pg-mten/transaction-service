@@ -27,6 +27,7 @@ import { FeeModule } from '../fee/fee.module';
 import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
 import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
+import { SettlementModule } from '../settlement/settlement.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { DisbursementTransactionModule } from '../disbursement/disbursement.modu
     TopupTransactionModule,
     WithdrawTransactionModule,
     DisbursementTransactionModule,
+    SettlementModule,
   ],
   controllers: [AppController],
   providers: [

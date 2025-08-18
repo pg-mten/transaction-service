@@ -44,7 +44,7 @@ export class TransactionPurchaseService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.amount,
           metadata: dto.metadata,
-          merchantNetNominal: purchaseFeeDto.merchantFee.netNominal,
+          netNominal: purchaseFeeDto.merchantFee.netNominal,
           status: 'PENDING',
         },
       });

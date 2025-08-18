@@ -1,74 +1,148 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Decimal from 'decimal.js';
-import { DateHelper } from 'src/shared/helper/date.helper';
+import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
+import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
+import { SettlementInternalDto } from './dto/settlement-internal.dto';
 
 @Injectable()
 export class SettlementService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async setSettlement(merchantId: number) {
-    const now = DateHelper.nowDate();
-    const transactions = await this.prisma.purchaseTransaction.findMany({
-      where: { merchantId, settlementAt: null },
-      include: {
-        feeDetails: true,
-      },
-    });
-    if (!transactions) {
-      throw new NotFoundException('Semua Transaksi sudah berhasil Settlement');
-    }
-    const lastLogBalanceMerchant =
-      await this.prisma.merchantBalanceLog.findFirst({
-        where: {
-          merchantId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-    const lastBalance = lastLogBalanceMerchant?.balanceAfter || new Decimal(0);
-    for (const trx of transactions) {
-      await this.prisma.merchantBalanceLog.create({
-        data: {
-          merchantId,
-          changeAmount: trx.merchantNetNominal || 0.0,
-          purchaseId: trx.id,
-          balanceAfter: lastBalance.plus(
-            trx.merchantNetNominal || new Decimal(0),
-          ), //last balance + netAmount
-          reason: 'SETTLEMENT BY SYSTEM',
-        },
-      });
-      for (const fees of trx.feeDetails) {
-        if (!(fees.type == 'AGENT' && fees.agentId != null)) continue;
-        const lastBalanceAgent = await this.prisma.agentBalanceLog.findFirst({
-          where: {
-            agentId: fees.agentId,
+  async internalSettlement(body: UpdateSettlementInternalDto) {
+    const { date: now, merchantIds, interval } = body;
+    /**
+     * For tracking merchant that skip settlement during that interval
+     * Cause:
+     *  - Already manual settlement by Admin itself
+     *  - No Transaction during interval
+     */
+    const merchantIdNoSettlement: number[] = [];
+
+    const merchantIdSettlement: number[] = [];
+
+    /**
+     * Update Many Balance of Merchants and Agents
+     */
+    for (const merchantId of merchantIds) {
+      /**
+       * It will start SQL Transaction consist of begin, commit and rollback for eact merchantId
+       */
+      await this.prisma.$transaction(async (tx) => {
+        /**
+         * Find Purchase Transaction by merchantId and Not Settlement yet
+         */
+        const purchaseTransactions = await tx.purchaseTransaction.findMany({
+          where: { settlementAt: null, merchantId: merchantId },
+          include: {
+            feeDetails: true,
           },
+        });
+
+        if (!purchaseTransactions || purchaseTransactions.length === 0) {
+          merchantIdNoSettlement.push(merchantId);
+          return; /// Continue to next merchant
+        }
+
+        /**
+         * Get the last Merchant Balance
+         */
+        const lastBalanceMerchantLog = await tx.merchantBalanceLog.findFirst({
+          where: { merchantId },
           orderBy: {
             createdAt: 'desc',
           },
         });
-        if (!lastBalanceAgent) continue;
-        await this.prisma.agentBalanceLog.create({
-          data: {
-            agentId: fees.agentId,
-            changeAmount: fees.nominal,
-            purchaseId: trx.id,
-            balanceAfter: lastBalanceAgent?.balanceAfter.plus(fees.nominal),
-            reason: 'SETTLEMENT BY SYSTEM',
-          },
-        });
-        await this.prisma.purchaseTransaction.update({
-          where: {
-            id: trx.id,
-          },
-          data: {
-            settlementAt: now,
-          },
-        });
-      }
+        const merchantLastBalance =
+          lastBalanceMerchantLog?.balanceAfter ?? new Decimal(0);
+
+        for (const purchase of purchaseTransactions) {
+          /**
+           * Merchant Balance
+           */
+          await tx.merchantBalanceLog.create({
+            data: {
+              merchantId,
+              purchaseId: purchase.id,
+              changeAmount: purchase.netNominal,
+              balanceAfter: merchantLastBalance.plus(purchase.netNominal), // last balance + netNominal
+              reason: `PURCHASE SETTLEMENT BY SYSTEM`,
+            },
+          });
+
+          /// TODO Internal Balance
+
+          /**
+           * Agent Balance
+           */
+          for (const feeDetail of purchase.feeDetails) {
+            /**
+             * Filter feeDetail Agent Only
+             */
+            if (feeDetail.type !== 'AGENT' || feeDetail.agentId === null)
+              continue;
+
+            const lastAgentBalanceLog = await tx.agentBalanceLog.findFirst({
+              where: {
+                agentId: feeDetail.agentId,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            });
+
+            /**
+             * Get the last Agent Balance
+             */
+            const agentLastBalance =
+              lastAgentBalanceLog?.balanceAfter ?? new Decimal(0);
+
+            /**
+             * Update Agent Balance
+             */
+            await tx.agentBalanceLog.create({
+              data: {
+                agentId: feeDetail.agentId,
+                purchaseId: purchase.id,
+                changeAmount: feeDetail.nominal,
+                balanceAfter: agentLastBalance.plus(feeDetail.nominal),
+                reason: 'PURCHASE SETTLEMENT BY SYSTEM',
+              },
+            });
+          }
+
+          /**
+           * Mark purchaseTransaction that has been Settlement
+           */
+          await tx.purchaseTransaction.update({
+            where: {
+              id: purchase.id,
+            },
+            data: {
+              settlementAt: now.toJSDate(),
+            },
+          });
+
+          merchantIdSettlement.push(merchantId);
+        }
+      });
     }
+
+    const settlementInternalDto = new SettlementInternalDto({
+      merchantIds: merchantIdSettlement,
+      merchantIdsNoSettlement: merchantIdNoSettlement,
+    });
+
+    if (merchantIdNoSettlement.length === 0)
+      return new ResponseDto<SettlementInternalDto>({
+        status: ResponseStatus.SUCCESS,
+        data: settlementInternalDto,
+      });
+
+    return new ResponseDto<SettlementInternalDto>({
+      status: ResponseStatus.PARTIAL_SUCCESS,
+      message: `Some merchant already settlement or no transaction during internal ${interval}`,
+      data: settlementInternalDto,
+    });
   }
 }

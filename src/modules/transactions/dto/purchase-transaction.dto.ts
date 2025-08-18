@@ -35,7 +35,7 @@ export class PurchaseTransactionDto {
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
-  merchantNetNominal: Decimal;
+  netNominal: Decimal;
 
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
