@@ -24,6 +24,9 @@ import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { FeeModule } from '../fee/fee.module';
+import { TopupTransactionModule } from '../topup/topup.module';
+import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
+import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
 import { SettlementModule } from '../settlement/settlement.module';
 
 @Module({
@@ -40,6 +43,9 @@ import { SettlementModule } from '../settlement/settlement.module';
     TransactionsModule,
     ReconciliationModule,
     FeeModule,
+    TopupTransactionModule,
+    WithdrawTransactionModule,
+    DisbursementTransactionModule,
     SettlementModule,
   ],
   controllers: [AppController],

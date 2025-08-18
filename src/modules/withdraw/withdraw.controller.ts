@@ -1,0 +1,52 @@
+// src/transactions/transactions.controller.ts
+import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiOkResponse,
+  ApiBody,
+} from '@nestjs/swagger';
+
+import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { Pagination } from 'src/shared/pagination/pagination.decorator';
+import { Pageable } from 'src/shared/pagination/pagination';
+import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
+import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
+import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
+import { WithdrawTransactionService } from './withdraw.service';
+
+@ApiTags('Transactions', 'Withdraw')
+@Controller('transactions')
+export class WithdrawTransactionsController {
+  constructor(private readonly service: WithdrawTransactionService) {}
+
+  /**
+   * Purchase
+   */
+  @Post('withdraw')
+  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
+  @ApiBody({ type: CreateWithdrawTransactionDto })
+  async create(@Body() body: CreateWithdrawTransactionDto) {
+    await this.service.createWithdrawTransaction(body);
+    return new ResponseDto({ status: ResponseStatus.CREATED });
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
+  @ApiParam({ name: 'id', description: 'UUID transaksi' })
+  async findOne(@Param('id') id: string) {
+    return await this.service.findOneThrow(id);
+  }
+
+  @Get('withdraw')
+  @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
+  @ApiOkResponse({ type: WithdrawTransactionDto, isArray: true })
+  async findAll(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterTransactionDto,
+  ) {
+    console.log({ filter, pageable });
+    return this.service.findAll(pageable, filter);
+  }
+}

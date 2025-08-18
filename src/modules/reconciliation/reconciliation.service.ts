@@ -40,6 +40,7 @@ export class ReconciliationService {
       },
     );
     console.log({ recons });
+    
     // const datas = await Promise.all(
     //   recons.map((recon) => {
     //     return this.prisma.purchaseTransaction.update({
