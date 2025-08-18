@@ -13,32 +13,36 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
         data: {
           purchaseTransactionId: purchase.id,
           type: 'INTERNAL',
-          amount: getRandomDouble(100.0, 1000.0).toFixed(2),
-          percentage: getRandomDouble(0, 10).toFixed(2),
+          nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+          isPercentage: true,
+          fee: getRandomDouble(0, 10).toFixed(2),
         },
       }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
           type: 'PROVIDER',
-          amount: getRandomDouble(100.0, 1000.0).toFixed(2),
-          percentage: getRandomDouble(0, 10).toFixed(2),
+          nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+          isPercentage: true,
+          fee: getRandomDouble(0, 10).toFixed(2),
         },
       }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
           type: 'AGENT',
-          amount: purchase.amount,
-          percentage: getRandomDouble(0, 10),
+          nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+          isPercentage: true,
+          fee: getRandomDouble(0, 10).toFixed(2),
         },
       }),
       prisma.purchaseFeeDetail.create({
         data: {
           purchaseTransactionId: purchase.id,
           type: 'MERCHANT',
-          amount: purchase.amount,
-          percentage: getRandomDouble(0, 10),
+          nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+          isPercentage: true,
+          fee: getRandomDouble(0, 10).toFixed(2),
         },
       }),
     ]);

@@ -42,13 +42,12 @@ export async function purchaseTransactionSeed(prisma: PrismaClient) {
         externalId: generateRandomString(10) + i,
         referenceId: generateRandomString(10),
         merchantId: getRandomNumber(1, 100),
-        provider: providers[getRandomNumber(0, providers.length - 1)],
-        agentId: getRandomNumber(1, 100),
-        amount: getRandomDouble(100.0, 1000.0).toFixed(2),
-        netAmount: getRandomDouble(100.0, 1000.0).toFixed(2),
-        status: getRandomEnumValue(TransactionStatusEnum),
-        paymentMethod:
+        providerName: providers[getRandomNumber(0, providers.length - 1)],
+        paymentMethodName:
           paymentMethods[getRandomNumber(0, paymentMethods.length - 1)],
+        nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+        merchantNetNominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+        status: getRandomEnumValue(TransactionStatusEnum),
         metadata: {},
         createdAt: getRandomDateTime(
           new Date('2025-08-01T00:00:00Z'),
