@@ -21,6 +21,9 @@ export class TransactionPurchaseService {
 
   async create(dto: CreatePurchaseTransactionDto) {
     await this.prisma.$transaction(async (tx) => {
+      /**
+       * Get Fee Config
+       */
       const purchaseFeeDto: PurchasingFeeDto =
         await this.feePurchaseService.calculateFeeConfig({
           merchantId: 1,
@@ -29,6 +32,9 @@ export class TransactionPurchaseService {
           nominal: dto.amount,
         });
 
+      /**
+       * Create Purchase Transaction
+       */
       const purchaseTransaction = await tx.purchaseTransaction.create({
         data: {
           externalId: dto.externalId,
@@ -43,12 +49,14 @@ export class TransactionPurchaseService {
         },
       });
 
+      /**
+       * Create Purchase Fee Detail
+       */
       const purchaseFeeDetailManyInput: Prisma.PurchaseFeeDetailCreateManyInput[] =
         this.purchaseFeeDetailMapper({
           purchaseTransactionId: purchaseTransaction.id,
           purchaseFeeDto,
         });
-
       const purchsaeFeeDetails = await tx.purchaseFeeDetail.createManyAndReturn(
         {
           data: purchaseFeeDetailManyInput,

@@ -20,9 +20,12 @@ export class PurchaseFeeDetailDto {
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
-  amount: Decimal;
+  nominal: Decimal;
+
+  @ApiProperty({ type: Boolean })
+  isPercentage: boolean;
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
-  percentage: Decimal;
+  fee: Decimal;
 }

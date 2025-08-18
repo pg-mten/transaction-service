@@ -24,27 +24,24 @@ export class PurchaseTransactionDto {
   merchantId: number;
 
   @ApiProperty({ type: String })
-  provider: string;
-
-  @ApiProperty({ type: String, required: false })
-  agentId: number | null;
-
-  @ToDecimalFixed()
-  @ApiProperty({ type: Decimal })
-  amount: Decimal;
-
-  @ToDecimalFixed()
-  @ApiProperty({ type: Decimal })
-  netAmount: Decimal | null;
+  providerName: string;
 
   @ApiProperty({ type: String })
+  paymentMethodName: string;
+
+  @ToDecimalFixed()
+  @ApiProperty({ type: Decimal })
+  nominal: Decimal;
+
+  @ToDecimalFixed()
+  @ApiProperty({ type: Decimal })
+  merchantNetNominal: Decimal;
+
+  @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 
-  @ApiProperty({ type: String })
-  paymentMethod: string;
-
   @ApiProperty({ type: Object })
-  metadata: object;
+  metadata: object | null;
 
   @ApiProperty({ type: DateTime })
   settlementAt: DateTime | null;
