@@ -9,7 +9,7 @@ import {
 import { Decimal } from 'decimal.js';
 import { ToDecimal, ToDecimalNullable } from 'src/decorator/decimal.decorator';
 
-export class CreateTransactionDto {
+export class CreatePurchaseTransactionDto {
   @ApiProperty({ example: 'trx_1234567890' })
   @IsString()
   @IsNotEmpty()
@@ -26,7 +26,11 @@ export class CreateTransactionDto {
 
   @ApiProperty({ example: 'NETZME' })
   @IsString()
-  provider: string;
+  providerName: string;
+
+  @ApiProperty({ example: 'QRIS' })
+  @IsString()
+  paymentMethodName: string;
 
   @ApiProperty({ required: false, example: 3 })
   @IsOptional()
@@ -49,11 +53,7 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsNumberString()
   @ToDecimalNullable()
-  nettAmount: Decimal | null;
-
-  @ApiProperty({ example: 'QRIS' })
-  @IsString()
-  paymentMethod: string;
+  netAmount: Decimal | null;
 
   @ApiProperty({
     required: false,

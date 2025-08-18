@@ -11,14 +11,14 @@ export class PurchasingFeeDto {
   }
 
   @ApiProperty({ type: MerchantFeeDto })
-  merchant: MerchantFeeDto;
+  merchantFee: MerchantFeeDto;
 
   @ApiProperty({ type: AgentFeeDto })
-  agent: AgentFeeDto;
+  agentFee: AgentFeeDto;
 
   @ApiProperty({ type: ProviderFeeDto })
-  provider: ProviderFeeDto;
+  providerFee: ProviderFeeDto;
 
   @ApiProperty({ type: InternalFeeDto })
-  internal: InternalFeeDto;
+  internalFee: InternalFeeDto;
 }

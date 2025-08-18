@@ -37,11 +37,11 @@ export class FilterTransactionDto {
 
   @ApiProperty({ type: String, example: 'NETZME', required: false })
   @IsOptional()
-  provider: string | null;
+  providerName: string | null;
 
   @ApiProperty({ type: String, example: 'QRIS', required: false })
   @IsOptional()
-  paymentMethod: string | null;
+  paymentMethodName: string | null;
 
   @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()

@@ -9,23 +9,30 @@ import {
 } from '@nestjs/swagger';
 
 import { TransactionsService } from './transactions.service';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
+import { TransactionPurchaseService } from './transaction-purchase.service';
 
-@ApiTags('Transactions')
+@ApiTags('Transactions', 'Purchase')
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly transactionPurchaseService: TransactionPurchaseService,
+  ) {}
 
+  /**
+   * Purchase
+   */
   @Post('purchase')
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
-  @ApiBody({ type: CreateTransactionDto })
-  async create(@Body() body: CreateTransactionDto) {
-    await this.transactionsService.create(body);
+  @ApiBody({ type: CreatePurchaseTransactionDto })
+  async create(@Body() body: CreatePurchaseTransactionDto) {
+    await this.transactionPurchaseService.create(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
@@ -33,10 +40,10 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: string) {
-    return await this.transactionsService.findOneThrow(id);
+    return await this.transactionPurchaseService.findOneThrow(id);
   }
 
-  @Get()
+  @Get('purchase')
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAll(
@@ -44,7 +51,7 @@ export class TransactionsController {
     @Query() filter: FilterTransactionDto,
   ) {
     console.log({ filter, pageable });
-    return this.transactionsService.findAll(pageable, filter);
+    return this.transactionPurchaseService.findAll(pageable, filter);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu

@@ -19,7 +19,7 @@ model TopUpTransaction {
   id            String                @id @default(uuid())
   merchantId    Int
   referenceId   String                @unique //reff id from bank
-  amount        Decimal
+  nominal       Decimal
   status        TransactionStatusEnum @default(PENDING)
   paymentMethod String //transfer_bank, virtual_account
   metadata      Json?
@@ -44,7 +44,7 @@ model TopupFeeDetail {
   agentId            Int?
   topupTransactionId String
   type               FeeTypeEnum
-  amount             Decimal
+  nominal            Decimal
   percentage         Decimal
 
   createdAt DateTime  @default(now())
@@ -63,8 +63,8 @@ model WithdrawTransaction {
   id            String                @id @default(uuid())
   externalId    String                @unique
   merchantId    Int
-  amount        Decimal
-  netAmount     Decimal? // amount setelah dipotong fee
+  nominal       Decimal
+  netAmount     Decimal? // nominal setelah dipotong fee
   status        TransactionStatusEnum @default(PENDING)
   paymentMethod String // transfer_bank, virtual_account, dll
   metadata      Json?
@@ -91,7 +91,7 @@ model WithdrawFeeDetail {
   agentId               Int?
   withdrawTransactionId String
   type                  FeeTypeEnum
-  amount                Decimal
+  nominal               Decimal
   percentage            Decimal
 
   createdAt DateTime  @default(now())
@@ -112,7 +112,7 @@ model DisbursementTransaction {
   provider         String
   recipientName    String // bisa merchant, agent, atau pihak ketiga
   recipientAccount String
-  amount           Decimal
+  nominal          Decimal
   netAmount        Decimal?
   status           TransactionStatusEnum @default(PENDING)
   paymentMethod    String
@@ -140,7 +140,7 @@ model DisbursementFeeDetail {
   agentId                   Int?
   disbursementTransactionId String
   type                      FeeTypeEnum
-  amount                    Decimal
+  nominal                   Decimal
   percentage                Decimal
 
   createdAt DateTime  @default(now())
@@ -156,19 +156,18 @@ model DisbursementFeeDetail {
 }
 
 model PurchaseTransaction {
-  id               String                @id @default(uuid())
-  externalId       String                @unique
-  referenceId      String?
-  merchantId       Int
-  provider         String
-  agentId          Int?
-  amount           Decimal
-  netAmount        Decimal?
-  status           TransactionStatusEnum @default(PENDING)
-  paymentMethod    String
-  metadata         Json?
-  settlementAt     DateTime?
-  reconciliationAt DateTime?
+  id                 String                @id @default(uuid())
+  externalId         String                @unique
+  referenceId        String?
+  merchantId         Int
+  providerName       String
+  paymentMethodName  String
+  nominal            Decimal
+  merchantNetNominal Decimal
+  status             TransactionStatusEnum @default(PENDING)
+  metadata           Json?
+  settlementAt       DateTime?
+  reconciliationAt   DateTime?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -185,7 +184,7 @@ model PurchaseTransaction {
   AgentBalanceLog    AgentBalanceLog[]
 
   @@index([merchantId])
-  @@index([provider])
+  @@index([providerName])
   @@index([status])
   @@schema("transaction")
 }
@@ -195,8 +194,9 @@ model PurchaseFeeDetail {
   agentId               Int?
   purchaseTransactionId String
   type                  FeeTypeEnum
-  amount                Decimal
-  percentage            Decimal
+  nominal               Decimal
+  isPercentage          Boolean
+  fee                   Decimal // Fixed or Percentage (2500 or 0.12%)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

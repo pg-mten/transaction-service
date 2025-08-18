@@ -23,6 +23,7 @@ import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
 import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
+import { FeeModule } from '../fee/fee.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { LoggerModule } from '../logger/logger.module';
     /// Business Module
     TransactionsModule,
     ReconciliationModule,
+    FeeModule,
   ],
   controllers: [AppController],
   providers: [
