@@ -32,9 +32,11 @@ export class SettlementService {
       await this.prisma.merchantBalanceLog.create({
         data: {
           merchantId,
-          changeAmount: trx.netAmount || 0.0,
+          changeAmount: trx.merchantNetNominal || 0.0,
           purchaseId: trx.id,
-          balanceAfter: lastBalance.plus(trx.netAmount || new Decimal(0)), //last balance + netAmount
+          balanceAfter: lastBalance.plus(
+            trx.merchantNetNominal || new Decimal(0),
+          ), //last balance + netAmount
           reason: 'SETTLEMENT BY SYSTEM',
         },
       });
@@ -52,9 +54,9 @@ export class SettlementService {
         await this.prisma.agentBalanceLog.create({
           data: {
             agentId: fees.agentId,
-            changeAmount: fees.amount,
+            changeAmount: fees.nominal,
             purchaseId: trx.id,
-            balanceAfter: lastBalanceAgent?.balanceAfter.plus(fees.amount),
+            balanceAfter: lastBalanceAgent?.balanceAfter.plus(fees.nominal),
             reason: 'SETTLEMENT BY SYSTEM',
           },
         });

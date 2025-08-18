@@ -6,7 +6,7 @@ import { PurchasingFeeDto } from './dto/purchashing-fee.dto';
 import { URL_CONFIG } from 'src/shared/constant/url.constant';
 
 @Injectable()
-export class FeePurchaseService {
+export class FeeCalculateService {
   constructor() {}
 
   async calculateFeeConfig(filter: FilterPurchasingFeeDto) {

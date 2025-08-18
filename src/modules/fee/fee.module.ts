@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FeePurchaseService } from './purchase/fee-purchase.service';
+import { FeeCalculateService } from './fee-calculate.service';
 
 @Module({
-  providers: [FeePurchaseService],
-  exports: [FeePurchaseService],
+  providers: [FeeCalculateService],
+  exports: [FeeCalculateService],
 })
 export class FeeModule {}

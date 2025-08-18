@@ -1,82 +1,102 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FeeCalculateService } from '../fee/fee-calculate.service';
-import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
-import { PurchasingFeeDto } from '../fee/dto/purchashing-fee.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
-import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
-import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { ResponseException } from 'src/exception/response.exception';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
+import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FeeDetailDto } from './dto/fee-details';
+import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
+import { WithdrawFeeDto } from '../fee/dto/withdraw-fee.dto';
+import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 
 @Injectable()
-export class TransactionPurchaseService {
+export class WithdrawTransactionService {
   constructor(
-    private readonly prisma: PrismaService,
-    private feePurchaseService: FeeCalculateService,
+    private prisma: PrismaService,
+    private feeCalculateService: FeeCalculateService,
   ) {}
 
-  async create(dto: CreatePurchaseTransactionDto) {
-    await this.prisma.$transaction(async (tx) => {
-      /**
-       * Get Fee Config
-       */
-      const purchaseFeeDto: PurchasingFeeDto =
-        await this.feePurchaseService.calculateFeeConfig({
-          merchantId: 1,
+  async checkBalanceMerchant(merchantId: number) {
+    const lastRow = await this.prisma.merchantBalanceLog.findFirst({
+      where: {
+        merchantId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+        id: 'desc',
+      },
+    });
+    return lastRow?.balanceAfter;
+  }
+
+  async checkBalanceAgent(agentId: number) {
+    const lastRow = await this.prisma.agentBalanceLog.findFirst({
+      where: {
+        agentId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+        id: 'desc',
+      },
+    });
+    return lastRow?.balanceAfter;
+  }
+
+  async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
+    await this.prisma.$transaction(async (trx) => {
+      const withdrawFeeDto: WithdrawFeeDto =
+        await this.feeCalculateService.calculateFeeConfig({
+          merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
-          nominal: dto.amount,
+          nominal: dto.nominal,
         });
 
-      /**
-       * Create Purchase Transaction
-       */
-      const purchaseTransaction = await tx.purchaseTransaction.create({
+      const withdrawTransaction = await trx.withdrawTransaction.create({
         data: {
           externalId: dto.externalId,
           referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-          nominal: dto.amount,
+          paymentMethod: dto.paymentMethodName,
+          nominal: dto.nominal,
           metadata: dto.metadata,
-          merchantNetNominal: purchaseFeeDto.merchantFee.netNominal,
+          netNominal: withdrawFeeDto.merchantFee.netNominal,
           status: 'PENDING',
         },
       });
 
-      /**
-       * Create Purchase Fee Detail
-       */
-      const purchaseFeeDetailManyInput: Prisma.PurchaseFeeDetailCreateManyInput[] =
-        this.purchaseFeeDetailMapper({
-          purchaseTransactionId: purchaseTransaction.id,
-          purchaseFeeDto,
+      const withdrawFeeDetailCreateManyInput: Prisma.WithdrawFeeDetailCreateManyInput[] =
+        this.feeDetailMapper({
+          withdrawTransactionId: withdrawTransaction.id,
+          withdrawFeeDto,
         });
-      const purchsaeFeeDetails = await tx.purchaseFeeDetail.createManyAndReturn(
-        {
-          data: purchaseFeeDetailManyInput,
-        },
-      );
-      console.log({ purchaseTransaction, purchaseFeeDto, purchsaeFeeDetails });
+      const withdrawFeeDetails =
+        await trx.withdrawFeeDetail.createManyAndReturn({
+          data: withdrawFeeDetailCreateManyInput,
+        });
+
+      console.log({
+        withdrawTransaction,
+        withdrawFeeDto,
+        withdrawFeeDetails,
+      });
 
       return;
     });
   }
-
-  private purchaseFeeDetailMapper({
-    purchaseTransactionId,
-    purchaseFeeDto,
+  private feeDetailMapper({
+    withdrawTransactionId,
+    withdrawFeeDto,
   }: {
-    purchaseTransactionId: string;
-    purchaseFeeDto: PurchasingFeeDto;
-  }): Prisma.PurchaseFeeDetailCreateManyInput[] {
-    const result: Prisma.PurchaseFeeDetailCreateManyInput[] = [];
-    const { merchantFee, agentFee, providerFee, internalFee } = purchaseFeeDto;
+    withdrawTransactionId: string;
+    withdrawFeeDto: WithdrawFeeDto;
+  }): Prisma.WithdrawFeeDetailCreateManyInput[] {
+    const result: Prisma.WithdrawFeeDetailCreateManyInput[] = [];
+    const { merchantFee, agentFee, providerFee, internalFee } = withdrawFeeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
         new UnprocessableEntityException('Some of the response is null'),
@@ -93,7 +113,7 @@ export class TransactionPurchaseService {
      * Merchant
      */
     result.push({
-      purchaseTransactionId,
+      withdrawTransactionId,
       type: 'MERCHANT',
       isPercentage: true,
       fee: merchantFee.feePercentage,
@@ -104,7 +124,7 @@ export class TransactionPurchaseService {
      * Provider
      */
     result.push({
-      purchaseTransactionId,
+      withdrawTransactionId,
       type: 'PROVIDER',
       isPercentage: providerFee.isPercentage,
       fee: providerFee.fee,
@@ -115,7 +135,7 @@ export class TransactionPurchaseService {
      * Internal
      */
     result.push({
-      purchaseTransactionId,
+      withdrawTransactionId,
       type: 'INTERNAL',
       isPercentage: internalFee.isPercentage,
       fee: internalFee.fee,
@@ -127,7 +147,7 @@ export class TransactionPurchaseService {
      */
     for (const agentFeeEach of agentFee.agents) {
       result.push({
-        purchaseTransactionId,
+        withdrawTransactionId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
         isPercentage: true,
@@ -140,7 +160,7 @@ export class TransactionPurchaseService {
   }
 
   async findOneThrow(id: string) {
-    return this.prisma.purchaseTransaction.findUniqueOrThrow({
+    return this.prisma.withdrawTransaction.findUniqueOrThrow({
       where: { id },
       include: {
         feeDetails: true,
@@ -160,7 +180,7 @@ export class TransactionPurchaseService {
       ? endOfDay(to.toJSDate())
       : endOfDay(DateHelper.nowDate());
 
-    const whereClause: Prisma.PurchaseTransactionWhereInput = {
+    const whereClause: Prisma.WithdrawTransactionWhereInput = {
       createdAt: {
         gte: fromDate,
         lte: toDate,
@@ -170,13 +190,13 @@ export class TransactionPurchaseService {
     if (merchantId) whereClause.merchantId = merchantId;
     if (providerName) whereClause.providerName = providerName;
     if (status) whereClause.status = status;
-    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
+    if (paymentMethodName) whereClause.paymentMethod = paymentMethodName;
 
     const [total, items] = await this.prisma.$transaction([
-      this.prisma.purchaseTransaction.count({
+      this.prisma.withdrawTransaction.count({
         where: whereClause,
       }),
-      this.prisma.purchaseTransaction.findMany({
+      this.prisma.withdrawTransaction.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
         skip,
@@ -187,17 +207,15 @@ export class TransactionPurchaseService {
       }),
     ]);
     const data = items.map((item) => {
-      return new PurchaseTransactionDto({
+      return new WithdrawTransactionDto({
         ...item,
         metadata: item.metadata as Record<string, unknown>,
-        settlementAt: DateHelper.fromJsDate(item.settlementAt),
-        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
         feeDetails: item.feeDetails.map((fee) => {
-          return new PurchaseFeeDetailDto({ ...fee });
+          return new FeeDetailDto({ ...fee });
         }),
       });
     });
-    return new Page<PurchaseTransactionDto>({
+    return new Page<WithdrawTransactionDto>({
       data: data,
       pageable,
       total,
