@@ -40,22 +40,22 @@ export class ReconciliationService {
       },
     );
     console.log({ recons });
-    const datas = await Promise.all(
-      recons.map((recon) => {
-        return this.prisma.purchaseTransaction.update({
-          where: {
-            provider: provider,
-            externalId: recon.id,
-            amount: recon.amount,
-            paymentMethod: recon.method,
-          },
-          data: {
-            reconciliationAt: DateHelper.nowDate(),
-          },
-        });
-      }),
-    );
-    return datas;
+    // const datas = await Promise.all(
+    //   recons.map((recon) => {
+    //     return this.prisma.purchaseTransaction.update({
+    //       where: {
+    //         provider: provider,
+    //         externalId: recon.id,
+    //         amount: recon.amount,
+    //         paymentMethod: recon.method,
+    //       },
+    //       data: {
+    //         reconciliationAt: DateHelper.nowDate(),
+    //       },
+    //     });
+    //   }),
+    // );
+    // return datas;
   }
 
   async findAll(pageable: Pageable, filter: FilterReconciliationDto) {

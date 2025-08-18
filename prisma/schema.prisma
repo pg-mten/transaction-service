@@ -12,7 +12,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["transaction", "settlement"]
+  schemas  = ["transaction"]
 }
 
 model TopUpTransaction {
@@ -156,18 +156,18 @@ model DisbursementFeeDetail {
 }
 
 model PurchaseTransaction {
-  id                 String                @id @default(uuid())
-  externalId         String                @unique
-  referenceId        String?
-  merchantId         Int
-  providerName       String
-  paymentMethodName  String
-  nominal            Decimal
-  merchantNetNominal Decimal
-  status             TransactionStatusEnum @default(PENDING)
-  metadata           Json?
-  settlementAt       DateTime?
-  reconciliationAt   DateTime?
+  id                String                @id @default(uuid())
+  externalId        String                @unique
+  referenceId       String?
+  merchantId        Int
+  providerName      String
+  paymentMethodName String
+  nominal           Decimal
+  netNominal        Decimal
+  status            TransactionStatusEnum @default(PENDING)
+  metadata          Json?
+  settlementAt      DateTime?
+  reconciliationAt  DateTime?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -261,7 +261,7 @@ model MerchantBalanceLog {
   merchantId     Int
   changeAmount   Decimal // nominal perubahan (positif / negatif)
   balanceAfter   Decimal // saldo akhir merchant setelah perubahan
-  reason         String // e.g "TOP UP", "PURCHASE", "WITHDRAW", "DISBURSEMENt"
+  reason         String // e.g "TOPUP", "PURCHASE", "WITHDRAW", "DISBURSEMENT"
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -277,6 +277,8 @@ model MerchantBalanceLog {
   @@index([merchantId])
   @@index([topupId])
   @@index([purchaseId])
+  @@index([withdrawId])
+  @@index([disbursementId])
   @@schema("transaction")
 }
 
@@ -305,6 +307,8 @@ model AgentBalanceLog {
   @@index([agentId])
   @@index([topupId])
   @@index([purchaseId])
+  @@index([withdrawId])
+  @@index([disbursementId])
   @@schema("transaction")
 }
 

@@ -24,6 +24,7 @@ import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { FeeModule } from '../fee/fee.module';
+import { SettlementModule } from '../settlement/settlement.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FeeModule } from '../fee/fee.module';
     TransactionsModule,
     ReconciliationModule,
     FeeModule,
+    SettlementModule,
   ],
   controllers: [AppController],
   providers: [

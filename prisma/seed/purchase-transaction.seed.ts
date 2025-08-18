@@ -46,7 +46,7 @@ export async function purchaseTransactionSeed(prisma: PrismaClient) {
         paymentMethodName:
           paymentMethods[getRandomNumber(0, paymentMethods.length - 1)],
         nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
-        merchantNetNominal: getRandomDouble(100.0, 1000.0).toFixed(2),
+        netNominal: getRandomDouble(100.0, 1000.0).toFixed(2),
         status: getRandomEnumValue(TransactionStatusEnum),
         metadata: {},
         createdAt: getRandomDateTime(
