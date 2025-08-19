@@ -40,6 +40,14 @@ async function main() {
           },
         ],
       },
+      merchantBalanceLog: {
+        create: {
+          merchantId: 1,
+          changeAmount: 980000,
+          balanceAfter: 980000,
+          reason: 'TOPUP',
+        },
+      },
     },
   });
 
@@ -78,6 +86,14 @@ async function main() {
             fee: 6000,
           },
         ],
+      },
+      merchantBalanceLog: {
+        create: {
+          merchantId: 2,
+          changeAmount: 1960000,
+          balanceAfter: 1960000,
+          reason: 'TOPUP',
+        },
       },
     },
   });
@@ -118,6 +134,14 @@ async function main() {
           },
         ],
       },
+      merchantBalanceLog: {
+        create: {
+          merchantId: 1,
+          changeAmount: 1470000,
+          balanceAfter: 1470000 + 980000,
+          reason: 'TOPUP',
+        },
+      },
     },
   });
 
@@ -157,6 +181,14 @@ async function main() {
           },
         ],
       },
+      merchantBalanceLog: {
+        create: {
+          merchantId: 2,
+          changeAmount: 490000,
+          balanceAfter: 490000 + 1960000,
+          reason: 'TOPUP',
+        },
+      },
     },
   });
 
@@ -195,6 +227,14 @@ async function main() {
             fee: 10000,
           },
         ],
+      },
+      merchantBalanceLog: {
+        create: {
+          merchantId: 1,
+          changeAmount: 2940000,
+          balanceAfter: 2940000 + 1470000 + 980000,
+          reason: 'TOPUP',
+        },
       },
     },
   });

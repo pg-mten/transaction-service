@@ -1,0 +1,31 @@
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { BalanceService } from './balance.service';
+
+@ApiTags('Balance')
+@Controller('Balance')
+export class BalanceController {
+  constructor(private readonly service: BalanceService) {}
+
+  @Get('merchant/:id')
+  @ApiOperation({ summary: 'Ambil Balance Merchant' })
+  @ApiParam({ name: 'id', description: 'ID Merchant' })
+  async getMerchantBalance(@Param('id') id: number) {
+    return await this.service.checkBalanceMerchant(id);
+  }
+
+  @Get('agent/:id')
+  @ApiOperation({ summary: 'Ambil Balance Agent' })
+  @ApiParam({ name: 'id', description: 'ID Agent' })
+  async getAgentBalance(@Param('id') id: number) {
+    return await this.service.checkBalanceMerchant(id);
+  }
+
+  @Get('internal')
+  @ApiOperation({ summary: 'Ambil Balance Agent' })
+  @ApiParam({ name: 'providerName', description: 'ProviderName' })
+  async getInternalBalance(@Param('providerName') providerName: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.service.checkBalanceInternal(providerName);
+  }
+}

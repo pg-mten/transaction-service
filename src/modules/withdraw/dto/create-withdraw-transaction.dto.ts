@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { Decimal } from 'decimal.js';
-import { ToDecimal, ToDecimalNullable } from 'src/decorator/decimal.decorator';
+import { ToDecimal } from 'src/decorator/decimal.decorator';
 
 export class CreateWithdrawTransactionDto {
   @ApiProperty({ example: 'trx-withdraw-123456789' })
@@ -54,16 +54,6 @@ export class CreateWithdrawTransactionDto {
   @ToDecimal()
   @IsOptional()
   netNominal: Decimal;
-
-  @ApiProperty({
-    required: false,
-    description: 'Net amount in decimal string format, e.g. "9700.00"',
-    example: '9700.00',
-  })
-  @IsOptional()
-  @IsNumberString()
-  @ToDecimalNullable()
-  netAmount: Decimal | null;
 
   @ApiProperty({
     required: false,

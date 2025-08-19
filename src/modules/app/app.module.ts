@@ -28,6 +28,7 @@ import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
 import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
 import { SettlementModule } from '../settlement/settlement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
+import { BalanceModule } from '../balance/balance.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { PurchaseModule } from '../purchase/purchase.module';
     WithdrawTransactionModule,
     DisbursementTransactionModule,
     SettlementModule,
+    BalanceModule,
   ],
   controllers: [AppController],
   providers: [

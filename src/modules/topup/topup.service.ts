@@ -11,6 +11,7 @@ import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import { FeeDetailDto } from './dto/fee-details';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class TopupTransactionService {
@@ -215,6 +216,94 @@ export class TopupTransactionService {
       data: data,
       pageable,
       total,
+    });
+  }
+
+  async approveTopUp(transactionId: string) {
+    await this.prisma.$transaction(async (trx) => {
+      const topup = await trx.topUpTransaction.update({
+        data: {
+          status: 'SUCCESS',
+        },
+        where: {
+          id: transactionId,
+          status: 'PENDING',
+        },
+        select: {
+          feeDetails: true,
+          merchantId: true,
+          id: true,
+          netNominal: true,
+        },
+      });
+      const lastBalanceMerchant = await trx.merchantBalanceLog.findFirst({
+        where: {
+          merchantId: topup.merchantId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      const merchantLastBalance =
+        lastBalanceMerchant?.balanceAfter ?? new Decimal(0);
+      await trx.merchantBalanceLog.create({
+        data: {
+          merchantId: topup.merchantId,
+          topupId: topup.id,
+          changeAmount: topup.netNominal,
+          balanceAfter: merchantLastBalance.plus(topup.netNominal),
+          reason: 'TOPUP BY MERCHANT',
+        },
+      });
+      for (const feeDetail of topup.feeDetails) {
+        if (feeDetail.type !== 'AGENT' || feeDetail.agentId === null) continue;
+
+        const lastAgentBalanceLog = await trx.agentBalanceLog.findFirst({
+          where: {
+            agentId: feeDetail.agentId,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        });
+
+        /**
+         * Get the last Agent Balance
+         */
+        const agentLastBalance =
+          lastAgentBalanceLog?.balanceAfter ?? new Decimal(0);
+
+        /**
+         * Update Agent Balance
+         */
+        await trx.agentBalanceLog.create({
+          data: {
+            agentId: feeDetail.agentId,
+            topupId: topup.id,
+            changeAmount: feeDetail.nominal,
+            balanceAfter: agentLastBalance.plus(feeDetail.nominal),
+            reason: 'PURCHASE SETTLEMENT BY SYSTEM',
+          },
+        });
+      }
+    });
+  }
+
+  async rejectTopup(transactionId: string) {
+    await this.prisma.topUpTransaction.update({
+      data: {
+        status: 'FAILED',
+      },
+      where: {
+        id: transactionId,
+        status: 'PENDING',
+      },
+      select: {
+        feeDetails: true,
+        merchantId: true,
+        id: true,
+        netNominal: true,
+      },
     });
   }
 }

@@ -26,7 +26,6 @@ export class WithdrawTransactionService {
       },
       orderBy: {
         createdAt: 'desc',
-        id: 'desc',
       },
     });
     return lastRow?.balanceAfter;
@@ -46,6 +45,10 @@ export class WithdrawTransactionService {
   }
 
   async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
+    const balance = await this.checkBalanceMerchant(dto.merchantId);
+    if (balance && balance <= dto.netNominal) {
+      throw new Error('Balance Tidak Mencukupi');
+    }
     await this.prisma.$transaction(async (trx) => {
       const withdrawFeeDto: WithdrawFeeDto =
         await this.feeCalculateService.calculateFeeConfig({

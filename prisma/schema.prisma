@@ -15,6 +15,35 @@ datasource db {
   schemas  = ["transaction"]
 }
 
+model InternalBalanceLog {
+  id             Int     @id @default(autoincrement())
+  topupId        String?
+  purchaseId     String?
+  withdrawId     String?
+  disbursementId String?
+  changeAmount   Decimal // nominal perubahan (positif / negatif)
+  balanceAfter   Decimal // saldo akhir merchant setelah perubahan
+  reason         String // e.g "TOPUP", "PURCHASE", "WITHDRAW", "DISBURSEMENT"
+  providerName   String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy Int?
+  updatedBy Int?
+
+  topupTransaction        TopUpTransaction?        @relation(fields: [topupId], references: [id], onDelete: SetNull)
+  purchaseTransaction     PurchaseTransaction?     @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  withdrawTransaction     WithdrawTransaction?     @relation(fields: [withdrawId], references: [id], onDelete: SetNull)
+  disbursementTransaction DisbursementTransaction? @relation(fields: [disbursementId], references: [id], onDelete: SetNull)
+
+  @@index([topupId])
+  @@index([purchaseId])
+  @@index([withdrawId])
+  @@index([disbursementId])
+  @@schema("transaction")
+}
+
 model TopUpTransaction {
   id                String                 @id @default(uuid())
   merchantId        Int
@@ -36,6 +65,7 @@ model TopUpTransaction {
 
   merchantBalanceLog MerchantBalanceLog[]
   agentBalanceLog    AgentBalanceLog[]
+  internalBalanceLog InternalBalanceLog[]
   feeDetails         TopupFeeDetail[]
 
   @@index([referenceId])
@@ -87,6 +117,7 @@ model WithdrawTransaction {
   feeDetails         WithdrawFeeDetail[]
   MerchantBalanceLog MerchantBalanceLog[]
   AgentBalanceLog    AgentBalanceLog[]
+  InternalBalanceLog InternalBalanceLog[]
 
   @@index([merchantId])
   @@index([status])
@@ -140,6 +171,7 @@ model DisbursementTransaction {
   feeDetails         DisbursementFeeDetail[]
   MerchantBalanceLog MerchantBalanceLog[]
   AgentBalanceLog    AgentBalanceLog[]
+  InternalBalanceLog InternalBalanceLog[]
 
   @@index([providerName])
   @@index([status])
@@ -194,6 +226,7 @@ model PurchaseTransaction {
   audits             PurchaseTransactionAudit[]
   MerchantBalanceLog MerchantBalanceLog[]
   AgentBalanceLog    AgentBalanceLog[]
+  InternalBalanceLog InternalBalanceLog[]
 
   @@index([merchantId])
   @@index([providerName])
