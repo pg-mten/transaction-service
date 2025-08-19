@@ -16,14 +16,14 @@ import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
 
 @ApiTags('Transactions', 'Purchase')
-@Controller('transactions')
+@Controller('transactions/purchase')
 export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
   /**
    * Purchase
    */
-  @Post('purchase')
+  @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
   async create(@Body() body: CreatePurchaseTransactionDto) {
@@ -31,14 +31,14 @@ export class PurchaseController {
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get('/purchase/:id')
+  @Get(':id')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: string) {
     return await this.purchaseService.findOneThrow(id);
   }
 
-  @Get('purchase')
+  @Get()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAll(

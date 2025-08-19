@@ -17,14 +17,14 @@ import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 import { WithdrawTransactionService } from './withdraw.service';
 
 @ApiTags('Transactions', 'Withdraw')
-@Controller('transactions')
+@Controller('transactions/withdraw')
 export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawTransactionService) {}
 
   /**
    * Purchase
    */
-  @Post('withdraw')
+  @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
@@ -39,7 +39,7 @@ export class WithdrawTransactionsController {
     return await this.service.findOneThrow(id);
   }
 
-  @Get('withdraw')
+  @Get()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: WithdrawTransactionDto, isArray: true })
   async findAll(

@@ -20,12 +20,12 @@ export class FilterTransactionDto {
   @Min(1)
   limit: number;
 
-  @ApiProperty({ type: String, example: '2025-08-01', required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   @ToDateTimeNullable()
   from: DateTime;
 
-  @ApiProperty({ type: String, example: '2025-08-02', required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   @ToDateTimeNullable()
   to: DateTime | null;
@@ -35,11 +35,11 @@ export class FilterTransactionDto {
   @Transform(({ value }) => parseInt(value))
   merchantId: number | null;
 
-  @ApiProperty({ type: String, example: 'NETZME', required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   providerName: string | null;
 
-  @ApiProperty({ type: String, example: 'QRIS', required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   paymentMethodName: TopupPaymentMethodEnum;
 

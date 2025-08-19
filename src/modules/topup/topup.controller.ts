@@ -17,14 +17,14 @@ import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 
 @ApiTags('Transactions', 'Topup')
-@Controller('transactions')
+@Controller('transactions/topup')
 export class TopupTransactionsController {
   constructor(private readonly service: TopupTransactionService) {}
 
   /**
    * Purchase
    */
-  @Post('topup')
+  @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateTopupTransactionDto })
   async create(@Body() body: CreateTopupTransactionDto) {
@@ -39,7 +39,7 @@ export class TopupTransactionsController {
     return await this.service.findOneThrow(id);
   }
 
-  @Get('topup')
+  @Get()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: TopupTransactionDto, isArray: true })
   async findAll(

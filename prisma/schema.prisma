@@ -345,7 +345,7 @@ enum FeeTypeEnum {
 
 enum TopupPaymentMethodEnum {
   TRANSFER_BANK
-  VIRTUAL_ACCOUNT
+  VA
 
   @@schema("transaction")
 }

@@ -17,14 +17,14 @@ import { CreateDisbursementTransactionDto } from './dto/create-disbursement-tran
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 
 @ApiTags('Transactions', 'Disbursement')
-@Controller('transactions')
+@Controller('transactions/disbursement')
 export class DisbursementTransactionsController {
   constructor(private readonly service: DisbursementTransactionService) {}
 
   /**
    * Purchase
    */
-  @Post('disbursement')
+  @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateDisbursementTransactionDto })
   async create(@Body() body: CreateDisbursementTransactionDto) {
@@ -39,7 +39,7 @@ export class DisbursementTransactionsController {
     return await this.service.findOneThrow(id);
   }
 
-  @Get('disbursement')
+  @Get()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: DisbursementTransactionDto, isArray: true })
   async findAll(
