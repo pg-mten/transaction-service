@@ -61,7 +61,7 @@ export class TopupTransactionService {
           referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
-          paymentMethod: dto.paymentMethodName,
+          paymentMethodName: dto.paymentMethodName,
           receiptImage: dto.receiptImage,
           nominal: dto.nominal,
           metadata: dto.metadata,
@@ -186,7 +186,7 @@ export class TopupTransactionService {
     if (merchantId) whereClause.merchantId = merchantId;
     if (providerName) whereClause.providerName = providerName;
     if (status) whereClause.status = status;
-    if (paymentMethodName) whereClause.paymentMethod = paymentMethodName;
+    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.topUpTransaction.count({

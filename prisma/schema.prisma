@@ -16,17 +16,17 @@ datasource db {
 }
 
 model TopUpTransaction {
-  id            String                 @id @default(uuid())
-  merchantId    Int
-  externalId    String?
-  referenceId   String                 @unique //reff id from bank
-  nominal       Decimal
-  netNominal    Decimal
-  status        TransactionStatusEnum  @default(PENDING)
-  providerName  String
-  paymentMethod TopupPaymentMethodEnum @default(TRANSFER_BANK) //transfer_bank, virtual_account
-  receiptImage  String
-  metadata      Json?
+  id                String                 @id @default(uuid())
+  merchantId        Int
+  externalId        String?
+  referenceId       String                 @unique //reff id from bank
+  nominal           Decimal
+  netNominal        Decimal
+  status            TransactionStatusEnum  @default(PENDING)
+  providerName      String
+  paymentMethodName TopupPaymentMethodEnum @default(TRANSFER_BANK) //transfer_bank, virtual_account
+  receiptImage      String
+  metadata          Json?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -65,16 +65,16 @@ model TopupFeeDetail {
 }
 
 model WithdrawTransaction {
-  id            String                @id @default(uuid())
-  externalId    String?
-  merchantId    Int
-  referenceId   String                @unique //reff id from bank
-  nominal       Decimal
-  netNominal    Decimal // nominal setelah dipotong fee
-  status        TransactionStatusEnum @default(PENDING)
-  providerName  String
-  paymentMethod String // transfer_bank, virtual_account, dll
-  metadata      Json?
+  id                String                @id @default(uuid())
+  externalId        String?
+  merchantId        Int
+  referenceId       String                @unique //reff id from bank
+  nominal           Decimal
+  netNominal        Decimal // nominal setelah dipotong fee
+  status            TransactionStatusEnum @default(PENDING)
+  providerName      String
+  paymentMethodName String // transfer_bank, virtual_account, dll
+  metadata          Json?
 
   // Audit fields
   createdAt DateTime  @default(now())
@@ -115,19 +115,19 @@ model WithdrawFeeDetail {
 }
 
 model DisbursementTransaction {
-  id               String                @id @default(uuid())
-  externalId       String?
-  referenceId      String?
-  merchantId       Int
-  providerName     String
-  recipientName    String // bisa merchant, agent, atau pihak ketiga
-  recipientBank    String
-  recipientAccount String
-  nominal          Decimal
-  netNominal       Decimal
-  status           TransactionStatusEnum @default(PENDING)
-  paymentMethod    String
-  metadata         Json?
+  id                String                @id @default(uuid())
+  externalId        String?
+  referenceId       String?
+  merchantId        Int
+  providerName      String
+  recipientName     String // bisa merchant, agent, atau pihak ketiga
+  recipientBank     String
+  recipientAccount  String
+  nominal           Decimal
+  netNominal        Decimal
+  status            TransactionStatusEnum @default(PENDING)
+  paymentMethodName String
+  metadata          Json?
 
   // Audit fields
   createdAt DateTime  @default(now())

@@ -4,7 +4,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from '../../middlewares/logger.middleware';
-import { TransactionsModule } from '../transactions/transactions.module';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   APP_FILTER,
@@ -28,6 +27,7 @@ import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
 import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
 import { SettlementModule } from '../settlement/settlement.module';
+import { PurchaseModule } from '../purchase/purchase.module';
 
 @Module({
   imports: [
@@ -40,7 +40,7 @@ import { SettlementModule } from '../settlement/settlement.module';
     LoggerModule,
 
     /// Business Module
-    TransactionsModule,
+    PurchaseModule,
     ReconciliationModule,
     FeeModule,
     TopupTransactionModule,

@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
@@ -13,7 +17,7 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 
 @Injectable()
-export class TransactionPurchaseService {
+export class PurchaseService {
   constructor(
     private readonly prisma: PrismaService,
     private feePurchaseService: FeeCalculateService,
@@ -202,5 +206,45 @@ export class TransactionPurchaseService {
       pageable,
       total,
     });
+  }
+
+  async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {
+    const trx = await this.prisma.purchaseTransaction.findUnique({
+      where: { externalId: external_id },
+    });
+    if (!trx) throw new NotFoundException('Transaction not found'); // TODO
+
+    if (['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED'].includes(trx.status)) {
+      return { message: 'Transaction already finalized' };
+    }
+
+    const updated = await this.prisma.purchaseTransaction.update({
+      where: { externalId: external_id },
+      data: {
+        status: newStatus as any,
+        updatedAt: DateHelper.nowDate(),
+      },
+    });
+
+    await this.prisma.purchaseTransactionAudit.create({
+      data: {
+        transactionId: updated.id,
+        oldStatus: trx.status,
+        newStatus: newStatus as any,
+        source: 'webhook',
+        createdAt: DateHelper.nowDate(),
+      },
+    });
+
+    await this.prisma.webhookLog.create({
+      data: {
+        transactionId: updated.id,
+        source: 'provider',
+        payload: rawPayload,
+        receivedAt: DateHelper.nowDate(),
+      },
+    });
+
+    return { message: 'Webhook processed', status: updated.status };
   }
 }

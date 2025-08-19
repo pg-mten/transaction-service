@@ -7,23 +7,18 @@ import {
   ApiOkResponse,
   ApiBody,
 } from '@nestjs/swagger';
-
-import { TransactionsService } from './transactions.service';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
 import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
-import { TransactionPurchaseService } from './transaction-purchase.service';
+import { PurchaseService } from './purchase.service';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions')
-export class TransactionsController {
-  constructor(
-    private readonly transactionsService: TransactionsService,
-    private readonly transactionPurchaseService: TransactionPurchaseService,
-  ) {}
+export class PurchaseController {
+  constructor(private readonly purchaseService: PurchaseService) {}
 
   /**
    * Purchase
@@ -32,15 +27,15 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
   async create(@Body() body: CreatePurchaseTransactionDto) {
-    await this.transactionPurchaseService.create(body);
+    await this.purchaseService.create(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get(':id')
+  @Get('/purchase/:id')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: string) {
-    return await this.transactionPurchaseService.findOneThrow(id);
+    return await this.purchaseService.findOneThrow(id);
   }
 
   @Get('purchase')
@@ -51,7 +46,7 @@ export class TransactionsController {
     @Query() filter: FilterTransactionDto,
   ) {
     console.log({ filter, pageable });
-    return this.transactionPurchaseService.findAll(pageable, filter);
+    return this.purchaseService.findAll(pageable, filter);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu
@@ -65,6 +60,6 @@ export class TransactionsController {
   @Post('webhook')
   async webhook(@Body() body: any) {
     const { external_id, status } = body;
-    return this.transactionsService.handleWebhook(external_id, status, body);
+    return this.purchaseService.handleWebhook(external_id, status, body);
   }
 }

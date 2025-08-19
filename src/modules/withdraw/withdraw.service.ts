@@ -61,7 +61,7 @@ export class WithdrawTransactionService {
           referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
-          paymentMethod: dto.paymentMethodName,
+          paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
           metadata: dto.metadata,
           netNominal: withdrawFeeDto.merchantFee.netNominal,
@@ -190,7 +190,7 @@ export class WithdrawTransactionService {
     if (merchantId) whereClause.merchantId = merchantId;
     if (providerName) whereClause.providerName = providerName;
     if (status) whereClause.status = status;
-    if (paymentMethodName) whereClause.paymentMethod = paymentMethodName;
+    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.withdrawTransaction.count({

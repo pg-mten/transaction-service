@@ -26,7 +26,7 @@ export class WithdrawTransactionDto {
   providerName: string;
 
   @ApiProperty({ type: String })
-  paymentMethod: string;
+  paymentMethodName: string;
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })

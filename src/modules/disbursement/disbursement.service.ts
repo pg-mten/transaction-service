@@ -62,7 +62,7 @@ export class DisbursementTransactionService {
           referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
-          paymentMethod: dto.paymentMethodName,
+          paymentMethodName: dto.paymentMethodName,
           recipientBank: dto.recipientBank,
           recipientName: dto.recipientName,
           recipientAccount: dto.recipientName,
@@ -190,7 +190,7 @@ export class DisbursementTransactionService {
     if (merchantId) whereClause.merchantId = merchantId;
     if (providerName) whereClause.providerName = providerName;
     if (status) whereClause.status = status;
-    if (paymentMethodName) whereClause.paymentMethod = paymentMethodName;
+    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.disbursementTransaction.count({

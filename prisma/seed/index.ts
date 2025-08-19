@@ -12,7 +12,7 @@ async function main() {
       nominal: 1000000,
       netNominal: 980000,
       providerName: 'BCA',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       receiptImage: 'https://dummy-receipt/1.png',
       status: 'SUCCESS',
       feeDetails: {
@@ -51,7 +51,7 @@ async function main() {
       nominal: 2000000,
       netNominal: 1960000,
       providerName: 'MANDIRI',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       receiptImage: 'https://dummy-receipt/2.png',
       status: 'SUCCESS',
       feeDetails: {
@@ -90,7 +90,7 @@ async function main() {
       nominal: 1500000,
       netNominal: 1470000,
       providerName: 'BNI',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       receiptImage: 'https://dummy-receipt/3.png',
       status: 'SUCCESS',
       feeDetails: {
@@ -129,7 +129,7 @@ async function main() {
       nominal: 500000,
       netNominal: 490000,
       providerName: 'BRI',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       receiptImage: 'https://dummy-receipt/4.png',
       status: 'SUCCESS',
       feeDetails: {
@@ -168,7 +168,7 @@ async function main() {
       nominal: 3000000,
       netNominal: 2940000,
       providerName: 'CIMB',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       receiptImage: 'https://dummy-receipt/5.png',
       status: 'SUCCESS',
       feeDetails: {
@@ -206,7 +206,7 @@ async function main() {
       merchantId: 1,
       referenceId: 'REF-PURCHASE-001',
       providerName: 'OVO',
-      paymentMethodName: 'OVO-WALLET',
+      paymentMethodName: 'OVO_WALLET',
       nominal: 200000,
       netNominal: 194000,
       status: 'SUCCESS',
@@ -244,7 +244,7 @@ async function main() {
       merchantId: 2,
       referenceId: 'REF-PURCHASE-002',
       providerName: 'GOPAY',
-      paymentMethodName: 'GOPAY-WALLET',
+      paymentMethodName: 'GOPAY_WALLET',
       nominal: 300000,
       netNominal: 291000,
       status: 'SUCCESS',
@@ -282,7 +282,7 @@ async function main() {
       merchantId: 1,
       referenceId: 'REF-PURCHASE-003',
       providerName: 'DANA',
-      paymentMethodName: 'DANA-WALLET',
+      paymentMethodName: 'DANA_WALLET',
       nominal: 150000,
       netNominal: 146000,
       status: 'SUCCESS',
@@ -320,7 +320,7 @@ async function main() {
       merchantId: 2,
       referenceId: 'REF-PURCHASE-004',
       providerName: 'SHOPEEPAY',
-      paymentMethodName: 'SHOPEEPAY-WALLET',
+      paymentMethodName: 'SHOPEEPAY_WALLET',
       nominal: 250000,
       netNominal: 244000,
       status: 'SUCCESS',
@@ -358,7 +358,7 @@ async function main() {
       merchantId: 1,
       referenceId: 'REF-PURCHASE-005',
       providerName: 'LINKAJA',
-      paymentMethodName: 'LINKAJA-WALLET',
+      paymentMethodName: 'LINKAJA_WALLET',
       nominal: 500000,
       netNominal: 490000,
       status: 'SUCCESS',
@@ -403,7 +403,7 @@ async function main() {
       nominal: 500000,
       netNominal: 495000,
       status: 'SUCCESS',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       feeDetails: {
         create: [
           {
@@ -437,7 +437,7 @@ async function main() {
       nominal: 300000,
       netNominal: 295000,
       providerName: 'BCA',
-      paymentMethod: 'TRANSFER_BANK',
+      paymentMethodName: 'TRANSFER_BANK',
       status: 'SUCCESS',
       feeDetails: {
         create: [
