@@ -14,6 +14,8 @@ import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
+import { FilterPurchaseSettlement } from './dto/filter-purchase-settlement.dto';
+import { FilterPurchaseNotSettlement } from './dto/filter-purchase-not-settlement.dto';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -31,7 +33,7 @@ export class PurchaseController {
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get(':id')
+  @Get(':id/detail')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: string) {
@@ -49,6 +51,24 @@ export class PurchaseController {
     return this.purchaseService.findAll(pageable, filter);
   }
 
+  @Get('not-settlement')
+  @ApiOperation({
+    summary: 'List purchase not yet settlement because automatic failure',
+  })
+  @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
+  async findAllNotSettlement(@Query() filter: FilterPurchaseNotSettlement) {
+    return this.purchaseService.findAllNotSettlement(filter);
+  }
+
+  @Get('settlement')
+  @ApiOperation({
+    summary: 'List purchase not yet settlement because automatic failure',
+  })
+  @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
+  async findAllSettlement(@Query() filter: FilterPurchaseSettlement) {
+    return this.purchaseService.findAllSettlement(filter);
+  }
+
   /// TODO: Transaction dan Settlement masih dijadikan satu
   // @Get('internal/settlement')
   // @ApiOperation({ summary: 'Settlement process hourly' })
@@ -56,7 +76,6 @@ export class PurchaseController {
   //   console.log({ filter });
   //   return this.transactionsService.internalTransactionSettlement(filter);
   // }
-
   @Post('webhook')
   async webhook(@Body() body: any) {
     const { external_id, status } = body;
