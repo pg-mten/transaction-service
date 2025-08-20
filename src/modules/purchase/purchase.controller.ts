@@ -37,6 +37,7 @@ export class PurchaseController {
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: string) {
+    console.log({ id });
     return await this.purchaseService.findOneThrow(id);
   }
 
@@ -57,6 +58,7 @@ export class PurchaseController {
   })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAllNotSettlement(@Query() filter: FilterPurchaseNotSettlement) {
+    console.log({ filter });
     return this.purchaseService.findAllNotSettlement(filter);
   }
 
@@ -66,6 +68,7 @@ export class PurchaseController {
   })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAllSettlement(@Query() filter: FilterPurchaseSettlement) {
+    console.log({ filter });
     return this.purchaseService.findAllSettlement(filter);
   }
 

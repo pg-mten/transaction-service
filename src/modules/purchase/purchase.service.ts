@@ -216,7 +216,7 @@ export class PurchaseService {
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
 
     whereClause.settlementAt = null;
-    whereClause.merchantId = merchantId;
+    if (merchantId) whereClause.merchantId = merchantId;
 
     const items = await this.prisma.purchaseTransaction.findMany({
       include: { feeDetails: true },
@@ -242,7 +242,7 @@ export class PurchaseService {
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
 
     whereClause.settlementAt = { not: null };
-    whereClause.merchantId = merchantId;
+    if (merchantId) whereClause.merchantId = merchantId;
 
     if (from && to) {
       whereClause.createdAt = {
