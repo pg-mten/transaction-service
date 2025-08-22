@@ -11,42 +11,26 @@ import { FeeDetailDto } from './dto/fee-details';
 import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
 import { WithdrawFeeDto } from '../fee/dto/withdraw-fee.dto';
 import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
+import { BalanceService } from '../balance/balance.service';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class WithdrawTransactionService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
+    private balanceService: BalanceService,
   ) {}
 
-  async checkBalanceMerchant(merchantId: number) {
-    const lastRow = await this.prisma.merchantBalanceLog.findFirst({
-      where: {
-        merchantId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
-
-  async checkBalanceAgent(agentId: number) {
-    const lastRow = await this.prisma.agentBalanceLog.findFirst({
-      where: {
-        agentId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-        id: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
-
   async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
-    const balance = await this.checkBalanceMerchant(dto.merchantId);
-    if (balance && balance <= dto.netNominal) {
+    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
+      dto.merchantId,
+    );
+    const lastBalanceInternal =
+      await this.balanceService.checkBalanceInternal();
+    const lastBalanceAllAgent =
+      await this.balanceService.checkBalanceAllAgent();
+    if (lastBalanceMerchant.active <= dto.netNominal) {
       throw new Error('Balance Tidak Mencukupi');
     }
     await this.prisma.$transaction(async (trx) => {
@@ -69,12 +53,55 @@ export class WithdrawTransactionService {
           metadata: dto.metadata,
           netNominal: withdrawFeeDto.merchantFee.netNominal,
           status: 'PENDING',
+          MerchantBalanceLog: {
+            create: {
+              merchantId: dto.merchantId,
+              changeAmount: dto.nominal,
+              balanceActive: lastBalanceMerchant.active?.minus(
+                withdrawFeeDto.merchantFee.netNominal,
+              ),
+              balancePending: lastBalanceMerchant.pending,
+              transactionType: 'WITHDRAW',
+            },
+          },
+          InternalBalanceLog: {
+            create: {
+              changeAmount: withdrawFeeDto.internalFee.fee,
+              balancePending: lastBalanceInternal.pending,
+              merchantId: dto.merchantId,
+              balanceActive: lastBalanceInternal.active?.plus(
+                withdrawFeeDto.internalFee.fee,
+              ),
+              providerName: dto.providerName,
+              paymentMethodName: dto.paymentMethodName,
+              transactionType: 'WITHDRAW',
+            },
+          },
+          AgentBalanceLog: {
+            createMany: {
+              skipDuplicates: true,
+              data: withdrawFeeDto.agentFee.agents.map((item) => {
+                return {
+                  agentId: item.id,
+                  changeAmount: item.nominal,
+                  balancePending:
+                    lastBalanceAllAgent.find((a) => a.agentId == item.id)
+                      ?.balancePending || new Decimal(0),
+                  balanceActive:
+                    lastBalanceAllAgent
+                      .find((a) => a.agentId == item.id)
+                      ?.balanceActive.plus(item.nominal) || new Decimal(0),
+                  transactionType: 'WITHDRAW',
+                };
+              }),
+            },
+          },
         },
       });
 
       const withdrawFeeDetailCreateManyInput: Prisma.WithdrawFeeDetailCreateManyInput[] =
         this.feeDetailMapper({
-          withdrawTransactionId: withdrawTransaction.id,
+          withdrawId: withdrawTransaction.id,
           withdrawFeeDto,
         });
       const withdrawFeeDetails =
@@ -92,10 +119,10 @@ export class WithdrawTransactionService {
     });
   }
   private feeDetailMapper({
-    withdrawTransactionId,
+    withdrawId,
     withdrawFeeDto,
   }: {
-    withdrawTransactionId: string;
+    withdrawId: number;
     withdrawFeeDto: WithdrawFeeDto;
   }): Prisma.WithdrawFeeDetailCreateManyInput[] {
     const result: Prisma.WithdrawFeeDetailCreateManyInput[] = [];
@@ -116,7 +143,7 @@ export class WithdrawTransactionService {
      * Merchant
      */
     result.push({
-      withdrawTransactionId,
+      withdrawId,
       type: 'MERCHANT',
       isPercentage: true,
       fee: merchantFee.feePercentage,
@@ -127,7 +154,7 @@ export class WithdrawTransactionService {
      * Provider
      */
     result.push({
-      withdrawTransactionId,
+      withdrawId,
       type: 'PROVIDER',
       isPercentage: providerFee.isPercentage,
       fee: providerFee.fee,
@@ -138,7 +165,7 @@ export class WithdrawTransactionService {
      * Internal
      */
     result.push({
-      withdrawTransactionId,
+      withdrawId,
       type: 'INTERNAL',
       isPercentage: internalFee.isPercentage,
       fee: internalFee.fee,
@@ -150,7 +177,7 @@ export class WithdrawTransactionService {
      */
     for (const agentFeeEach of agentFee.agents) {
       result.push({
-        withdrawTransactionId,
+        withdrawId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
         isPercentage: true,
@@ -162,7 +189,7 @@ export class WithdrawTransactionService {
     return result;
   }
 
-  async findOneThrow(id: string) {
+  async findOneThrow(id: number) {
     return this.prisma.withdrawTransaction.findUniqueOrThrow({
       where: { id },
       include: {

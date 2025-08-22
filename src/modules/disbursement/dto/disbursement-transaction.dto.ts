@@ -11,7 +11,7 @@ export class DisbursementTransactionDto {
   }
 
   @ApiProperty({ type: String })
-  id: string;
+  id: number;
 
   @ApiProperty({ type: String })
   externalId: string | null;

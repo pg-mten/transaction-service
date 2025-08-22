@@ -11,7 +11,7 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
     const fees = await Promise.all([
       prisma.purchaseFeeDetail.create({
         data: {
-          purchaseTransactionId: purchase.id,
+          purchaseId: purchase.id,
           type: 'INTERNAL',
           nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
           isPercentage: true,
@@ -20,7 +20,7 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
       }),
       prisma.purchaseFeeDetail.create({
         data: {
-          purchaseTransactionId: purchase.id,
+          purchaseId: purchase.id,
           type: 'PROVIDER',
           nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
           isPercentage: true,
@@ -30,7 +30,7 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
       // TODO Salah seeder
       prisma.purchaseFeeDetail.create({
         data: {
-          purchaseTransactionId: purchase.id,
+          purchaseId: purchase.id,
           type: 'AGENT',
           nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
           isPercentage: true,
@@ -39,7 +39,7 @@ export async function purchaseFeeDetailSeed(prisma: PrismaClient) {
       }),
       prisma.purchaseFeeDetail.create({
         data: {
-          purchaseTransactionId: purchase.id,
+          purchaseId: purchase.id,
           type: 'MERCHANT',
           nominal: getRandomDouble(100.0, 1000.0).toFixed(2),
           isPercentage: true,

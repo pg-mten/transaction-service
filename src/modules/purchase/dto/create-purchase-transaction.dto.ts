@@ -13,7 +13,8 @@ export class CreatePurchaseTransactionDto {
   @ApiProperty({ example: 'trx_1234567890' })
   @IsString()
   @IsNotEmpty()
-  externalId: string;
+  @IsOptional()
+  externalId?: string;
 
   @ApiProperty({ required: false, example: 'ref_abc123' })
   @IsOptional()
@@ -32,18 +33,13 @@ export class CreatePurchaseTransactionDto {
   @IsString()
   paymentMethodName: string;
 
-  @ApiProperty({ required: false, example: 3 })
-  @IsOptional()
-  @IsInt()
-  agentId?: number;
-
   @ApiProperty({
     description: 'Amount in decimal string format, e.g. "10000.00"',
     example: '10000.00',
   })
   @IsNumberString()
   @ToDecimal()
-  amount: Decimal;
+  nominal: Decimal;
 
   @ApiProperty({
     required: false,
@@ -53,7 +49,7 @@ export class CreatePurchaseTransactionDto {
   @IsOptional()
   @IsNumberString()
   @ToDecimalNullable()
-  netAmount: Decimal | null;
+  netNominal: Decimal | null;
 
   @ApiProperty({
     required: false,

@@ -10,7 +10,7 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 export class ReconciliationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async processCSV(data: Worksheet, provider: string) {
+  processCSV(data: Worksheet, provider: string) {
     const list: string[][] = [];
     data.eachRow((row: Row) => {
       const cells = row.values as CellValue[];
@@ -40,7 +40,7 @@ export class ReconciliationService {
       },
     );
     console.log({ recons });
-    
+
     // const datas = await Promise.all(
     //   recons.map((recon) => {
     //     return this.prisma.purchaseTransaction.update({

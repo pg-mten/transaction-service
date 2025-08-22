@@ -4,10 +4,14 @@ import Decimal from 'decimal.js';
 import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { SettlementInternalDto } from './dto/settlement-internal.dto';
+import { BalanceService } from '../balance/balance.service';
 
 @Injectable()
 export class SettlementService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private balanceService: BalanceService,
+  ) {}
 
   async internalSettlement(body: UpdateSettlementInternalDto) {
     const { date: now, merchantIds, interval } = body;
@@ -47,14 +51,12 @@ export class SettlementService {
         /**
          * Get the last Merchant Balance
          */
-        const lastBalanceMerchantLog = await tx.merchantBalanceLog.findFirst({
-          where: { merchantId },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        });
-        const merchantLastBalance =
-          lastBalanceMerchantLog?.balanceAfter ?? new Decimal(0);
+        const lastBalanceMerchant =
+          await this.balanceService.checkBalanceMerchant(merchantId);
+        const lastBalanceInternal =
+          await this.balanceService.checkBalanceInternal();
+        const lastBalanceAllAgent =
+          await this.balanceService.checkBalanceAllAgent();
 
         for (const purchase of purchaseTransactions) {
           /**
@@ -65,37 +67,46 @@ export class SettlementService {
               merchantId,
               purchaseId: purchase.id,
               changeAmount: purchase.netNominal,
-              balanceAfter: merchantLastBalance.plus(purchase.netNominal), // last balance + netNominal
-              reason: `PURCHASE SETTLEMENT BY SYSTEM`,
+              balancePending: lastBalanceMerchant.pending.minus(
+                purchase.netNominal,
+              ),
+              balanceActive: lastBalanceMerchant.active.plus(
+                purchase.netNominal,
+              ), // last balance + netNominal
+              transactionType: 'SETTLEMENT_PURCHASE',
             },
           });
 
           /// TODO Internal Balance
+          await tx.internalBalanceLog.create({
+            data: {
+              purchaseId: purchase.id,
+              merchantId,
+              changeAmount: purchase.netNominal,
+              balancePending: lastBalanceInternal.pending.minus(
+                purchase.netNominal,
+              ),
+              balanceActive: lastBalanceInternal.active.plus(
+                purchase.netNominal,
+              ),
+              transactionType: 'SETTLEMENT_PURCHASE',
+              providerName: purchase.providerName,
+              paymentMethodName: purchase.paymentMethodName,
+            },
+          });
 
           /**
            * Agent Balance
            */
           for (const feeDetail of purchase.feeDetails) {
+            const lastBalanceAgent = lastBalanceAllAgent.find(
+              (item) => item.agentId == feeDetail.agentId,
+            );
             /**
              * Filter feeDetail Agent Only
              */
             if (feeDetail.type !== 'AGENT' || feeDetail.agentId === null)
               continue;
-
-            const lastAgentBalanceLog = await tx.agentBalanceLog.findFirst({
-              where: {
-                agentId: feeDetail.agentId,
-              },
-              orderBy: {
-                createdAt: 'desc',
-              },
-            });
-
-            /**
-             * Get the last Agent Balance
-             */
-            const agentLastBalance =
-              lastAgentBalanceLog?.balanceAfter ?? new Decimal(0);
 
             /**
              * Update Agent Balance
@@ -105,8 +116,13 @@ export class SettlementService {
                 agentId: feeDetail.agentId,
                 purchaseId: purchase.id,
                 changeAmount: feeDetail.nominal,
-                balanceAfter: agentLastBalance.plus(feeDetail.nominal),
-                reason: 'PURCHASE SETTLEMENT BY SYSTEM',
+                balanceActive:
+                  lastBalanceAgent?.balanceActive.plus(feeDetail.nominal) ||
+                  new Decimal(0),
+                balancePending:
+                  lastBalanceAgent?.balancePending.minus(feeDetail.nominal) ||
+                  new Decimal(0),
+                transactionType: 'SETTLEMENT_PURCHASE',
               },
             });
           }

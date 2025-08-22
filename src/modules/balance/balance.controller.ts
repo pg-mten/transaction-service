@@ -25,7 +25,18 @@ export class BalanceController {
   @ApiOperation({ summary: 'Ambil Balance Agent' })
   @ApiParam({ name: 'providerName', description: 'ProviderName' })
   async getInternalBalance(@Param('providerName') providerName: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await this.service.checkBalanceInternal(providerName);
+  }
+
+  @Get('all-merchant')
+  @ApiOperation({ summary: 'Ambil Balance All Merchant' })
+  async getAllMerchantBalance() {
+    return await this.service.checkBalanceAllMerchant();
+  }
+
+  @Get('all-agent')
+  @ApiOperation({ summary: 'Ambil Balance All Agent' })
+  async getAllAgentBalance() {
+    return await this.service.checkBalanceAllAgent();
   }
 }

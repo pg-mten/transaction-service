@@ -11,7 +11,7 @@ export class WithdrawTransactionDto {
   }
 
   @ApiProperty({ type: String })
-  id: string;
+  id: number;
 
   @ApiProperty({ type: String })
   externalId: string | null;

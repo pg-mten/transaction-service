@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import { IsOptional, IsInt, Min, IsEnum } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTimeNullable } from 'src/decorator/date.decorator';
-import { TopupPaymentMethodEnum, TransactionStatusEnum } from '@prisma/client';
+import { TransactionStatusEnum } from '@prisma/client';
 
 export class FilterTransactionDto {
   @ApiPropertyOptional({ example: 1 })
@@ -41,7 +41,7 @@ export class FilterTransactionDto {
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
-  paymentMethodName: TopupPaymentMethodEnum;
+  paymentMethodName: string;
 
   @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()

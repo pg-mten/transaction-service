@@ -12,42 +12,25 @@ import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { FeeDetailDto } from './dto/fee-details';
 import { DisbursementFeeDto } from '../fee/dto/disbursement-fee-dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
+import { BalanceService } from '../balance/balance.service';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class DisbursementTransactionService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
+    private balanceService: BalanceService,
   ) {}
-
-  async checkBalanceMerchant(merchantId: number) {
-    const lastRow = await this.prisma.merchantBalanceLog.findFirst({
-      where: {
-        merchantId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-        id: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
-
-  async checkBalanceAgent(agentId: number) {
-    const lastRow = await this.prisma.agentBalanceLog.findFirst({
-      where: {
-        agentId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-        id: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
 
   async createDisbursementTransaction(dto: CreateDisbursementTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(dto.merchantId);
+      const lastBalanceInternal =
+        await this.balanceService.checkBalanceInternal();
+      const lastBalanceAllAgent =
+        await this.balanceService.checkBalanceAllAgent();
       const feeDto: TopupFeeDto =
         await this.feeCalculateService.calculateFeeConfig({
           merchantId: dto.merchantId,
@@ -70,29 +53,71 @@ export class DisbursementTransactionService {
           metadata: dto.metadata,
           netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
+          MerchantBalanceLog: {
+            create: {
+              merchantId: dto.merchantId,
+              changeAmount: dto.nominal,
+              balanceActive: lastBalanceMerchant.active?.minus(
+                feeDto.merchantFee.netNominal,
+              ),
+              balancePending: lastBalanceMerchant.pending,
+              transactionType: 'DISBURSEMENT',
+            },
+          },
+          InternalBalanceLog: {
+            create: {
+              changeAmount: feeDto.internalFee.fee,
+              balancePending: lastBalanceInternal.pending,
+              merchantId: dto.merchantId,
+              balanceActive: lastBalanceInternal.active?.plus(
+                feeDto.internalFee.fee,
+              ),
+              providerName: dto.providerName,
+              paymentMethodName: dto.paymentMethodName,
+              transactionType: 'DISBURSEMENT',
+            },
+          },
+          AgentBalanceLog: {
+            createMany: {
+              skipDuplicates: true,
+              data: feeDto.agentFee.agents.map((item) => {
+                return {
+                  agentId: item.id,
+                  changeAmount: item.nominal,
+                  balancePending:
+                    lastBalanceAllAgent.find((a) => a.agentId == item.id)
+                      ?.balancePending || new Decimal(0),
+                  balanceActive:
+                    lastBalanceAllAgent
+                      .find((a) => a.agentId == item.id)
+                      ?.balanceActive.plus(item.nominal) || new Decimal(0),
+                  transactionType: 'DISBURSEMENT',
+                };
+              }),
+            },
+          },
         },
       });
 
       const feeDetailCreateManyInput: Prisma.DisbursementFeeDetailCreateManyInput[] =
         this.feeDetailMapper({
-          disbursementTransactionId: transaction.id,
+          disbursementId: transaction.id,
           feeDto,
         });
       const disbursementFeeDetails =
         await trx.disbursementFeeDetail.createManyAndReturn({
           data: feeDetailCreateManyInput,
         });
-
       console.log({ transaction, feeDto, disbursementFeeDetails });
 
       return;
     });
   }
   private feeDetailMapper({
-    disbursementTransactionId,
+    disbursementId,
     feeDto,
   }: {
-    disbursementTransactionId: string;
+    disbursementId: number;
     feeDto: DisbursementFeeDto;
   }): Prisma.DisbursementFeeDetailCreateManyInput[] {
     const result: Prisma.DisbursementFeeDetailCreateManyInput[] = [];
@@ -113,7 +138,7 @@ export class DisbursementTransactionService {
      * Merchant
      */
     result.push({
-      disbursementTransactionId,
+      disbursementId,
       type: 'MERCHANT',
       isPercentage: true,
       fee: merchantFee.feePercentage,
@@ -124,7 +149,7 @@ export class DisbursementTransactionService {
      * Provider
      */
     result.push({
-      disbursementTransactionId,
+      disbursementId,
       type: 'PROVIDER',
       isPercentage: providerFee.isPercentage,
       fee: providerFee.fee,
@@ -135,7 +160,7 @@ export class DisbursementTransactionService {
      * Internal
      */
     result.push({
-      disbursementTransactionId,
+      disbursementId,
       type: 'INTERNAL',
       isPercentage: internalFee.isPercentage,
       fee: internalFee.fee,
@@ -147,7 +172,7 @@ export class DisbursementTransactionService {
      */
     for (const agentFeeEach of agentFee.agents) {
       result.push({
-        disbursementTransactionId,
+        disbursementId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
         isPercentage: true,
@@ -159,7 +184,7 @@ export class DisbursementTransactionService {
     return result;
   }
 
-  async findOneThrow(id: string) {
+  async findOneThrow(id: number) {
     return this.prisma.disbursementTransaction.findUniqueOrThrow({
       where: { id },
       include: {

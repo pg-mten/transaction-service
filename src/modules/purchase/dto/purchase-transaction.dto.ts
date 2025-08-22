@@ -12,10 +12,10 @@ export class PurchaseTransactionDto {
   }
 
   @ApiProperty({ type: String })
-  id: string;
+  id: number;
 
   @ApiProperty({ type: String })
-  externalId: string;
+  externalId: string | null;
 
   @ApiProperty({ type: String, required: false })
   referenceId: string | null;

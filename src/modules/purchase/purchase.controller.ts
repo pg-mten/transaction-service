@@ -36,7 +36,7 @@ export class PurchaseController {
   @Get(':id/detail')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     console.log({ id });
     return await this.purchaseService.findOneThrow(id);
   }
@@ -79,9 +79,9 @@ export class PurchaseController {
   //   console.log({ filter });
   //   return this.transactionsService.internalTransactionSettlement(filter);
   // }
-  @Post('webhook')
-  async webhook(@Body() body: any) {
-    const { external_id, status } = body;
-    return this.purchaseService.handleWebhook(external_id, status, body);
-  }
+  // @Post('webhook')
+  // webhook(@Body() body: any) {
+  //   const { external_id, status } = body;
+  //   return this.purchaseService.handleWebhook(external_id, status, body);
+  // }
 }

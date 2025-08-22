@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import Decimal from 'decimal.js';
 
 @Injectable()
 export class BalanceService {
@@ -14,7 +15,10 @@ export class BalanceService {
         createdAt: 'desc',
       },
     });
-    return lastRow?.balanceAfter;
+    return {
+      active: lastRow?.balanceActive || new Decimal(0),
+      pending: lastRow?.balancePending || new Decimal(0),
+    };
   }
 
   async checkBalanceAgent(agentId: number) {
@@ -24,13 +28,15 @@ export class BalanceService {
       },
       orderBy: {
         createdAt: 'desc',
-        id: 'desc',
       },
     });
-    return lastRow?.balanceAfter;
+    return {
+      active: lastRow?.balanceActive || new Decimal(0),
+      pending: lastRow?.balancePending || new Decimal(0),
+    };
   }
 
-  async checkBalanceInternal(providerName: string) {
+  async checkBalanceInternal(providerName?: string) {
     let whereClause = {};
     if (providerName) {
       whereClause = { providerName: providerName };
@@ -42,7 +48,33 @@ export class BalanceService {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return lastRow?.balanceAfter;
+    return {
+      active: lastRow?.balanceActive || new Decimal(0),
+      pending: lastRow?.balancePending || new Decimal(0),
+    };
+  }
+
+  async checkBalanceAllMerchant() {
+    return await this.prisma.merchantBalanceLog.findMany({
+      distinct: ['merchantId'],
+      orderBy: { createdAt: 'desc' },
+      select: {
+        merchantId: true,
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+  }
+
+  async checkBalanceAllAgent() {
+    return await this.prisma.agentBalanceLog.findMany({
+      distinct: ['agentId'],
+      orderBy: { createdAt: 'desc' },
+      select: {
+        agentId: true,
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
   }
 }

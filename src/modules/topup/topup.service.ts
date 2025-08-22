@@ -12,39 +12,15 @@ import { FilterTransactionDto } from './dto/filter-transaction.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import { FeeDetailDto } from './dto/fee-details';
 import Decimal from 'decimal.js';
+import { BalanceService } from '../balance/balance.service';
 
 @Injectable()
 export class TopupTransactionService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
+    private balanceService: BalanceService,
   ) {}
-
-  async checkBalanceMerchant(merchantId: number) {
-    const lastRow = await this.prisma.merchantBalanceLog.findFirst({
-      where: {
-        merchantId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-        id: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
-
-  async checkBalanceAgent(agentId: number) {
-    const lastRow = await this.prisma.agentBalanceLog.findFirst({
-      where: {
-        agentId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-        id: 'desc',
-      },
-    });
-    return lastRow?.balanceAfter;
-  }
 
   async createTopupTransaction(dto: CreateTopupTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
@@ -73,7 +49,7 @@ export class TopupTransactionService {
 
       const topupFeeDetailCreateManyInput: Prisma.TopupFeeDetailCreateManyInput[] =
         this.feeDetailMapper({
-          topupTransactionId: topupTransaction.id,
+          topupId: topupTransaction.id,
           topupFeeDto,
         });
       const topupFeeDetails = await trx.topupFeeDetail.createManyAndReturn({
@@ -86,10 +62,10 @@ export class TopupTransactionService {
     });
   }
   private feeDetailMapper({
-    topupTransactionId,
+    topupId,
     topupFeeDto,
   }: {
-    topupTransactionId: string;
+    topupId: number;
     topupFeeDto: TopupFeeDto;
   }): Prisma.TopupFeeDetailCreateManyInput[] {
     const result: Prisma.TopupFeeDetailCreateManyInput[] = [];
@@ -110,7 +86,7 @@ export class TopupTransactionService {
      * Merchant
      */
     result.push({
-      topupTransactionId,
+      topupId,
       type: 'MERCHANT',
       isPercentage: true,
       fee: merchantFee.feePercentage,
@@ -121,7 +97,7 @@ export class TopupTransactionService {
      * Provider
      */
     result.push({
-      topupTransactionId,
+      topupId,
       type: 'PROVIDER',
       isPercentage: providerFee.isPercentage,
       fee: providerFee.fee,
@@ -132,7 +108,7 @@ export class TopupTransactionService {
      * Internal
      */
     result.push({
-      topupTransactionId,
+      topupId,
       type: 'INTERNAL',
       isPercentage: internalFee.isPercentage,
       fee: internalFee.fee,
@@ -144,7 +120,7 @@ export class TopupTransactionService {
      */
     for (const agentFeeEach of agentFee.agents) {
       result.push({
-        topupTransactionId,
+        topupId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
         isPercentage: true,
@@ -156,7 +132,7 @@ export class TopupTransactionService {
     return result;
   }
 
-  async findOneThrow(id: string) {
+  async findOneThrow(id: number) {
     return this.prisma.topUpTransaction.findUniqueOrThrow({
       where: { id },
       include: {
@@ -219,7 +195,7 @@ export class TopupTransactionService {
     });
   }
 
-  async approveTopUp(transactionId: string) {
+  async approveTopUp(transactionId: number) {
     await this.prisma.$transaction(async (trx) => {
       const topup = await trx.topUpTransaction.update({
         data: {
@@ -236,42 +212,27 @@ export class TopupTransactionService {
           netNominal: true,
         },
       });
-      const lastBalanceMerchant = await trx.merchantBalanceLog.findFirst({
-        where: {
-          merchantId: topup.merchantId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      });
-      const merchantLastBalance =
-        lastBalanceMerchant?.balanceAfter ?? new Decimal(0);
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(topup.merchantId);
+      const lastBalanceAllAgent =
+        await this.balanceService.checkBalanceAllAgent();
+
       await trx.merchantBalanceLog.create({
         data: {
           merchantId: topup.merchantId,
           topupId: topup.id,
           changeAmount: topup.netNominal,
-          balanceAfter: merchantLastBalance.plus(topup.netNominal),
-          reason: 'TOPUP BY MERCHANT',
+          balanceActive: lastBalanceMerchant.active.plus(topup.netNominal),
+          balancePending: lastBalanceMerchant.pending,
+          transactionType: 'TOPUP',
         },
       });
       for (const feeDetail of topup.feeDetails) {
         if (feeDetail.type !== 'AGENT' || feeDetail.agentId === null) continue;
 
-        const lastAgentBalanceLog = await trx.agentBalanceLog.findFirst({
-          where: {
-            agentId: feeDetail.agentId,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        });
-
         /**
          * Get the last Agent Balance
          */
-        const agentLastBalance =
-          lastAgentBalanceLog?.balanceAfter ?? new Decimal(0);
 
         /**
          * Update Agent Balance
@@ -281,15 +242,21 @@ export class TopupTransactionService {
             agentId: feeDetail.agentId,
             topupId: topup.id,
             changeAmount: feeDetail.nominal,
-            balanceAfter: agentLastBalance.plus(feeDetail.nominal),
-            reason: 'PURCHASE SETTLEMENT BY SYSTEM',
+            balancePending:
+              lastBalanceAllAgent.find((a) => a.agentId == feeDetail.agentId)
+                ?.balancePending || new Decimal(0),
+            balanceActive:
+              lastBalanceAllAgent
+                .find((a) => a.agentId == feeDetail.agentId)
+                ?.balanceActive.plus(feeDetail.nominal) || new Decimal(0),
+            transactionType: 'TOPUP',
           },
         });
       }
     });
   }
 
-  async rejectTopup(transactionId: string) {
+  async rejectTopup(transactionId: number) {
     await this.prisma.topUpTransaction.update({
       data: {
         status: 'FAILED',

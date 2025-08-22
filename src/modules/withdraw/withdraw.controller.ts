@@ -35,7 +35,7 @@ export class WithdrawTransactionsController {
   @Get(':id')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     return await this.service.findOneThrow(id);
   }
 

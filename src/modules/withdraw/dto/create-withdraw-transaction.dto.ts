@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TopupPaymentMethodEnum } from '@prisma/client';
 import {
   IsInt,
   IsNotEmpty,
@@ -31,7 +30,7 @@ export class CreateWithdrawTransactionDto {
 
   @ApiProperty({ example: 'TRANSFER_BANK' })
   @IsString()
-  paymentMethodName: TopupPaymentMethodEnum;
+  paymentMethodName: string;
 
   @ApiProperty({ required: false, example: 3 })
   @IsOptional()
