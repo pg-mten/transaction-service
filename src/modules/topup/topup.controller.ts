@@ -21,9 +21,6 @@ import { TopupTransactionDto } from './dto/topup-transaction.dto';
 export class TopupTransactionsController {
   constructor(private readonly service: TopupTransactionService) {}
 
-  /**
-   * Purchase
-   */
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateTopupTransactionDto })

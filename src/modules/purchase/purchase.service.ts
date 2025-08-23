@@ -30,12 +30,14 @@ export class PurchaseService {
        * Get Fee Config
        */
       const purchaseFeeDto: PurchasingFeeDto =
-        await this.feePurchaseService.calculateFeeConfigTCP({
-          merchantId: 1,
+        await this.feePurchaseService.calculateFeeConfig({
+          merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
+
+      console.log({ purchaseFeeDto });
 
       const agentIds: number[] = purchaseFeeDto.agentFee.agents.map(
         (agent) => agent.id,

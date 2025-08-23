@@ -21,9 +21,6 @@ import { WithdrawTransactionService } from './withdraw.service';
 export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawTransactionService) {}
 
-  /**
-   * Purchase
-   */
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })

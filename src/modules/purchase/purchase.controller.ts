@@ -22,13 +22,11 @@ import { FilterPurchaseNotSettlement } from './dto/filter-purchase-not-settlemen
 export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
-  /**
-   * Purchase
-   */
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
   async create(@Body() body: CreatePurchaseTransactionDto) {
+    console.log({ body });
     await this.purchaseService.create(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }

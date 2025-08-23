@@ -21,9 +21,6 @@ import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 export class DisbursementTransactionsController {
   constructor(private readonly service: DisbursementTransactionService) {}
 
-  /**
-   * Purchase
-   */
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateDisbursementTransactionDto })

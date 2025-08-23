@@ -1,13 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsNumberString,
+  ValidateIf,
 } from 'class-validator';
 import { Decimal } from 'decimal.js';
-import { ToDecimal, ToDecimalNullable } from 'src/decorator/decimal.decorator';
+import { ToDecimal } from 'src/decorator/decimal.decorator';
 
 export class CreatePurchaseTransactionDto {
   @ApiProperty({ example: 'trx_1234567890' })
@@ -37,19 +38,10 @@ export class CreatePurchaseTransactionDto {
     description: 'Amount in decimal string format, e.g. "10000.00"',
     example: '10000.00',
   })
-  @IsNumberString()
+  @Type(() => Decimal)
+  @ValidateIf((o) => o.nominal !== undefined)
   @ToDecimal()
   nominal: Decimal;
-
-  @ApiProperty({
-    required: false,
-    description: 'Net amount in decimal string format, e.g. "9700.00"',
-    example: '9700.00',
-  })
-  @IsOptional()
-  @IsNumberString()
-  @ToDecimalNullable()
-  netNominal: Decimal | null;
 
   @ApiProperty({
     required: false,
