@@ -222,8 +222,10 @@ export class TopupTransactionService {
           merchantId: topup.merchantId,
           topupId: topup.id,
           changeAmount: topup.netNominal,
-          balanceActive: lastBalanceMerchant.active.plus(topup.netNominal),
-          balancePending: lastBalanceMerchant.pending,
+          balanceActive: lastBalanceMerchant.balanceActive.plus(
+            topup.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
           transactionType: 'TOPUP',
         },
       });

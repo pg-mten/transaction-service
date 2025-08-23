@@ -30,7 +30,7 @@ export class WithdrawTransactionService {
       await this.balanceService.checkBalanceInternal();
     const lastBalanceAllAgent =
       await this.balanceService.checkBalanceAllAgent();
-    if (lastBalanceMerchant.active <= dto.netNominal) {
+    if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
       throw new Error('Balance Tidak Mencukupi');
     }
     await this.prisma.$transaction(async (trx) => {
@@ -57,19 +57,19 @@ export class WithdrawTransactionService {
             create: {
               merchantId: dto.merchantId,
               changeAmount: dto.nominal,
-              balanceActive: lastBalanceMerchant.active?.minus(
+              balanceActive: lastBalanceMerchant.balanceActive?.minus(
                 withdrawFeeDto.merchantFee.netNominal,
               ),
-              balancePending: lastBalanceMerchant.pending,
+              balancePending: lastBalanceMerchant.balancePending,
               transactionType: 'WITHDRAW',
             },
           },
           InternalBalanceLog: {
             create: {
               changeAmount: withdrawFeeDto.internalFee.fee,
-              balancePending: lastBalanceInternal.pending,
+              balancePending: lastBalanceInternal.balancePending,
               merchantId: dto.merchantId,
-              balanceActive: lastBalanceInternal.active?.plus(
+              balanceActive: lastBalanceInternal.balanceActive?.plus(
                 withdrawFeeDto.internalFee.fee,
               ),
               providerName: dto.providerName,

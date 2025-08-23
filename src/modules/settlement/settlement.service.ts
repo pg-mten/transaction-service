@@ -67,10 +67,10 @@ export class SettlementService {
               merchantId,
               purchaseId: purchase.id,
               changeAmount: purchase.netNominal,
-              balancePending: lastBalanceMerchant.pending.minus(
+              balancePending: lastBalanceMerchant.balancePending.minus(
                 purchase.netNominal,
               ),
-              balanceActive: lastBalanceMerchant.active.plus(
+              balanceActive: lastBalanceMerchant.balanceActive.plus(
                 purchase.netNominal,
               ), // last balance + netNominal
               transactionType: 'SETTLEMENT_PURCHASE',
@@ -83,10 +83,10 @@ export class SettlementService {
               purchaseId: purchase.id,
               merchantId,
               changeAmount: purchase.netNominal,
-              balancePending: lastBalanceInternal.pending.minus(
+              balancePending: lastBalanceInternal.balancePending.minus(
                 purchase.netNominal,
               ),
-              balanceActive: lastBalanceInternal.active.plus(
+              balanceActive: lastBalanceInternal.balanceActive.plus(
                 purchase.netNominal,
               ),
               transactionType: 'SETTLEMENT_PURCHASE',

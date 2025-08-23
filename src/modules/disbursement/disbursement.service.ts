@@ -57,19 +57,19 @@ export class DisbursementTransactionService {
             create: {
               merchantId: dto.merchantId,
               changeAmount: dto.nominal,
-              balanceActive: lastBalanceMerchant.active?.minus(
+              balanceActive: lastBalanceMerchant.balanceActive?.minus(
                 feeDto.merchantFee.netNominal,
               ),
-              balancePending: lastBalanceMerchant.pending,
+              balancePending: lastBalanceMerchant.balancePending,
               transactionType: 'DISBURSEMENT',
             },
           },
           InternalBalanceLog: {
             create: {
               changeAmount: feeDto.internalFee.fee,
-              balancePending: lastBalanceInternal.pending,
+              balancePending: lastBalanceInternal.balancePending,
               merchantId: dto.merchantId,
-              balanceActive: lastBalanceInternal.active?.plus(
+              balanceActive: lastBalanceInternal.balanceActive?.plus(
                 feeDto.internalFee.fee,
               ),
               providerName: dto.providerName,
