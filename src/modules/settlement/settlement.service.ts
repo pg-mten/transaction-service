@@ -51,6 +51,7 @@ export class SettlementService {
         /**
          * Get the last Merchant Balance
          */
+        /// TODO lastBalanceAllAgent must find specific agentIds
         const lastBalanceMerchant =
           await this.balanceService.checkBalanceMerchant(merchantId);
         const lastBalanceInternal =

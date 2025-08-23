@@ -25,12 +25,6 @@ export class DisbursementTransactionService {
 
   async createDisbursementTransaction(dto: CreateDisbursementTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(dto.merchantId);
-      const lastBalanceInternal =
-        await this.balanceService.checkBalanceInternal();
-      const lastBalanceAllAgent =
-        await this.balanceService.checkBalanceAllAgent();
       const feeDto: TopupFeeDto =
         await this.feeCalculateService.calculateFeeConfig({
           merchantId: dto.merchantId,
@@ -38,6 +32,17 @@ export class DisbursementTransactionService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
+
+      const agentIds: number[] = feeDto.agentFee.agents.map(
+        (agent) => agent.id,
+      );
+
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(dto.merchantId);
+      const lastBalanceInternal =
+        await this.balanceService.checkBalanceInternal();
+      const lastBalanceAgents =
+        await this.balanceService.checkBalanceAgents(agentIds);
 
       const transaction = await trx.disbursementTransaction.create({
         data: {
@@ -85,10 +90,10 @@ export class DisbursementTransactionService {
                   agentId: item.id,
                   changeAmount: item.nominal,
                   balancePending:
-                    lastBalanceAllAgent.find((a) => a.agentId == item.id)
+                    lastBalanceAgents.find((a) => a.agentId == item.id)
                       ?.balancePending || new Decimal(0),
                   balanceActive:
-                    lastBalanceAllAgent
+                    lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balanceActive.plus(item.nominal) || new Decimal(0),
                   transactionType: 'DISBURSEMENT',

@@ -212,10 +212,15 @@ export class TopupTransactionService {
           netNominal: true,
         },
       });
+
+      const agentIds: number[] = topup.feeDetails
+        .map((feeDetail) => feeDetail.agentId as number | null)
+        .filter<number>((agentId) => agentId !== null);
+
       const lastBalanceMerchant =
         await this.balanceService.checkBalanceMerchant(topup.merchantId);
-      const lastBalanceAllAgent =
-        await this.balanceService.checkBalanceAllAgent();
+      const lastBalanceAgents =
+        await this.balanceService.checkBalanceAgents(agentIds);
 
       await trx.merchantBalanceLog.create({
         data: {
@@ -245,10 +250,10 @@ export class TopupTransactionService {
             topupId: topup.id,
             changeAmount: feeDetail.nominal,
             balancePending:
-              lastBalanceAllAgent.find((a) => a.agentId == feeDetail.agentId)
+              lastBalanceAgents.find((a) => a.agentId == feeDetail.agentId)
                 ?.balancePending || new Decimal(0),
             balanceActive:
-              lastBalanceAllAgent
+              lastBalanceAgents
                 .find((a) => a.agentId == feeDetail.agentId)
                 ?.balanceActive.plus(feeDetail.nominal) || new Decimal(0),
             transactionType: 'TOPUP',

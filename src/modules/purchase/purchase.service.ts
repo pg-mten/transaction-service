@@ -47,8 +47,6 @@ export class PurchaseService {
         await this.balanceService.checkBalanceMerchant(dto.merchantId);
       const lastBalanceInternal =
         await this.balanceService.checkBalanceInternal();
-      // const lastBalanceAllAgent =
-      //   await this.balanceService.checkBalanceAllAgent();
       const lastBalanceAgents =
         await this.balanceService.checkBalanceAgents(agentIds);
 

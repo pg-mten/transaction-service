@@ -23,16 +23,6 @@ export class WithdrawTransactionService {
   ) {}
 
   async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
-    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
-      dto.merchantId,
-    );
-    const lastBalanceInternal =
-      await this.balanceService.checkBalanceInternal();
-    const lastBalanceAllAgent =
-      await this.balanceService.checkBalanceAllAgent();
-    if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
-      throw new Error('Balance Tidak Mencukupi');
-    }
     await this.prisma.$transaction(async (trx) => {
       const withdrawFeeDto: WithdrawFeeDto =
         await this.feeCalculateService.calculateFeeConfig({
@@ -41,6 +31,21 @@ export class WithdrawTransactionService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
+
+      const agentIds: number[] = withdrawFeeDto.agentFee.agents.map(
+        (agent) => agent.id,
+      );
+
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(dto.merchantId);
+      const lastBalanceInternal =
+        await this.balanceService.checkBalanceInternal();
+      const lastBalanceAgents =
+        await this.balanceService.checkBalanceAgents(agentIds);
+
+      if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
+        throw new Error('Balance Tidak Mencukupi');
+      }
 
       const withdrawTransaction = await trx.withdrawTransaction.create({
         data: {
@@ -85,10 +90,10 @@ export class WithdrawTransactionService {
                   agentId: item.id,
                   changeAmount: item.nominal,
                   balancePending:
-                    lastBalanceAllAgent.find((a) => a.agentId == item.id)
+                    lastBalanceAgents.find((a) => a.agentId == item.id)
                       ?.balancePending || new Decimal(0),
                   balanceActive:
-                    lastBalanceAllAgent
+                    lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balanceActive.plus(item.nominal) || new Decimal(0),
                   transactionType: 'WITHDRAW',
