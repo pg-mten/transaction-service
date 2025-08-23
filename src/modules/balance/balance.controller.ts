@@ -22,7 +22,7 @@ export class BalanceController {
   }
 
   @Get('internal')
-  @ApiOperation({ summary: 'Ambil Balance Agent' })
+  @ApiOperation({ summary: 'Ambil Balance Internal' })
   @ApiParam({ name: 'providerName', description: 'ProviderName' })
   async getInternalBalance(@Param('providerName') providerName: string) {
     return await this.service.checkBalanceInternal(providerName);

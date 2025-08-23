@@ -14,7 +14,7 @@ export class FeeCalculateService {
   async calculateFeeConfig(filter: FilterPurchasingFeeDto) {
     try {
       const res = await axios.get<ResponseDto<PurchasingFeeDto>>(
-        `${URL_CONFIG}/fee/purchasing`,
+        `${URL_CONFIG}/fee/internal/purchasing`,
         {
           params: filter,
         },
@@ -29,7 +29,7 @@ export class FeeCalculateService {
   async calculateFeeConfigTCP(filter: FilterPurchasingFeeDto) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send({ cmd: 'calculate_fee_config' }, filter),
+        this.feeClient.send({ cmd: 'calculate_fee_purchase' }, filter),
       );
       console.log(res);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return

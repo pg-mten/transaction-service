@@ -26,12 +26,6 @@ export class PurchaseService {
 
   async create(dto: CreatePurchaseTransactionDto) {
     await this.prisma.$transaction(async (tx) => {
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(dto.merchantId);
-      const lastBalanceInternal =
-        await this.balanceService.checkBalanceInternal();
-      const lastBalanceAllAgent =
-        await this.balanceService.checkBalanceAllAgent();
       /**
        * Get Fee Config
        */
@@ -42,6 +36,19 @@ export class PurchaseService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
+
+      const agentIds: number[] = purchaseFeeDto.agentFee.agents.map(
+        (agent) => agent.id,
+      );
+
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(dto.merchantId);
+      const lastBalanceInternal =
+        await this.balanceService.checkBalanceInternal();
+      // const lastBalanceAllAgent =
+      //   await this.balanceService.checkBalanceAllAgent();
+      const lastBalanceAgents =
+        await this.balanceService.checkBalanceAgents(agentIds);
 
       /**
        * Create Purchase Transaction
@@ -61,19 +68,19 @@ export class PurchaseService {
             create: {
               merchantId: dto.merchantId,
               changeAmount: dto.nominal,
-              balancePending: lastBalanceMerchant.pending?.plus(
+              balancePending: lastBalanceMerchant.balancePending.plus(
                 purchaseFeeDto.merchantFee.netNominal,
               ),
-              balanceActive: lastBalanceMerchant.active,
+              balanceActive: lastBalanceMerchant.balanceActive,
               transactionType: 'PURCHASE',
             },
           },
           InternalBalanceLog: {
             create: {
               changeAmount: purchaseFeeDto.internalFee.fee,
-              balanceActive: lastBalanceInternal.active,
+              balanceActive: lastBalanceInternal.balanceActive,
               merchantId: dto.merchantId,
-              balancePending: lastBalanceInternal.pending?.plus(
+              balancePending: lastBalanceInternal.balancePending.plus(
                 purchaseFeeDto.internalFee.fee,
               ),
               providerName: dto.providerName,
@@ -89,10 +96,10 @@ export class PurchaseService {
                   agentId: item.id,
                   changeAmount: item.nominal,
                   balanceActive:
-                    lastBalanceAllAgent.find((a) => a.agentId == item.id)
+                    lastBalanceAgents.find((a) => a.agentId == item.id)
                       ?.balanceActive || new Decimal(0),
                   balancePending:
-                    lastBalanceAllAgent
+                    lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balancePending.plus(item.nominal) || new Decimal(0),
                   transactionType: 'PURCHASE',
