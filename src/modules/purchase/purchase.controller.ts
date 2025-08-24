@@ -14,8 +14,6 @@ import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
-import { FilterPurchaseSettlement } from './dto/filter-purchase-settlement.dto';
-import { FilterPurchaseNotSettlement } from './dto/filter-purchase-not-settlement.dto';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -48,26 +46,6 @@ export class PurchaseController {
   ) {
     console.log({ filter, pageable });
     return this.purchaseService.findAll(pageable, filter);
-  }
-
-  @Get('not-settlement')
-  @ApiOperation({
-    summary: 'List purchase not yet settlement because automatic failure',
-  })
-  @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
-  async findAllNotSettlement(@Query() filter: FilterPurchaseNotSettlement) {
-    console.log({ filter });
-    return this.purchaseService.findAllNotSettlement(filter);
-  }
-
-  @Get('settlement')
-  @ApiOperation({
-    summary: 'List purchase not yet settlement because automatic failure',
-  })
-  @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
-  async findAllSettlement(@Query() filter: FilterPurchaseSettlement) {
-    console.log({ filter });
-    return this.purchaseService.findAllSettlement(filter);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu

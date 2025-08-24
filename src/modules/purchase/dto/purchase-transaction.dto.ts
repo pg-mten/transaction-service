@@ -5,6 +5,10 @@ import { DateTime } from 'luxon';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 import { PurchaseFeeDetailDto } from './purchase-fee-detail.dto';
+import {
+  ToDateTimeJsDate,
+  ToDateTimeJsDateNullable,
+} from 'src/decorator/date.decorator';
 
 export class PurchaseTransactionDto {
   constructor(data: PurchaseTransactionDto) {
@@ -44,10 +48,16 @@ export class PurchaseTransactionDto {
   metadata: object | null;
 
   @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDateNullable()
   settlementAt: DateTime | null;
 
   @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDateNullable()
   reconciliationAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDate()
+  createdAt: DateTime;
 
   @ApiProperty({ type: PurchaseFeeDetailDto, isArray: true })
   feeDetails: PurchaseFeeDetailDto[];

@@ -5,6 +5,12 @@ import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dt
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { SettlementInternalDto } from './dto/settlement-internal.dto';
 import { BalanceService } from '../balance/balance.service';
+import { FilterSettlementDto } from './dto/filter-settlement.dto';
+import { Prisma } from '@prisma/client';
+import { DateHelper } from 'src/shared/helper/date.helper';
+import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
+import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
+import { FilterUnsettlementDto } from './dto/filter-unsettlement.dto';
 
 @Injectable()
 export class SettlementService {
@@ -12,6 +18,67 @@ export class SettlementService {
     private readonly prisma: PrismaService,
     private balanceService: BalanceService,
   ) {}
+
+  async findAllSettlement(filter: FilterSettlementDto) {
+    const { merchantId, from, to } = filter;
+
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {};
+
+    whereClause.settlementAt = { not: null };
+    if (merchantId) whereClause.merchantId = merchantId;
+
+    if (from && to) {
+      whereClause.createdAt = {
+        gte: from.toJSDate(),
+        lte: to.toJSDate(),
+      };
+    }
+
+    const items = await this.prisma.purchaseTransaction.findMany({
+      include: { feeDetails: true },
+      where: whereClause,
+    });
+
+    return items.map((item) => {
+      return new PurchaseTransactionDto({
+        ...item,
+        metadata: item.metadata as Record<string, unknown>,
+        settlementAt: DateHelper.fromJsDate(item.settlementAt),
+        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+        createdAt: DateHelper.fromJsDate(item.createdAt)!,
+        feeDetails: item.feeDetails.map((fee) => {
+          return new PurchaseFeeDetailDto({ ...fee });
+        }),
+      });
+    });
+  }
+
+  async findAllUnsettlement(filter: FilterUnsettlementDto) {
+    const { merchantId } = filter;
+
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {};
+
+    whereClause.settlementAt = null;
+    if (merchantId) whereClause.merchantId = merchantId;
+
+    const items = await this.prisma.purchaseTransaction.findMany({
+      include: { feeDetails: true },
+      where: whereClause,
+    });
+
+    return items.map((item) => {
+      return new PurchaseTransactionDto({
+        ...item,
+        metadata: item.metadata as Record<string, unknown>,
+        settlementAt: DateHelper.fromJsDate(item.settlementAt),
+        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+        createdAt: DateHelper.fromJsDate(item.createdAt)!,
+        feeDetails: item.feeDetails.map((fee) => {
+          return new PurchaseFeeDetailDto({ ...fee });
+        }),
+      });
+    });
+  }
 
   async internalSettlement(body: UpdateSettlementInternalDto) {
     const { date: now, merchantIds, interval } = body;
