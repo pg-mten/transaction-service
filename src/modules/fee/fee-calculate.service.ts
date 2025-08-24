@@ -6,6 +6,7 @@ import { PurchasingFeeDto } from './dto/purchashing-fee.dto';
 import { URL_CONFIG } from 'src/shared/constant/url.constant';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class FeeCalculateService {
@@ -29,11 +30,14 @@ export class FeeCalculateService {
   async calculateFeeConfigTCP(filter: FilterPurchasingFeeDto) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send({ cmd: 'calculate_fee_purchase' }, filter),
+        this.feeClient.send<ResponseDto<PurchasingFeeDto>>(
+          { cmd: 'calculate_fee_purchase' },
+          filter,
+        ),
       );
-      console.log(res);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return res; // sama kaya res.data.data di axios
+      return plainToInstance(ResponseDto<PurchasingFeeDto>, res.data, {
+        excludeExtraneousValues: true,
+      }).data!;
     } catch (error) {
       console.error(error);
       throw error;

@@ -9,11 +9,13 @@ import {
   APP_NAME,
   IS_DEVELOPMENT,
   PORT,
+  PORT_TCP,
   VERSION,
 } from './shared/constant/global.constant';
 import { logger } from './shared/constant/logger.constant';
 import { useContainer } from 'class-validator';
 import { MyLogger } from './modules/logger/logger.service';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -42,7 +44,15 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup(API_PREFIX, app, document);
   }
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: '127.0.0.1',
+      port: PORT_TCP,
+    },
+  });
 
+  await app.startAllMicroservices();
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.listen(PORT, async () => {
     const myLogger = await app.resolve(MyLogger);

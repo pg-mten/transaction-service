@@ -43,16 +43,6 @@ export class CreatePurchaseTransactionDto {
 
   @ApiProperty({
     required: false,
-    description: 'Net amount in decimal string format, e.g. "9700.00"',
-    example: '9700.00',
-  })
-  @IsOptional()
-  @IsNumberString()
-  @ToDecimalNullable()
-  netNominal: Decimal | null;
-
-  @ApiProperty({
-    required: false,
     example: {
       customerName: 'John Doe',
       orderItems: ['item1', 'item2'],
