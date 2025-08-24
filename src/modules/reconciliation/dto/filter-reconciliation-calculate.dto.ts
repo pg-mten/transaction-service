@@ -1,24 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTimeNullable } from 'src/decorator/date.decorator';
 
-export class FilterReconciliationDto {
-  @ApiPropertyOptional({ example: 1 })
-  @IsOptional()
-  @Transform(({ value }) => parseInt(value))
-  @IsInt()
-  @Min(1)
-  page: number;
-
-  @ApiPropertyOptional({ example: 15 })
-  @IsOptional()
-  @Transform(({ value }) => parseInt(value))
-  @IsInt()
-  @Min(1)
-  size: number;
-
+export class FilterReconciliationCalculateDto {
   @ApiProperty({ type: String, required: false })
   @IsOptional()
   @ToDateTimeNullable()

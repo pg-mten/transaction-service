@@ -5,6 +5,11 @@ import { FilterReconciliationDto } from './dto/filter-reconciliation.dto';
 import { Prisma, TransactionStatusEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { DateHelper } from 'src/shared/helper/date.helper';
+import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
+import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
+import { FilterReconciliationCalculateDto } from './dto/filter-reconciliation-calculate.dto';
+import Decimal from 'decimal.js';
+import { ReconciliationCalculateDto } from './dto/reconciliation-calculate.dto';
 
 @Injectable()
 export class ReconciliationService {
@@ -60,38 +65,90 @@ export class ReconciliationService {
   }
 
   async findAll(pageable: Pageable, filter: FilterReconciliationDto) {
-    const { from, to, provider } = filter;
+    const { from, to, providerName, paymentMethodName } = filter;
 
-    const where: Prisma.PurchaseTransactionWhereInput = {
-      status: TransactionStatusEnum.SUCCESS,
-      reconciliationAt: null,
-      createdAt: {
-        gte: from,
-        lte: to,
-      },
-      ...(provider && { provider: provider }),
-    };
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {};
+
+    whereClause.status = TransactionStatusEnum.SUCCESS;
+    whereClause.settlementAt = { not: null };
+    whereClause.reconciliationAt = { not: null };
+
+    if (providerName) whereClause.providerName = providerName;
+    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
+    if (from && to) {
+      whereClause.createdAt = {
+        gte: from.toJSDate(),
+        lte: to.toJSDate(),
+      };
+    }
 
     const { skip, take } = paging(pageable);
-
-    const [total, recons] = await Promise.all([
+    const [total, items] = await Promise.all([
       this.prisma.purchaseTransaction.count({
-        where,
+        where: whereClause,
       }),
       this.prisma.purchaseTransaction.findMany({
         skip,
         take,
-        where: where,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        where: whereClause,
+        include: { feeDetails: true },
       }),
     ]);
 
-    return new Page<object>({
-      data: recons,
+    const purchaseDtos = items.map((item) => {
+      return new PurchaseTransactionDto({
+        ...item,
+        metadata: item.metadata as Record<string, unknown>,
+        settlementAt: DateHelper.fromJsDate(item.settlementAt),
+        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+        createdAt: DateHelper.fromJsDate(item.createdAt)!,
+        feeDetails: item.feeDetails.map((fee) => {
+          return new PurchaseFeeDetailDto({ ...fee });
+        }),
+      });
+    });
+
+    return new Page<PurchaseTransactionDto>({
       pageable,
       total,
+      data: purchaseDtos,
     });
   }
+
+  async calculate(filter: FilterReconciliationCalculateDto) {
+    const { from, to, providerName, paymentMethodName } = filter;
+
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {};
+
+    whereClause.status = TransactionStatusEnum.SUCCESS;
+    whereClause.settlementAt = { not: null };
+    whereClause.reconciliationAt = { not: null };
+
+    if (providerName) whereClause.providerName = providerName;
+    if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
+    if (from && to) {
+      whereClause.createdAt = {
+        gte: from.toJSDate(),
+        lte: to.toJSDate(),
+      };
+    }
+
+    const sumNominal = await this.prisma.purchaseTransaction.aggregate({
+      where: whereClause,
+      _count: { id: true },
+      _sum: {
+        nominal: true,
+      },
+    });
+    const count: number = sumNominal._count.id;
+    const nominal: Decimal = sumNominal._sum.nominal ?? new Decimal(0);
+
+    return new ReconciliationCalculateDto({
+      count,
+      nominal,
+    });
+  }
+
+  /// Jumlah Purchase yang belum unrecon
+  /// Calculate Nominal yang belum unrecon
 }

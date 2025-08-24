@@ -6,7 +6,7 @@ import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { SettlementInternalDto } from './dto/settlement-internal.dto';
 import { BalanceService } from '../balance/balance.service';
 import { FilterSettlementDto } from './dto/filter-settlement.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, TransactionStatusEnum } from '@prisma/client';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
 import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
@@ -25,6 +25,7 @@ export class SettlementService {
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
 
+    whereClause.status = TransactionStatusEnum.SUCCESS;
     whereClause.settlementAt = { not: null };
     if (merchantId) whereClause.merchantId = merchantId;
 
@@ -70,6 +71,7 @@ export class SettlementService {
     const { merchantId } = filter;
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
+    whereClause.status = TransactionStatusEnum.SUCCESS;
 
     whereClause.settlementAt = null;
     if (merchantId) whereClause.merchantId = merchantId;
