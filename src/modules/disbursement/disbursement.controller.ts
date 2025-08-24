@@ -8,7 +8,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
@@ -41,7 +41,7 @@ export class DisbursementTransactionsController {
   @ApiOkResponse({ type: DisbursementTransactionDto, isArray: true })
   async findAll(
     @Pagination() pageable: Pageable,
-    @Query() filter: FilterTransactionDto,
+    @Query() filter: FilterDisbursementDto,
   ) {
     console.log({ filter, pageable });
     return this.service.findAll(pageable, filter);

@@ -8,7 +8,7 @@ import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateDisbursementTransactionDto } from './dto/create-disbursement-transaction.dto';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { FeeDetailDto } from './dto/fee-details';
 import { DisbursementFeeDto } from '../fee/dto/disbursement-fee-dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
@@ -198,10 +198,9 @@ export class DisbursementTransactionService {
     });
   }
 
-  async findAll(pageable: Pageable, query: FilterTransactionDto) {
+  async findAll(pageable: Pageable, query: FilterDisbursementDto) {
     const { from, to, merchantId, providerName, paymentMethodName, status } =
       query;
-    const { skip, take } = paging(pageable);
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
@@ -222,6 +221,7 @@ export class DisbursementTransactionService {
     if (status) whereClause.status = status;
     if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
+    const { skip, take } = paging(pageable);
     const [total, items] = await this.prisma.$transaction([
       this.prisma.disbursementTransaction.count({
         where: whereClause,
@@ -245,10 +245,11 @@ export class DisbursementTransactionService {
         }),
       });
     });
+
     return new Page<DisbursementTransactionDto>({
-      data: data,
       pageable,
       total,
+      data: data,
     });
   }
 }

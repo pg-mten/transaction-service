@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { ToDateTimeNullable } from 'src/decorator/date.decorator';
 import { TransactionStatusEnum } from '@prisma/client';
 
-export class FilterTransactionDto {
+export class FilterDisbursementDto {
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
