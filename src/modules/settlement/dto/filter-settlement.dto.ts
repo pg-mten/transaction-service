@@ -1,10 +1,24 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTimeNullable } from 'src/decorator/date.decorator';
 
 export class FilterSettlementDto {
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsInt()
+  @Min(1)
+  page: number;
+
+  @ApiPropertyOptional({ example: 15 })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsInt()
+  @Min(1)
+  size: number;
+
   @ApiProperty({ type: Number, required: false })
   @Type(() => Number)
   @IsNumber()

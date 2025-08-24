@@ -11,6 +11,7 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
 import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
 import { FilterUnsettlementDto } from './dto/filter-unsettlement.dto';
+import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 
 @Injectable()
 export class SettlementService {
@@ -19,7 +20,7 @@ export class SettlementService {
     private balanceService: BalanceService,
   ) {}
 
-  async findAllSettlement(filter: FilterSettlementDto) {
+  async findAllSettlement(pageable: Pageable, filter: FilterSettlementDto) {
     const { merchantId, from, to } = filter;
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
@@ -34,12 +35,18 @@ export class SettlementService {
       };
     }
 
-    const items = await this.prisma.purchaseTransaction.findMany({
-      include: { feeDetails: true },
-      where: whereClause,
-    });
+    const { skip, take } = paging(pageable);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.purchaseTransaction.count({ where: whereClause }),
+      this.prisma.purchaseTransaction.findMany({
+        skip,
+        take,
+        include: { feeDetails: true },
+        where: whereClause,
+      }),
+    ]);
 
-    return items.map((item) => {
+    const purchaseDtos = items.map((item) => {
       return new PurchaseTransactionDto({
         ...item,
         metadata: item.metadata as Record<string, unknown>,
@@ -51,9 +58,15 @@ export class SettlementService {
         }),
       });
     });
+
+    return new Page<PurchaseTransactionDto>({
+      pageable,
+      total,
+      data: purchaseDtos,
+    });
   }
 
-  async findAllUnsettlement(filter: FilterUnsettlementDto) {
+  async findAllUnsettlement(pageable: Pageable, filter: FilterUnsettlementDto) {
     const { merchantId } = filter;
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {};
@@ -61,12 +74,18 @@ export class SettlementService {
     whereClause.settlementAt = null;
     if (merchantId) whereClause.merchantId = merchantId;
 
-    const items = await this.prisma.purchaseTransaction.findMany({
-      include: { feeDetails: true },
-      where: whereClause,
-    });
+    const { skip, take } = paging(pageable);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.purchaseTransaction.count({ where: whereClause }),
+      this.prisma.purchaseTransaction.findMany({
+        skip,
+        take,
+        include: { feeDetails: true },
+        where: whereClause,
+      }),
+    ]);
 
-    return items.map((item) => {
+    const purchaseDtos = items.map((item) => {
       return new PurchaseTransactionDto({
         ...item,
         metadata: item.metadata as Record<string, unknown>,
@@ -77,6 +96,12 @@ export class SettlementService {
           return new PurchaseFeeDetailDto({ ...fee });
         }),
       });
+    });
+
+    return new Page<PurchaseTransactionDto>({
+      pageable,
+      total,
+      data: purchaseDtos,
     });
   }
 

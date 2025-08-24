@@ -7,6 +7,8 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import { FilterSettlementDto } from './dto/filter-settlement.dto';
 import { FilterUnsettlementDto } from './dto/filter-unsettlement.dto';
 import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
+import { Pagination } from 'src/shared/pagination/pagination.decorator';
+import { Pageable } from 'src/shared/pagination/pagination';
 
 @Controller('settlement')
 export class SettlementController {
@@ -17,19 +19,25 @@ export class SettlementController {
     summary: 'List purchase not yet settlement because automatic failure',
   })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
-  async findAllSettlement(@Query() filter: FilterSettlementDto) {
-    console.log({ filter });
-    return this.settlementService.findAllSettlement(filter);
+  async findAllSettlement(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterSettlementDto,
+  ) {
+    console.log({ pageable, filter });
+    return this.settlementService.findAllSettlement(pageable, filter);
   }
 
-  @Get('unsettled')
+  @Get('/unsettled')
   @ApiOperation({
     summary: 'List purchase not yet settlement because automatic failure',
   })
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
-  async findAllUnsettlement(@Query() filter: FilterUnsettlementDto) {
-    console.log({ filter });
-    return this.settlementService.findAllUnsettlement(filter);
+  async findAllUnsettlement(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterUnsettlementDto,
+  ) {
+    console.log({ pageable, filter });
+    return this.settlementService.findAllUnsettlement(pageable, filter);
   }
 
   @Post('/internal')
