@@ -8,7 +8,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
@@ -42,7 +42,7 @@ export class PurchaseController {
   @ApiOkResponse({ type: PurchaseTransactionDto, isArray: true })
   async findAll(
     @Pagination() pageable: Pageable,
-    @Query() filter: FilterTransactionDto,
+    @Query() filter: FilterPurchaseDto,
   ) {
     console.log({ filter, pageable });
     return this.purchaseService.findAll(pageable, filter);

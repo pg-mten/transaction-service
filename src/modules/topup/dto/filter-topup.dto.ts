@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { ToDateTimeNullable } from 'src/decorator/date.decorator';
 import { TransactionStatusEnum } from '@prisma/client';
 
-export class FilterTransactionDto {
+export class FilterTopupDto {
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
@@ -13,17 +13,17 @@ export class FilterTransactionDto {
   @Min(1)
   page: number;
 
-  @ApiPropertyOptional({ example: 10 })
+  @ApiPropertyOptional({ example: 15 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value))
   @IsInt()
   @Min(1)
-  limit: number;
+  size: number;
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
   @ToDateTimeNullable()
-  from: DateTime;
+  from: DateTime | null;
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
@@ -41,7 +41,7 @@ export class FilterTransactionDto {
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
-  paymentMethodName: string;
+  paymentMethodName: string | null;
 
   @ApiPropertyOptional({ enum: TransactionStatusEnum })
   @IsOptional()

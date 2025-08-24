@@ -8,7 +8,7 @@ import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterTopupDto } from './dto/filter-topup.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import { FeeDetailDto } from './dto/fee-details';
 import Decimal from 'decimal.js';
@@ -141,7 +141,7 @@ export class TopupTransactionService {
     });
   }
 
-  async findAll(pageable: Pageable, query: FilterTransactionDto) {
+  async findAll(pageable: Pageable, query: FilterTopupDto) {
     const { from, to, merchantId, providerName, paymentMethodName, status } =
       query;
     const { skip, take } = paging(pageable);
@@ -214,7 +214,7 @@ export class TopupTransactionService {
       });
 
       const agentIds: number[] = topup.feeDetails
-        .map((feeDetail) => feeDetail.agentId as number | null)
+        .map((feeDetail) => feeDetail.agentId)
         .filter<number>((agentId) => agentId !== null);
 
       const lastBalanceMerchant =

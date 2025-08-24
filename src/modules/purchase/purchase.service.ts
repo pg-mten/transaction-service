@@ -8,7 +8,7 @@ import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { ResponseException } from 'src/exception/response.exception';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { BalanceService } from '../balance/balance.service';
@@ -207,10 +207,9 @@ export class PurchaseService {
     });
   }
 
-  async findAll(pageable: Pageable, query: FilterTransactionDto) {
+  async findAll(pageable: Pageable, query: FilterPurchaseDto) {
     const { from, to, merchantId, providerName, paymentMethodName, status } =
       query;
-    const { skip, take } = paging(pageable);
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
@@ -231,6 +230,7 @@ export class PurchaseService {
     if (status) whereClause.status = status;
     if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
+    const { skip, take } = paging(pageable);
     const [total, items] = await this.prisma.$transaction([
       this.prisma.purchaseTransaction.count({
         where: whereClause,
@@ -258,9 +258,9 @@ export class PurchaseService {
       });
     });
     return new Page<PurchaseTransactionDto>({
-      data: data,
       pageable,
       total,
+      data: data,
     });
   }
 
