@@ -6,7 +6,6 @@ import { PurchasingFeeDto } from './dto/purchashing-fee.dto';
 import { URL_CONFIG } from 'src/shared/constant/url.constant';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class FeeCalculateService {
@@ -35,9 +34,7 @@ export class FeeCalculateService {
           filter,
         ),
       );
-      return plainToInstance(ResponseDto<PurchasingFeeDto>, res.data, {
-        excludeExtraneousValues: true,
-      }).data!;
+      return res;
     } catch (error) {
       console.error(error);
       throw error;

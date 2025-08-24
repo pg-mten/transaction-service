@@ -1,4 +1,4 @@
-import { Body, Controller, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { SettlementService } from './settlement.service';
 import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
 import { ApiOperation } from '@nestjs/swagger';

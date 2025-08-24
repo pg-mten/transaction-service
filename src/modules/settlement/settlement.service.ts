@@ -141,6 +141,7 @@ export class SettlementService {
           });
 
           merchantIdSettlement.push(merchantId);
+          console.log(merchantIdSettlement);
         }
       });
     }

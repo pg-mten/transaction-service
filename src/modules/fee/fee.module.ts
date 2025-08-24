@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FeeCalculateService } from './fee-calculate.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { PORT_TCP } from 'src/shared/constant/global.constant';
 
 @Module({
   imports: [
