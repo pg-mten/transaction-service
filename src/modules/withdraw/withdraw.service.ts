@@ -6,7 +6,7 @@ import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
-import { FilterTransactionDto } from './dto/filter-transaction.dto';
+import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
 import { FeeDetailDto } from './dto/fee-details';
 import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
 import { WithdrawFeeDto } from '../fee/dto/withdraw-fee.dto';
@@ -203,10 +203,9 @@ export class WithdrawTransactionService {
     });
   }
 
-  async findAll(pageable: Pageable, query: FilterTransactionDto) {
+  async findAll(pageable: Pageable, query: FilterWithdrawDto) {
     const { from, to, merchantId, providerName, paymentMethodName, status } =
       query;
-    const { skip, take } = paging(pageable);
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
@@ -227,6 +226,7 @@ export class WithdrawTransactionService {
     if (status) whereClause.status = status;
     if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
+    const { skip, take } = paging(pageable);
     const [total, items] = await this.prisma.$transaction([
       this.prisma.withdrawTransaction.count({
         where: whereClause,
@@ -251,9 +251,9 @@ export class WithdrawTransactionService {
       });
     });
     return new Page<WithdrawTransactionDto>({
-      data: data,
       pageable,
       total,
+      data: data,
     });
   }
 }

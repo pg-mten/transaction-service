@@ -144,7 +144,6 @@ export class TopupTransactionService {
   async findAll(pageable: Pageable, query: FilterTopupDto) {
     const { from, to, merchantId, providerName, paymentMethodName, status } =
       query;
-    const { skip, take } = paging(pageable);
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
@@ -165,6 +164,7 @@ export class TopupTransactionService {
     if (status) whereClause.status = status;
     if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
 
+    const { skip, take } = paging(pageable);
     const [total, items] = await this.prisma.$transaction([
       this.prisma.topUpTransaction.count({
         where: whereClause,
@@ -189,9 +189,9 @@ export class TopupTransactionService {
       });
     });
     return new Page<TopupTransactionDto>({
-      data: data,
       pageable,
       total,
+      data: data,
     });
   }
 
