@@ -3,6 +3,7 @@ import { SettlementService } from './settlement.service';
 import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
 import { ApiOperation } from '@nestjs/swagger';
 import { MessagePattern } from '@nestjs/microservices';
+import { DateHelper } from 'src/shared/helper/date.helper';
 
 @Controller('settlement')
 export class SettlementController {
@@ -18,7 +19,7 @@ export class SettlementController {
 
   @MessagePattern({ cmd: 'settlement_schedule' })
   internalSettlementTCP(filter: UpdateSettlementInternalDto) {
-    console.log({ filter });
+    filter.date = DateHelper.fromISO(filter.date.toString());
     return this.settlementService.internalSettlement(filter);
   }
 }
