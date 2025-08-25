@@ -7,7 +7,11 @@ import {
 } from '@nestjs/swagger';
 import { BalanceService } from './balance.service';
 import { FilterAggregateBalanceInternal } from './dto/filter-aggregate-balance-internal.dto';
-import { BalanceDto } from './dto/balance.dto';
+import {
+  BalanceAgentDto,
+  BalanceDto,
+  BalanceMerchantDto,
+} from './dto/balance.dto';
 
 @ApiTags('Balance')
 @Controller('Balance')
@@ -17,6 +21,7 @@ export class BalanceController {
   @Get('merchant/:merchantId')
   @ApiOperation({ summary: 'Ambil Balance Merchant' })
   @ApiParam({ name: 'merchantId', description: 'ID Merchant' })
+  @ApiOkResponse({ type: BalanceMerchantDto })
   async getMerchantBalance(
     @Param('merchantId', ParseIntPipe) merchantId: number,
   ) {
@@ -26,6 +31,7 @@ export class BalanceController {
   @Get('agent/:agentId')
   @ApiOperation({ summary: 'Ambil Balance Agent' })
   @ApiParam({ name: 'agentId', description: 'ID Agent' })
+  @ApiOkResponse({ type: BalanceAgentDto })
   async getAgentBalance(@Param('agentId', ParseIntPipe) agentId: number) {
     console.log({ agentId });
     return await this.service.checkBalanceAgent(agentId);
