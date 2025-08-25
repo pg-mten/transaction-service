@@ -149,7 +149,7 @@ export class SettlementService {
         const lastBalanceMerchant =
           await this.balanceService.checkBalanceMerchant(merchantId);
         const lastBalanceInternal =
-          await this.balanceService.checkBalanceInternal();
+          await this.balanceService.aggregateBalanceInternal();
         const lastBalanceAllAgent =
           await this.balanceService.checkBalanceAllAgent();
 
