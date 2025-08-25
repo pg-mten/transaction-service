@@ -45,6 +45,7 @@ export class ReconciliationService {
       },
     );
     console.log({ recons });
+    return recons;
 
     // const datas = await Promise.all(
     //   recons.map((recon) => {

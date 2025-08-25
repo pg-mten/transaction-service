@@ -11,12 +11,19 @@ import { ReconciliationService } from './reconciliation.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CsvOrXlsxMulterEngine } from './multer-engine/multer-engine';
 import { Worksheet } from 'exceljs';
-import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { FilterReconciliationDto } from './dto/filter-reconciliation.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { ReconFileUploadDto } from './dto/reconciliation-file-upload.dto';
 import { FilterReconciliationCalculateDto } from './dto/filter-reconciliation-calculate.dto';
+import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
+import { ReconciliationCalculateDto } from './dto/reconciliation-calculate.dto';
 
 const MAX_FILE_SIZE_IN_MiB = 1000000000; // Only for test
 
@@ -49,6 +56,7 @@ export class ReconciliationController {
 
   @Get()
   @ApiOperation({ summary: 'Find transaction not reconciliation' })
+  @ApiOkResponse({ type: PurchaseTransactionDto })
   findAll(
     @Pagination() pageable: Pageable,
     @Query() filter: FilterReconciliationDto,
@@ -58,6 +66,7 @@ export class ReconciliationController {
 
   @Get('/calculate')
   @ApiOperation({ summary: 'Find transaction not reconciliation' })
+  @ApiOkResponse({ type: ReconciliationCalculateDto })
   calculate(
     @Pagination() pageable: Pageable,
     @Query() filter: FilterReconciliationCalculateDto,
