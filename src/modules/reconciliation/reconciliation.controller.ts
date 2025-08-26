@@ -49,9 +49,9 @@ export class ReconciliationController {
     @UploadedFile() data: { worksheet: Worksheet },
     @Body() body: ReconFileUploadDto,
   ) {
-    const { provider } = body;
-    console.log({ data, provider });
-    return this.reconciliationService.processCSV(data.worksheet, provider);
+    const { providerName } = body;
+    console.log({ data, providerName });
+    return this.reconciliationService.processCSV(data.worksheet, providerName);
   }
 
   @Get()

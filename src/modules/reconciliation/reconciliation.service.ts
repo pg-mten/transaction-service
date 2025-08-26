@@ -15,7 +15,8 @@ import { ReconciliationCalculateDto } from './dto/reconciliation-calculate.dto';
 export class ReconciliationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  processCSV(data: Worksheet, provider: string) {
+  processCSV(data: Worksheet, providerName: string) {
+    console.log({ providerName });
     const list: string[][] = [];
     data.eachRow((row: Row) => {
       const cells = row.values as CellValue[];
