@@ -23,24 +23,50 @@ export class TopupTransactionService {
   ) {}
 
   async createTopupTransaction(dto: CreateTopupTransactionDto) {
+    /// TODO Ambil dari JWT token
+    const merchantId = 1;
+
+    /// TODO URL Path dari Minio
+    const receiptImage = 'image.png';
+
+    /// TODO Readme
+    /**
+     * Alur top up ini harus update sih
+     * Suggestion:
+     * - Merchant melakukan TopUp input nominal dan receipt image
+     * - Kedua data itu disimpan pada table terpisah (TopUpMerchantDraft)
+     * - Admin akan melakukan identifikasi manual berdasarkan receipt image
+     * - Admin melakukan input berdasarkan table TopUpTransaction dan etc
+     * - Jika tidak valid, maka TopUpMerchantDraft ubah status menjadi INVALID
+     *
+     * - Table TopUpMerchantDraft
+     *   - merchantId
+     *   - Receipt Image
+     *   - TopUpMerchantDraftEnum
+     *   - createdAt ... etc
+     * - Enum TopUpMerchantDraftEnum
+     * - Table TopUpTransaction
+     *   - Tambah FK ke TopUpMerchantDraft
+     */
+
     await this.prisma.$transaction(async (trx) => {
       const feeDto = await this.feeCalculateService.calculateTopupFeeConfigTCP({
-        merchantId: dto.merchantId,
-        providerName: dto.providerName,
-        paymentMethodName: dto.paymentMethodName,
+        merchantId,
+        providerName: 'NETZME',
+        paymentMethodName: 'TRANSFERBANK',
         nominal: dto.nominal,
       });
 
       const topupTransaction = await trx.topUpTransaction.create({
         data: {
-          externalId: dto.externalId,
-          referenceId: dto.referenceId,
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-          receiptImage: dto.receiptImage,
+          externalId: 'external id faker',
+          referenceId: 'reference id faker',
+          merchantId,
+          providerName: 'NETZME',
+          paymentMethodName: 'TRANSFERBANK',
+          receiptImage: receiptImage,
           nominal: dto.nominal,
-          metadata: dto.metadata,
+          metadata: {},
           netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
         },

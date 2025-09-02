@@ -23,12 +23,14 @@ export class WithdrawTransactionService {
   ) {}
 
   async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
+    /// TODO Ambil dari JWT token
+    const merchantId = 1;
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateService.calculateWithdrawFeeConfigTCP({
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
+          merchantId,
+          providerName: 'NETZME',
+          paymentMethodName: 'TRANSFERBANK',
           nominal: dto.nominal,
         });
 
@@ -37,30 +39,35 @@ export class WithdrawTransactionService {
       );
 
       const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(dto.merchantId);
+        await this.balanceService.checkBalanceMerchant(merchantId);
       const lastBalanceInternal =
         await this.balanceService.aggregateBalanceInternal();
       const lastBalanceAgents =
         await this.balanceService.checkBalanceAgents(agentIds);
 
-      if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
+      // if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
+      //   throw new Error('Balance Tidak Mencukupi');
+      // }
+
+      /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
+      if (lastBalanceMerchant.balanceActive <= dto.nominal) {
         throw new Error('Balance Tidak Mencukupi');
       }
 
       const withdrawTransaction = await trx.withdrawTransaction.create({
         data: {
-          externalId: dto.externalId,
-          referenceId: dto.referenceId,
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
+          externalId: 'external id faker',
+          referenceId: 'reference id faker',
+          merchantId,
+          providerName: 'NETZME',
+          paymentMethodName: 'TRANSFERBANK',
           nominal: dto.nominal,
-          metadata: dto.metadata,
+          metadata: {},
           netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
           MerchantBalanceLog: {
             create: {
-              merchantId: dto.merchantId,
+              merchantId: merchantId,
               changeAmount: dto.nominal,
               balanceActive: lastBalanceMerchant.balanceActive?.minus(
                 feeDto.merchantFee.netNominal,
@@ -73,12 +80,12 @@ export class WithdrawTransactionService {
             create: {
               changeAmount: feeDto.internalFee.nominal,
               balancePending: lastBalanceInternal.balancePending,
-              merchantId: dto.merchantId,
+              merchantId: merchantId,
               balanceActive: lastBalanceInternal.balanceActive?.plus(
                 feeDto.internalFee.nominal,
               ),
-              providerName: dto.providerName,
-              paymentMethodName: dto.paymentMethodName,
+              providerName: 'NETZME',
+              paymentMethodName: 'TRANSFERBANK',
               transactionType: 'WITHDRAW',
             },
           },
