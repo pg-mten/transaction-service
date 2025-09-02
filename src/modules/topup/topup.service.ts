@@ -1,7 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FeeCalculateService } from '../fee/fee-calculate.service';
-import { TopupFeeDto } from '../fee/dto/topup-fee.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -10,9 +9,10 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
 import { FilterTopupDto } from './dto/filter-topup.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
-import { FeeDetailDto } from './dto/fee-details';
 import Decimal from 'decimal.js';
 import { BalanceService } from '../balance/balance.service';
+import { TopupFeeSystemDto } from '../fee/dto-transaction-system/topup-fee.system.dto';
+import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
 
 @Injectable()
 export class TopupTransactionService {
@@ -24,13 +24,12 @@ export class TopupTransactionService {
 
   async createTopupTransaction(dto: CreateTopupTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
-      const topupFeeDto: TopupFeeDto =
-        await this.feeCalculateService.calculateFeeConfig({
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-          nominal: dto.nominal,
-        });
+      const feeDto = await this.feeCalculateService.calculateTopupFeeConfigTCP({
+        merchantId: dto.merchantId,
+        providerName: dto.providerName,
+        paymentMethodName: dto.paymentMethodName,
+        nominal: dto.nominal,
+      });
 
       const topupTransaction = await trx.topUpTransaction.create({
         data: {
@@ -42,7 +41,7 @@ export class TopupTransactionService {
           receiptImage: dto.receiptImage,
           nominal: dto.nominal,
           metadata: dto.metadata,
-          netNominal: topupFeeDto.merchantFee.netNominal,
+          netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
         },
       });
@@ -50,26 +49,26 @@ export class TopupTransactionService {
       const topupFeeDetailCreateManyInput: Prisma.TopupFeeDetailCreateManyInput[] =
         this.feeDetailMapper({
           topupId: topupTransaction.id,
-          topupFeeDto,
+          feeDto,
         });
       const topupFeeDetails = await trx.topupFeeDetail.createManyAndReturn({
         data: topupFeeDetailCreateManyInput,
       });
 
-      console.log({ topupTransaction, topupFeeDto, topupFeeDetails });
+      console.log({ topupTransaction, feeDto, topupFeeDetails });
 
       return;
     });
   }
   private feeDetailMapper({
     topupId,
-    topupFeeDto,
+    feeDto,
   }: {
     topupId: number;
-    topupFeeDto: TopupFeeDto;
+    feeDto: TopupFeeSystemDto;
   }): Prisma.TopupFeeDetailCreateManyInput[] {
     const result: Prisma.TopupFeeDetailCreateManyInput[] = [];
-    const { merchantFee, agentFee, providerFee, internalFee } = topupFeeDto;
+    const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
         new UnprocessableEntityException('Some of the response is null'),
@@ -88,8 +87,8 @@ export class TopupTransactionService {
     result.push({
       topupId,
       type: 'MERCHANT',
-      isPercentage: true,
-      fee: merchantFee.feePercentage,
+      feePercentage: merchantFee.feePercentage,
+      feeFixed: new Decimal(0),
       nominal: merchantFee.netNominal,
     });
 
@@ -99,8 +98,8 @@ export class TopupTransactionService {
     result.push({
       topupId,
       type: 'PROVIDER',
-      isPercentage: providerFee.isPercentage,
-      fee: providerFee.fee,
+      feeFixed: providerFee.feeFixed,
+      feePercentage: providerFee.feePercentage,
       nominal: providerFee.nominal,
     });
 
@@ -110,8 +109,8 @@ export class TopupTransactionService {
     result.push({
       topupId,
       type: 'INTERNAL',
-      isPercentage: internalFee.isPercentage,
-      fee: internalFee.fee,
+      feeFixed: internalFee.feeFixed,
+      feePercentage: internalFee.feePercentage,
       nominal: internalFee.nominal,
     });
 
@@ -123,8 +122,8 @@ export class TopupTransactionService {
         topupId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
-        isPercentage: true,
-        fee: agentFeeEach.feePercentage,
+        feeFixed: agentFee.nominal,
+        feePercentage: agentFeeEach.feePercentage,
         nominal: agentFeeEach.nominal,
       });
     }
@@ -184,7 +183,7 @@ export class TopupTransactionService {
         ...item,
         metadata: item.metadata as Record<string, unknown>,
         feeDetails: item.feeDetails.map((fee) => {
-          return new FeeDetailDto({ ...fee });
+          return new TopupFeeDetailDto({ ...fee });
         }),
       });
     });

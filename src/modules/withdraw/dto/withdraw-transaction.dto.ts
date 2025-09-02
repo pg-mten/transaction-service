@@ -3,7 +3,7 @@ import { TransactionStatusEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
-import { FeeDetailDto } from './fee-details';
+import { WithdrawFeeDetailDto } from './withdraw-fee-detail.dto';
 
 export class WithdrawTransactionDto {
   constructor(data: WithdrawTransactionDto) {
@@ -42,6 +42,6 @@ export class WithdrawTransactionDto {
   @ApiProperty({ type: Object })
   metadata: object | null;
 
-  @ApiProperty({ type: FeeDetailDto, isArray: true })
-  feeDetails: FeeDetailDto[];
+  @ApiProperty({ type: WithdrawFeeDetailDto, isArray: true })
+  feeDetails: WithdrawFeeDetailDto[];
 }

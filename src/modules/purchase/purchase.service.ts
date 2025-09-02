@@ -2,23 +2,23 @@ import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
-import { PurchasingFeeDto } from '../fee/dto/purchashing-fee.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
-import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { ResponseException } from 'src/exception/response.exception';
 import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
+import { PurchaseFeeSystemDto } from '../fee/dto-transaction-system/purchase-fee.system.dto';
+import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 
 @Injectable()
 export class PurchaseService {
   constructor(
     private readonly prisma: PrismaService,
-    private feePurchaseService: FeeCalculateService,
+    private feeCalculateService: FeeCalculateService,
     private balanceService: BalanceService,
   ) {}
 
@@ -27,17 +27,17 @@ export class PurchaseService {
       /**
        * Get Fee Config
        */
-      const purchaseFeeDto: PurchasingFeeDto =
-        await this.feePurchaseService.calculateFeeConfig({
+      const feeDto =
+        await this.feeCalculateService.calculatePurchaseFeeConfigTCP({
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
 
-      console.log({ purchaseFeeDto });
+      console.log({ feeDto });
 
-      const agentIds: number[] = purchaseFeeDto.agentFee.agents.map(
+      const agentIds: number[] = feeDto.agentFee.agents.map(
         (agent) => agent.id,
       );
 
@@ -60,14 +60,14 @@ export class PurchaseService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
           metadata: dto.metadata,
-          netNominal: purchaseFeeDto.merchantFee.netNominal,
+          netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
           MerchantBalanceLog: {
             create: {
               merchantId: dto.merchantId,
               changeAmount: dto.nominal,
               balancePending: lastBalanceMerchant.balancePending.plus(
-                purchaseFeeDto.merchantFee.netNominal,
+                feeDto.merchantFee.netNominal,
               ),
               balanceActive: lastBalanceMerchant.balanceActive,
               transactionType: 'PURCHASE',
@@ -75,11 +75,11 @@ export class PurchaseService {
           },
           InternalBalanceLog: {
             create: {
-              changeAmount: purchaseFeeDto.internalFee.fee,
-              balanceActive: lastBalanceInternal.balanceActive,
+              changeAmount: feeDto.internalFee.nominal,
+              balancePending: lastBalanceInternal.balancePending,
               merchantId: dto.merchantId,
-              balancePending: lastBalanceInternal.balancePending.plus(
-                purchaseFeeDto.internalFee.fee,
+              balanceActive: lastBalanceInternal.balanceActive?.plus(
+                feeDto.internalFee.nominal,
               ),
               providerName: dto.providerName,
               paymentMethodName: dto.paymentMethodName,
@@ -89,7 +89,7 @@ export class PurchaseService {
           AgentBalanceLog: {
             createMany: {
               skipDuplicates: true,
-              data: purchaseFeeDto.agentFee.agents.map((item) => {
+              data: feeDto.agentFee.agents.map((item) => {
                 return {
                   agentId: item.id,
                   changeAmount: item.nominal,
@@ -114,14 +114,14 @@ export class PurchaseService {
       const purchaseFeeDetailManyInput: Prisma.PurchaseFeeDetailCreateManyInput[] =
         this.purchaseFeeDetailMapper({
           purchaseId: purchaseTransaction.id,
-          purchaseFeeDto,
+          feeDto,
         });
       const purchsaeFeeDetails = await tx.purchaseFeeDetail.createManyAndReturn(
         {
           data: purchaseFeeDetailManyInput,
         },
       );
-      console.log({ purchaseTransaction, purchaseFeeDto, purchsaeFeeDetails });
+      console.log({ purchaseTransaction, feeDto, purchsaeFeeDetails });
 
       return;
     });
@@ -129,13 +129,13 @@ export class PurchaseService {
 
   private purchaseFeeDetailMapper({
     purchaseId,
-    purchaseFeeDto,
+    feeDto,
   }: {
     purchaseId: number;
-    purchaseFeeDto: PurchasingFeeDto;
+    feeDto: PurchaseFeeSystemDto;
   }): Prisma.PurchaseFeeDetailCreateManyInput[] {
     const result: Prisma.PurchaseFeeDetailCreateManyInput[] = [];
-    const { merchantFee, agentFee, providerFee, internalFee } = purchaseFeeDto;
+    const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
         new UnprocessableEntityException('Some of the response is null'),
@@ -154,8 +154,8 @@ export class PurchaseService {
     result.push({
       purchaseId,
       type: 'MERCHANT',
-      isPercentage: true,
-      fee: merchantFee.feePercentage,
+      feePercentage: merchantFee.feePercentage,
+      feeFixed: new Decimal(0),
       nominal: merchantFee.netNominal,
     });
 
@@ -165,8 +165,8 @@ export class PurchaseService {
     result.push({
       purchaseId,
       type: 'PROVIDER',
-      isPercentage: providerFee.isPercentage,
-      fee: providerFee.fee,
+      feeFixed: providerFee.feeFixed,
+      feePercentage: providerFee.feePercentage,
       nominal: providerFee.nominal,
     });
 
@@ -176,8 +176,8 @@ export class PurchaseService {
     result.push({
       purchaseId,
       type: 'INTERNAL',
-      isPercentage: internalFee.isPercentage,
-      fee: internalFee.fee,
+      feeFixed: internalFee.feeFixed,
+      feePercentage: internalFee.feePercentage,
       nominal: internalFee.nominal,
     });
 
@@ -189,8 +189,8 @@ export class PurchaseService {
         purchaseId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
-        isPercentage: true,
-        fee: agentFeeEach.feePercentage,
+        feeFixed: agentFee.nominal,
+        feePercentage: agentFeeEach.feePercentage,
         nominal: agentFeeEach.nominal,
       });
     }

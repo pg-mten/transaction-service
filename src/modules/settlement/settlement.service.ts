@@ -9,9 +9,9 @@ import { FilterSettlementDto } from './dto/filter-settlement.dto';
 import { Prisma, TransactionStatusEnum } from '@prisma/client';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto';
-import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
 import { FilterUnsettlementDto } from './dto/filter-unsettlement.dto';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
+import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
 
 @Injectable()
 export class SettlementService {

@@ -46,13 +46,13 @@ model TopUpTransaction {
 }
 
 model TopupFeeDetail {
-  id           Int         @id @default(autoincrement())
-  agentId      Int?
-  topupId      Int
-  type         FeeTypeEnum
-  nominal      Decimal
-  isPercentage Boolean
-  fee          Decimal
+  id            Int         @id @default(autoincrement())
+  agentId       Int?
+  topupId       Int
+  type          FeeTypeEnum
+  nominal       Decimal
+  feeFixed      Decimal
+  feePercentage Decimal
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -98,13 +98,13 @@ model WithdrawTransaction {
 }
 
 model WithdrawFeeDetail {
-  id           Int         @id @default(autoincrement())
-  agentId      Int?
-  withdrawId   Int
-  type         FeeTypeEnum
-  nominal      Decimal
-  isPercentage Boolean
-  fee          Decimal
+  id            Int         @id @default(autoincrement())
+  agentId       Int?
+  withdrawId    Int
+  type          FeeTypeEnum
+  nominal       Decimal
+  feeFixed      Decimal
+  feePercentage Decimal
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -158,8 +158,8 @@ model DisbursementFeeDetail {
   disbursementId Int
   type           FeeTypeEnum
   nominal        Decimal
-  isPercentage   Boolean
-  fee            Decimal
+  feeFixed       Decimal
+  feePercentage  Decimal
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -209,13 +209,13 @@ model PurchaseTransaction {
 }
 
 model PurchaseFeeDetail {
-  id           Int         @id @default(autoincrement())
-  agentId      Int?
-  purchaseId   Int
-  type         FeeTypeEnum
-  nominal      Decimal
-  isPercentage Boolean
-  fee          Decimal // Fixed or Percentage (2500 or 0.12%)
+  id            Int         @id @default(autoincrement())
+  agentId       Int?
+  purchaseId    Int
+  type          FeeTypeEnum
+  nominal       Decimal
+  feeFixed      Decimal
+  feePercentage Decimal
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

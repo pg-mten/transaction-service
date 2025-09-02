@@ -4,11 +4,11 @@ import Decimal from 'decimal.js';
 import { DateTime } from 'luxon';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
-import { PurchaseFeeDetailDto } from './purchase-fee-detail.dto';
 import {
   ToDateTimeJsDate,
   ToDateTimeJsDateNullable,
 } from 'src/decorator/date.decorator';
+import { PurchaseFeeDetailDto } from './purchase-fee-detail.dto';
 
 export class PurchaseTransactionDto {
   constructor(data: PurchaseTransactionDto) {

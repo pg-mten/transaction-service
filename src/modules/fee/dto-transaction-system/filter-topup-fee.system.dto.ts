@@ -4,7 +4,7 @@ import { IsNumber, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
-export class FilterPurchasingFeeDto {
+export class FilterTopupFeeSystemDto {
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ example: 1 })
@@ -21,6 +21,6 @@ export class FilterPurchasingFeeDto {
   @ToDecimal()
   @Type(() => Decimal)
   @ValidateIf((o) => o.nominal !== undefined)
-  @ApiProperty({ type: Decimal, example: '100' })
+  @ApiProperty({ example: '1000000' })
   nominal: Decimal;
 }

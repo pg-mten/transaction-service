@@ -3,22 +3,19 @@ import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class ProviderFeeDto {
-  constructor(data: ProviderFeeDto) {
+export class AgentFeeEachSystemDto {
+  constructor(data: AgentFeeEachSystemDto) {
     DtoHelper.assign(this, data);
   }
 
   @ApiProperty()
-  name: string;
+  id: number;
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
   nominal: Decimal;
 
-  @ApiProperty({ type: Boolean })
-  isPercentage: boolean;
-
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
-  fee: Decimal;
+  feePercentage: Decimal;
 }

@@ -1,15 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { FeeTypeEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class MerchantFeeDto {
-  constructor(data: MerchantFeeDto) {
+export class TopupFeeDetailDto {
+  constructor(data: TopupFeeDetailDto) {
     DtoHelper.assign(this, data);
   }
 
-  @ApiProperty()
+  @ApiProperty({ type: Number })
   id: number;
+
+  @ApiProperty({ type: Number, required: false })
+  agentId: number | null;
+
+  @ApiProperty({ enum: FeeTypeEnum })
+  type: FeeTypeEnum;
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
@@ -17,7 +24,7 @@ export class MerchantFeeDto {
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })
-  netNominal: Decimal;
+  feeFixed: Decimal;
 
   @ToDecimalFixed()
   @ApiProperty({ type: Decimal })

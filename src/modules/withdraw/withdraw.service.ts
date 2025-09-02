@@ -7,12 +7,12 @@ import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
-import { FeeDetailDto } from './dto/fee-details';
 import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
-import { WithdrawFeeDto } from '../fee/dto/withdraw-fee.dto';
 import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
+import { WithdrawFeeSystemDto } from '../fee/dto-transaction-system/withdraw-fee.system.dto';
+import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 
 @Injectable()
 export class WithdrawTransactionService {
@@ -24,15 +24,15 @@ export class WithdrawTransactionService {
 
   async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
-      const withdrawFeeDto: WithdrawFeeDto =
-        await this.feeCalculateService.calculateFeeConfig({
+      const feeDto =
+        await this.feeCalculateService.calculateWithdrawFeeConfigTCP({
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
         });
 
-      const agentIds: number[] = withdrawFeeDto.agentFee.agents.map(
+      const agentIds: number[] = feeDto.agentFee.agents.map(
         (agent) => agent.id,
       );
 
@@ -56,14 +56,14 @@ export class WithdrawTransactionService {
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
           metadata: dto.metadata,
-          netNominal: withdrawFeeDto.merchantFee.netNominal,
+          netNominal: feeDto.merchantFee.netNominal,
           status: 'PENDING',
           MerchantBalanceLog: {
             create: {
               merchantId: dto.merchantId,
               changeAmount: dto.nominal,
               balanceActive: lastBalanceMerchant.balanceActive?.minus(
-                withdrawFeeDto.merchantFee.netNominal,
+                feeDto.merchantFee.netNominal,
               ),
               balancePending: lastBalanceMerchant.balancePending,
               transactionType: 'WITHDRAW',
@@ -71,11 +71,11 @@ export class WithdrawTransactionService {
           },
           InternalBalanceLog: {
             create: {
-              changeAmount: withdrawFeeDto.internalFee.fee,
+              changeAmount: feeDto.internalFee.nominal,
               balancePending: lastBalanceInternal.balancePending,
               merchantId: dto.merchantId,
               balanceActive: lastBalanceInternal.balanceActive?.plus(
-                withdrawFeeDto.internalFee.fee,
+                feeDto.internalFee.nominal,
               ),
               providerName: dto.providerName,
               paymentMethodName: dto.paymentMethodName,
@@ -85,7 +85,7 @@ export class WithdrawTransactionService {
           AgentBalanceLog: {
             createMany: {
               skipDuplicates: true,
-              data: withdrawFeeDto.agentFee.agents.map((item) => {
+              data: feeDto.agentFee.agents.map((item) => {
                 return {
                   agentId: item.id,
                   changeAmount: item.nominal,
@@ -107,7 +107,7 @@ export class WithdrawTransactionService {
       const withdrawFeeDetailCreateManyInput: Prisma.WithdrawFeeDetailCreateManyInput[] =
         this.feeDetailMapper({
           withdrawId: withdrawTransaction.id,
-          withdrawFeeDto,
+          feeDto,
         });
       const withdrawFeeDetails =
         await trx.withdrawFeeDetail.createManyAndReturn({
@@ -116,7 +116,7 @@ export class WithdrawTransactionService {
 
       console.log({
         withdrawTransaction,
-        withdrawFeeDto,
+        feeDto,
         withdrawFeeDetails,
       });
 
@@ -125,13 +125,13 @@ export class WithdrawTransactionService {
   }
   private feeDetailMapper({
     withdrawId,
-    withdrawFeeDto,
+    feeDto,
   }: {
     withdrawId: number;
-    withdrawFeeDto: WithdrawFeeDto;
+    feeDto: WithdrawFeeSystemDto;
   }): Prisma.WithdrawFeeDetailCreateManyInput[] {
     const result: Prisma.WithdrawFeeDetailCreateManyInput[] = [];
-    const { merchantFee, agentFee, providerFee, internalFee } = withdrawFeeDto;
+    const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
         new UnprocessableEntityException('Some of the response is null'),
@@ -150,8 +150,8 @@ export class WithdrawTransactionService {
     result.push({
       withdrawId,
       type: 'MERCHANT',
-      isPercentage: true,
-      fee: merchantFee.feePercentage,
+      feePercentage: merchantFee.feePercentage,
+      feeFixed: new Decimal(0),
       nominal: merchantFee.netNominal,
     });
 
@@ -161,8 +161,8 @@ export class WithdrawTransactionService {
     result.push({
       withdrawId,
       type: 'PROVIDER',
-      isPercentage: providerFee.isPercentage,
-      fee: providerFee.fee,
+      feeFixed: providerFee.feeFixed,
+      feePercentage: providerFee.feePercentage,
       nominal: providerFee.nominal,
     });
 
@@ -172,8 +172,8 @@ export class WithdrawTransactionService {
     result.push({
       withdrawId,
       type: 'INTERNAL',
-      isPercentage: internalFee.isPercentage,
-      fee: internalFee.fee,
+      feeFixed: internalFee.feeFixed,
+      feePercentage: internalFee.feePercentage,
       nominal: internalFee.nominal,
     });
 
@@ -185,8 +185,8 @@ export class WithdrawTransactionService {
         withdrawId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
-        isPercentage: true,
-        fee: agentFeeEach.feePercentage,
+        feeFixed: agentFee.nominal,
+        feePercentage: agentFeeEach.feePercentage,
         nominal: agentFeeEach.nominal,
       });
     }
@@ -246,7 +246,7 @@ export class WithdrawTransactionService {
         ...item,
         metadata: item.metadata as Record<string, unknown>,
         feeDetails: item.feeDetails.map((fee) => {
-          return new FeeDetailDto({ ...fee });
+          return new WithdrawFeeDetailDto({ ...fee });
         }),
       });
     });

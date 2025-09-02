@@ -1,7 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FeeCalculateService } from '../fee/fee-calculate.service';
-import { TopupFeeDto } from '../fee/dto/topup-fee.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -9,11 +8,11 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateDisbursementTransactionDto } from './dto/create-disbursement-transaction.dto';
 import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
-import { FeeDetailDto } from './dto/fee-details';
-import { DisbursementFeeDto } from '../fee/dto/disbursement-fee-dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
+import { DisbursementFeeSystemDto } from '../fee/dto-transaction-system/disbursement-fee.system.dto';
+import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 
 @Injectable()
 export class DisbursementTransactionService {
@@ -23,10 +22,10 @@ export class DisbursementTransactionService {
     private balanceService: BalanceService,
   ) {}
 
-  async createDisbursementTransaction(dto: CreateDisbursementTransactionDto) {
+  async create(dto: CreateDisbursementTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
-      const feeDto: TopupFeeDto =
-        await this.feeCalculateService.calculateFeeConfig({
+      const feeDto =
+        await this.feeCalculateService.calculateDisbursementFeeConfigTCP({
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
@@ -71,11 +70,11 @@ export class DisbursementTransactionService {
           },
           InternalBalanceLog: {
             create: {
-              changeAmount: feeDto.internalFee.fee,
+              changeAmount: feeDto.internalFee.nominal,
               balancePending: lastBalanceInternal.balancePending,
               merchantId: dto.merchantId,
               balanceActive: lastBalanceInternal.balanceActive?.plus(
-                feeDto.internalFee.fee,
+                feeDto.internalFee.nominal,
               ),
               providerName: dto.providerName,
               paymentMethodName: dto.paymentMethodName,
@@ -123,7 +122,7 @@ export class DisbursementTransactionService {
     feeDto,
   }: {
     disbursementId: number;
-    feeDto: DisbursementFeeDto;
+    feeDto: DisbursementFeeSystemDto;
   }): Prisma.DisbursementFeeDetailCreateManyInput[] {
     const result: Prisma.DisbursementFeeDetailCreateManyInput[] = [];
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
@@ -145,8 +144,8 @@ export class DisbursementTransactionService {
     result.push({
       disbursementId,
       type: 'MERCHANT',
-      isPercentage: true,
-      fee: merchantFee.feePercentage,
+      feePercentage: merchantFee.feePercentage,
+      feeFixed: new Decimal(0),
       nominal: merchantFee.netNominal,
     });
 
@@ -156,8 +155,8 @@ export class DisbursementTransactionService {
     result.push({
       disbursementId,
       type: 'PROVIDER',
-      isPercentage: providerFee.isPercentage,
-      fee: providerFee.fee,
+      feeFixed: providerFee.feeFixed,
+      feePercentage: providerFee.feePercentage,
       nominal: providerFee.nominal,
     });
 
@@ -167,8 +166,8 @@ export class DisbursementTransactionService {
     result.push({
       disbursementId,
       type: 'INTERNAL',
-      isPercentage: internalFee.isPercentage,
-      fee: internalFee.fee,
+      feeFixed: internalFee.feeFixed,
+      feePercentage: internalFee.feePercentage,
       nominal: internalFee.nominal,
     });
 
@@ -180,8 +179,8 @@ export class DisbursementTransactionService {
         disbursementId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
-        isPercentage: true,
-        fee: agentFeeEach.feePercentage,
+        feeFixed: agentFee.nominal,
+        feePercentage: agentFeeEach.feePercentage,
         nominal: agentFeeEach.nominal,
       });
     }
@@ -241,7 +240,7 @@ export class DisbursementTransactionService {
         ...item,
         metadata: item.metadata as Record<string, unknown>,
         feeDetails: item.feeDetails.map((fee) => {
-          return new FeeDetailDto({ ...fee });
+          return new DisbursementFeeDetailDto({ ...fee });
         }),
       });
     });

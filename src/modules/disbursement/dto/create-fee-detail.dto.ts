@@ -4,8 +4,8 @@ import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class DisbursementFeeDetailDto {
-  constructor(data: DisbursementFeeDetailDto) {
+export class CreateDisbursementFeeDetailDto {
+  constructor(data: CreateDisbursementFeeDetailDto) {
     DtoHelper.assign(this, data);
   }
 
