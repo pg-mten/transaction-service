@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumberString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ValidateIf } from 'class-validator';
 import { Decimal } from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
@@ -32,10 +33,12 @@ export class CreateWithdrawTransactionDto {
   // agentId?: number;
 
   @ApiProperty({
+    type: Decimal,
     description: 'Amount in decimal string format, e.g. "10000.00"',
     example: '10000.00',
   })
-  @IsNumberString()
+  @Type(() => Decimal)
+  @ValidateIf((o) => o.nominal !== undefined)
   @ToDecimal()
   nominal: Decimal;
 
