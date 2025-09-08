@@ -13,6 +13,7 @@ import Decimal from 'decimal.js';
 import { BalanceService } from '../balance/balance.service';
 import { TopupFeeSystemDto } from '../fee/dto-transaction-system/topup-fee.system.dto';
 import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
+import { SettlementService } from '../settlement/settlement.service';
 
 @Injectable()
 export class TopupTransactionService {
@@ -20,6 +21,7 @@ export class TopupTransactionService {
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
     private balanceService: BalanceService,
+    private settlementService: SettlementService,
   ) {}
 
   async createTopupTransaction(dto: CreateTopupTransactionDto) {
@@ -231,60 +233,16 @@ export class TopupTransactionService {
           status: 'PENDING',
         },
         select: {
-          feeDetails: true,
           merchantId: true,
           id: true,
           netNominal: true,
+          feeDetails: true,
+          providerName: true,
+          paymentMethodName: true,
+          nominal: true,
         },
       });
-
-      const agentIds: number[] = topup.feeDetails
-        .map((feeDetail) => feeDetail.agentId)
-        .filter<number>((agentId) => agentId !== null);
-
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(topup.merchantId);
-      const lastBalanceAgents =
-        await this.balanceService.checkBalanceAgents(agentIds);
-
-      await trx.merchantBalanceLog.create({
-        data: {
-          merchantId: topup.merchantId,
-          topupId: topup.id,
-          changeAmount: topup.netNominal,
-          balanceActive: lastBalanceMerchant.balanceActive.plus(
-            topup.netNominal,
-          ),
-          balancePending: lastBalanceMerchant.balancePending,
-          transactionType: 'TOPUP',
-        },
-      });
-      for (const feeDetail of topup.feeDetails) {
-        if (feeDetail.type !== 'AGENT' || feeDetail.agentId === null) continue;
-
-        /**
-         * Get the last Agent Balance
-         */
-
-        /**
-         * Update Agent Balance
-         */
-        await trx.agentBalanceLog.create({
-          data: {
-            agentId: feeDetail.agentId,
-            topupId: topup.id,
-            changeAmount: feeDetail.nominal,
-            balancePending:
-              lastBalanceAgents.find((a) => a.agentId == feeDetail.agentId)
-                ?.balancePending || new Decimal(0),
-            balanceActive:
-              lastBalanceAgents
-                .find((a) => a.agentId == feeDetail.agentId)
-                ?.balanceActive.plus(feeDetail.nominal) || new Decimal(0),
-            transactionType: 'TOPUP',
-          },
-        });
-      }
+      await this.settlementService.settlementTopup(topup);
     });
   }
 

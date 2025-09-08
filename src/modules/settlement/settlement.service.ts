@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import Decimal from 'decimal.js';
 import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
@@ -12,12 +12,18 @@ import { PurchaseTransactionDto } from '../purchase/dto/purchase-transaction.dto
 import { FilterUnsettlementDto } from './dto/filter-unsettlement.dto';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
+import { DisbursementTransactionDto } from '../disbursement/dto/disbursement-transaction.dto';
+import { firstValueFrom } from 'rxjs';
+import { ClientProxy } from '@nestjs/microservices';
+import { WithdrawTransactionDto } from '../withdraw/dto/withdraw-transaction.dto';
+import { TopupSettlementDto } from './dto/top-up-settlement.dto';
 
 @Injectable()
 export class SettlementService {
   constructor(
     private readonly prisma: PrismaService,
     private balanceService: BalanceService,
+    @Inject('SETTLE_RECON_SERVICE') private readonly settleClient: ClientProxy,
   ) {}
 
   async findAllSettlement(pageable: Pageable, filter: FilterSettlementDto) {
@@ -65,6 +71,45 @@ export class SettlementService {
       total,
       data: purchaseDtos,
     });
+  }
+
+  async settlementDisbursement(filter: DisbursementTransactionDto) {
+    try {
+      const res = await firstValueFrom(
+        this.settleClient.send({ cmd: 'settlement_disbursement' }, filter),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async settlementTopup(filter: TopupSettlementDto) {
+    try {
+      const res = await firstValueFrom(
+        this.settleClient.send({ cmd: 'settlement_topup' }, filter),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async settlementWithdraw(filter: WithdrawTransactionDto) {
+    try {
+      const res = await firstValueFrom(
+        this.settleClient.send({ cmd: 'settlement_withdraw' }, filter),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async findAllUnsettlement(pageable: Pageable, filter: FilterUnsettlementDto) {
