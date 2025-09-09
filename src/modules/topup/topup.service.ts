@@ -206,19 +206,29 @@ export class TopupTransactionService {
         },
       }),
     ]);
-    const data = items.map((item) => {
-      return new TopupTransactionDto({
-        ...item,
-        metadata: item.metadata as Record<string, unknown>,
-        feeDetails: item.feeDetails.map((fee) => {
-          return new TopupFeeDetailDto({ ...fee });
+
+    const topupDtos: TopupTransactionDto[] = [];
+    for (const item of items) {
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: TopupFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new TopupFeeDetailDto({ ...feeDetail }));
+      }
+      topupDtos.push(
+        new TopupTransactionDto({
+          ...item,
+          totalFeeCut,
+          metadata: item.metadata as Record<string, unknown>,
+          feeDetails: feeDetailDtos,
         }),
-      });
-    });
+      );
+    }
+
     return new Page<TopupTransactionDto>({
       pageable,
       total,
-      data: data,
+      data: topupDtos,
     });
   }
 

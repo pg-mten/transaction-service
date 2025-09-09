@@ -53,18 +53,26 @@ export class SettlementService {
       }),
     ]);
 
-    const purchaseDtos = items.map((item) => {
-      return new PurchaseTransactionDto({
-        ...item,
-        metadata: item.metadata as Record<string, unknown>,
-        settlementAt: DateHelper.fromJsDate(item.settlementAt),
-        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
-        createdAt: DateHelper.fromJsDate(item.createdAt)!,
-        feeDetails: item.feeDetails.map((fee) => {
-          return new PurchaseFeeDetailDto({ ...fee });
+    const purchaseDtos: PurchaseTransactionDto[] = [];
+    for (const item of items) {
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: PurchaseFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new PurchaseFeeDetailDto({ ...feeDetail }));
+      }
+      purchaseDtos.push(
+        new PurchaseTransactionDto({
+          ...item,
+          totalFeeCut,
+          metadata: item.metadata as Record<string, unknown>,
+          settlementAt: DateHelper.fromJsDate(item.settlementAt),
+          reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+          createdAt: DateHelper.fromJsDate(item.createdAt)!,
+          feeDetails: feeDetailDtos,
         }),
-      });
-    });
+      );
+    }
 
     return new Page<PurchaseTransactionDto>({
       pageable,
@@ -132,18 +140,26 @@ export class SettlementService {
       }),
     ]);
 
-    const purchaseDtos = items.map((item) => {
-      return new PurchaseTransactionDto({
-        ...item,
-        metadata: item.metadata as Record<string, unknown>,
-        settlementAt: DateHelper.fromJsDate(item.settlementAt),
-        reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
-        createdAt: DateHelper.fromJsDate(item.createdAt)!,
-        feeDetails: item.feeDetails.map((fee) => {
-          return new PurchaseFeeDetailDto({ ...fee });
+    const purchaseDtos: PurchaseTransactionDto[] = [];
+    for (const item of items) {
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: PurchaseFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new PurchaseFeeDetailDto({ ...feeDetail }));
+      }
+      purchaseDtos.push(
+        new PurchaseTransactionDto({
+          ...item,
+          totalFeeCut,
+          metadata: item.metadata as Record<string, unknown>,
+          settlementAt: DateHelper.fromJsDate(item.settlementAt),
+          reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+          createdAt: DateHelper.fromJsDate(item.createdAt)!,
+          feeDetails: feeDetailDtos,
         }),
-      });
-    });
+      );
+    }
 
     return new Page<PurchaseTransactionDto>({
       pageable,

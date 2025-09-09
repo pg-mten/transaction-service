@@ -36,6 +36,10 @@ export class DisbursementTransactionDto {
   @ApiProperty({ type: Decimal })
   netNominal: Decimal;
 
+  @ToDecimalFixed()
+  @ApiProperty({ type: Decimal })
+  totalFeeCut: Decimal;
+
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 

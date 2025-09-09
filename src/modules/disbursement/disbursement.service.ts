@@ -235,20 +235,29 @@ export class DisbursementTransactionService {
         },
       }),
     ]);
-    const data = items.map((item) => {
-      return new DisbursementTransactionDto({
-        ...item,
-        metadata: item.metadata as Record<string, unknown>,
-        feeDetails: item.feeDetails.map((fee) => {
-          return new DisbursementFeeDetailDto({ ...fee });
+
+    const disbursementDtos: DisbursementTransactionDto[] = [];
+    for (const item of items) {
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: DisbursementFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new DisbursementFeeDetailDto({ ...feeDetail }));
+      }
+      disbursementDtos.push(
+        new DisbursementTransactionDto({
+          ...item,
+          totalFeeCut,
+          metadata: item.metadata as Record<string, unknown>,
+          feeDetails: feeDetailDtos,
         }),
-      });
-    });
+      );
+    }
 
     return new Page<DisbursementTransactionDto>({
       pageable,
       total,
-      data: data,
+      data: disbursementDtos,
     });
   }
 }

@@ -248,19 +248,29 @@ export class WithdrawTransactionService {
         },
       }),
     ]);
-    const data = items.map((item) => {
-      return new WithdrawTransactionDto({
-        ...item,
-        metadata: item.metadata as Record<string, unknown>,
-        feeDetails: item.feeDetails.map((fee) => {
-          return new WithdrawFeeDetailDto({ ...fee });
+
+    const withdrawDtos: WithdrawTransactionDto[] = [];
+    for (const item of items) {
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: WithdrawFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new WithdrawFeeDetailDto({ ...feeDetail }));
+      }
+      withdrawDtos.push(
+        new WithdrawTransactionDto({
+          ...item,
+          totalFeeCut,
+          metadata: item.metadata as Record<string, unknown>,
+          feeDetails: feeDetailDtos,
         }),
-      });
-    });
+      );
+    }
+
     return new Page<WithdrawTransactionDto>({
       pageable,
       total,
-      data: data,
+      data: withdrawDtos,
     });
   }
 }
