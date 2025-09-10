@@ -47,7 +47,7 @@ export class TopupService {
           externalId: 'external id faker',
           referenceId: UuidHelper.v4(),
           merchantId,
-          providerName: 'NETZME',
+          providerName: 'INTERNAL',
           paymentMethodName: 'TRANSFERBANK',
           receiptImage: receiptImage,
           nominal: dto.nominal,
