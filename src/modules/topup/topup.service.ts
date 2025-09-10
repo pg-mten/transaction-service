@@ -15,6 +15,8 @@ import { TopupFeeSystemDto } from '../fee/dto-transaction-system/topup-fee.syste
 import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
 import { SettlementService } from '../settlement/settlement.service';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
+import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
+import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
 
 @Injectable()
 export class TopupService {
@@ -31,26 +33,6 @@ export class TopupService {
     /// TODO URL Path dari Minio
     const receiptImage = dto.receiptImage ?? 'www.google.com';
     console.log({ dto });
-
-    /// TODO Readme
-    /**
-     * Alur top up ini harus update sih
-     * Suggestion:
-     * - Merchant melakukan TopUp input nominal dan receipt image
-     * - Kedua data itu disimpan pada table terpisah (TopUpMerchantDraft)
-     * - Admin akan melakukan identifikasi manual berdasarkan receipt image
-     * - Admin melakukan input berdasarkan table TopUpTransaction dan etc
-     * - Jika tidak valid, maka TopUpMerchantDraft ubah status menjadi INVALID
-     *
-     * - Table TopUpMerchantDraft
-     *   - merchantId
-     *   - Receipt Image
-     *   - TopUpMerchantDraftEnum
-     *   - createdAt ... etc
-     * - Enum TopUpMerchantDraftEnum
-     * - Table TopUpTransaction
-     *   - Tambah FK ke TopUpMerchantDraft
-     */
 
     await this.prisma.$transaction(async (trx) => {
       const feeDto = await this.feeCalculateService.calculateTopupFeeConfigTCP({
@@ -235,29 +217,41 @@ export class TopupService {
     });
   }
 
-  async approveTopUp(transactionId: number) {
-    const topup = await this.prisma.$transaction(async (trx) => {
-      const topup = await trx.topUpTransaction.update({
+  async approveTopUp(dto: ApproveTopupTransactionDto) {
+    const { topupId } = dto;
+    console.log('approveTopUp');
+    const topupDto = await this.prisma.$transaction(async (trx) => {
+      const item = await trx.topUpTransaction.update({
         data: {
           status: 'SUCCESS',
         },
         where: {
-          id: transactionId,
+          id: topupId,
           status: 'PENDING',
         },
-        select: {
-          merchantId: true,
-          id: true,
-          netNominal: true,
-          feeDetails: true,
-          providerName: true,
-          paymentMethodName: true,
-          nominal: true,
-        },
+        include: { feeDetails: true },
       });
-      await this.settlementService.settlementTopup(topup);
-      return topup;
+      console.log({ item });
+      let totalFeeCut = new Decimal(0);
+      const feeDetailDtos: TopupFeeDetailDto[] = [];
+      for (const feeDetail of item.feeDetails) {
+        totalFeeCut = totalFeeCut.plus(feeDetail.nominal);
+        feeDetailDtos.push(new TopupFeeDetailDto({ ...feeDetail }));
+      }
+
+      const topupDto = new TopupTransactionDto({
+        ...item,
+        totalFeeCut,
+        metadata: item.metadata as Record<string, unknown>,
+        feeDetails: feeDetailDtos,
+      });
+      console.log({ topupDto });
+
+      // await this.settlementService.settlementTopup(topup);
+      await this.settlementTopup(topupDto);
+      return topupDto;
     });
+    console.log({ topupDto });
 
     /// TODO Reduce Deadlock
     // this.settlementService
@@ -290,13 +284,86 @@ export class TopupService {
     return;
   }
 
-  async rejectTopup(transactionId: number) {
+  async settlementTopup(topupDto: TopupTransactionDto) {
+    console.log('settlementTopup');
+    console.log({ topupDto });
+    await this.prisma.$transaction(async (trx) => {
+      const agentIds: number[] = topupDto.feeDetails
+        .map((feeDetail) => feeDetail.agentId)
+        .filter<number>((agentId) => agentId !== null);
+
+      const lastBalanceMerchant =
+        await this.balanceService.checkBalanceMerchant(topupDto.merchantId);
+      const lastBalanceAgents =
+        await this.balanceService.checkBalanceAgents(agentIds);
+      const lastBalanceInternal =
+        await this.balanceService.checkBalanceInternal();
+
+      console.log({
+        lastBalanceMerchant,
+        lastBalanceAgents,
+        lastBalanceInternal,
+      });
+
+      await trx.merchantBalanceLog.create({
+        data: {
+          merchantId: topupDto.merchantId,
+          topupId: topupDto.id,
+          changeAmount: topupDto.netNominal,
+          balanceActive: lastBalanceMerchant.balanceActive.plus(
+            topupDto.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
+          transactionType: 'TOPUP',
+        },
+      });
+      for (const feeDetail of topupDto.feeDetails) {
+        if (feeDetail.type == 'INTERNAL') {
+          await trx.internalBalanceLog.create({
+            data: {
+              topupId: topupDto.id,
+              changeAmount: feeDetail.nominal,
+              balancePending: lastBalanceInternal.balancePending,
+              balanceActive: lastBalanceInternal.balanceActive.plus(
+                feeDetail.nominal,
+              ),
+              merchantId: topupDto.merchantId,
+              providerName: topupDto.providerName,
+              paymentMethodName: topupDto.paymentMethodName,
+              transactionType: 'TOPUP',
+            },
+          });
+        }
+        if (feeDetail.type == 'AGENT' && feeDetail.agentId !== null) {
+          await trx.agentBalanceLog.create({
+            data: {
+              agentId: feeDetail.agentId,
+              topupId: topupDto.id,
+              changeAmount: feeDetail.nominal,
+              balancePending:
+                lastBalanceAgents.find((a) => a.agentId == feeDetail.agentId)
+                  ?.balancePending || new Decimal(0),
+              balanceActive:
+                lastBalanceAgents
+                  .find((a) => a.agentId == feeDetail.agentId)
+                  ?.balanceActive.plus(feeDetail.nominal) || new Decimal(0),
+              transactionType: 'TOPUP',
+            },
+          });
+        }
+      }
+    });
+    return;
+  }
+
+  async rejectTopup(dto: RejectTopupTransactionDto) {
+    const { topupId } = dto;
     await this.prisma.topUpTransaction.update({
       data: {
         status: 'FAILED',
       },
       where: {
-        id: transactionId,
+        id: topupId,
         status: 'PENDING',
       },
       select: {

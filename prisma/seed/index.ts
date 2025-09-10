@@ -15,10 +15,10 @@ async function main() {
     await NestFactory.createApplicationContext(AppModule);
 
   try {
-    await purchaseSeed(app);
+    // await purchaseSeed(app);
     await topupSeed(app);
-    await withdrawSeed(app);
-    await disbursementSeed(app);
+    // await withdrawSeed(app);
+    // await disbursementSeed(app);
     console.log('Proccess Done');
   } catch (error) {
     console.log('Error');

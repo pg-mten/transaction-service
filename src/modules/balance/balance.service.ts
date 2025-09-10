@@ -229,4 +229,21 @@ export class BalanceService {
       balancePending: lastRow?.balancePending ?? new Decimal(0),
     });
   }
+
+  async checkBalanceInternal() {
+    const lastRow = await this.prisma.internalBalanceLog.findFirst({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+
+    return new BalanceDto({
+      balanceActive: lastRow?.balanceActive ?? new Decimal(0),
+      balancePending: lastRow?.balancePending ?? new Decimal(0),
+    });
+  }
 }

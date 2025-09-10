@@ -28,6 +28,8 @@ export async function topupSeed(app: INestApplicationContext) {
       receiptImage: 'www.google.com',
       nominal: new Decimal(70000000),
     });
+
+    await topupService.approveTopUp({ topupId: 1 });
   } catch (error) {
     console.log('Error');
     console.log(error);

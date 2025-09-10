@@ -15,6 +15,8 @@ import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { TopupService } from './topup.service';
 import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
+import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
+import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
 
 @ApiTags('Transactions', 'Topup')
 @Controller('transactions/topup')
@@ -45,5 +47,21 @@ export class TopupTransactionsController {
   ) {
     console.log({ filter, pageable });
     return this.service.findAll(pageable, filter);
+  }
+
+  @Post('/approve')
+  @ApiOperation({ summary: 'Approve topup' })
+  @ApiBody({ type: ApproveTopupTransactionDto })
+  approveTopup(@Body() body: ApproveTopupTransactionDto) {
+    console.log({ body });
+    return this.service.approveTopUp(body);
+  }
+
+  @Post('/reject')
+  @ApiOperation({ summary: 'Reject topup' })
+  @ApiBody({ type: RejectTopupTransactionDto })
+  rejectTopup(@Body() body: RejectTopupTransactionDto) {
+    console.log({ body });
+    return this.service.rejectTopup(body);
   }
 }
