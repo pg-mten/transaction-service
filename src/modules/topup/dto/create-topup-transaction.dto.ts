@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { Decimal } from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
@@ -15,9 +15,9 @@ export class CreateTopupTransactionDto {
   // @IsNotEmpty()
   // referenceId: string;
 
-  // @ApiProperty({ example: 1 })
-  // @IsInt()
-  // merchantId: number;
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  merchantId: number;
 
   // @ApiProperty({ example: 'INTERNAL' })
   // @IsString()

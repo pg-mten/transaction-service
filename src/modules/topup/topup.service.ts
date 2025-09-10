@@ -17,7 +17,7 @@ import { SettlementService } from '../settlement/settlement.service';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 
 @Injectable()
-export class TopupTransactionService {
+export class TopupService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
@@ -25,12 +25,11 @@ export class TopupTransactionService {
     private settlementService: SettlementService,
   ) {}
 
-  async createTopupTransaction(dto: CreateTopupTransactionDto) {
-    /// TODO Ambil dari JWT token
-    const merchantId = 1;
+  async create(dto: CreateTopupTransactionDto) {
+    const merchantId = dto.merchantId;
 
     /// TODO URL Path dari Minio
-    const receiptImage = 'image.png';
+    const receiptImage = dto.receiptImage ?? 'www.google.com';
     console.log({ dto });
 
     /// TODO Readme

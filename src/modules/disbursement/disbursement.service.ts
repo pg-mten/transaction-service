@@ -15,7 +15,7 @@ import { DisbursementFeeSystemDto } from '../fee/dto-transaction-system/disburse
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 
 @Injectable()
-export class DisbursementTransactionService {
+export class DisbursementService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,

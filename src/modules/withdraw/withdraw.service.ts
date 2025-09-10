@@ -16,16 +16,15 @@ import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 
 @Injectable()
-export class WithdrawTransactionService {
+export class WithdrawService {
   constructor(
     private prisma: PrismaService,
     private feeCalculateService: FeeCalculateService,
     private balanceService: BalanceService,
   ) {}
 
-  async createWithdrawTransaction(dto: CreateWithdrawTransactionDto) {
-    /// TODO Ambil dari JWT token
-    const merchantId = 1;
+  async create(dto: CreateWithdrawTransactionDto) {
+    const merchantId = dto.merchantId;
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateService.calculateWithdrawFeeConfigTCP({

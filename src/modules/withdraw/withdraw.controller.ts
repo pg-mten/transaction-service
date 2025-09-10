@@ -14,19 +14,19 @@ import { Pageable } from 'src/shared/pagination/pagination';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
 import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
-import { WithdrawTransactionService } from './withdraw.service';
+import { WithdrawService } from './withdraw.service';
 
 @ApiTags('Transactions', 'Withdraw')
 @Controller('transactions/withdraw')
 export class WithdrawTransactionsController {
-  constructor(private readonly service: WithdrawTransactionService) {}
+  constructor(private readonly service: WithdrawService) {}
 
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
     console.log({ body });
-    await this.service.createWithdrawTransaction(body);
+    await this.service.create(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 

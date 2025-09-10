@@ -12,14 +12,14 @@ import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
-import { DisbursementTransactionService } from './disbursement.service';
+import { DisbursementService } from './disbursement.service';
 import { CreateDisbursementTransactionDto } from './dto/create-disbursement-transaction.dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 
 @ApiTags('Transactions', 'Disbursement')
 @Controller('transactions/disbursement')
 export class DisbursementTransactionsController {
-  constructor(private readonly service: DisbursementTransactionService) {}
+  constructor(private readonly service: DisbursementService) {}
 
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
