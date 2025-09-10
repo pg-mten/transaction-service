@@ -15,7 +15,7 @@ export class PurchaseTransactionDto {
     DtoHelper.assign(this, data);
   }
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: Number })
   id: number;
 
   @ApiProperty({ type: String })

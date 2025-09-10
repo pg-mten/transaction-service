@@ -10,7 +10,7 @@ export class WithdrawTransactionDto {
     DtoHelper.assign(this, data);
   }
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: Number })
   id: number;
 
   @ApiProperty({ type: String })
