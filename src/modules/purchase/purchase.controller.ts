@@ -14,6 +14,7 @@ import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
+import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -46,6 +47,15 @@ export class PurchaseController {
   ) {
     console.log({ filter, pageable });
     return this.purchaseService.findAll(pageable, filter);
+  }
+
+  @Post('callback')
+  @ApiOperation({ summary: 'untuk update status dari provider services' })
+  @ApiBody({ type: UpdateStatusPurchaseTransactionDto })
+  async updateTransactionStatus(
+    @Body('body') body: UpdateStatusPurchaseTransactionDto,
+  ) {
+    return this.purchaseService.updateStatusTransactions(body);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu

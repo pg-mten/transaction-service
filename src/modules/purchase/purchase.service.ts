@@ -13,6 +13,8 @@ import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { PurchaseFeeSystemDto } from '../fee/dto-transaction-system/purchase-fee.system.dto';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
+import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
+import axios from 'axios';
 
 @Injectable()
 export class PurchaseService {
@@ -27,7 +29,6 @@ export class PurchaseService {
   }
 
   async create(dto: CreatePurchaseTransactionDto) {
-    console.log({ dto });
     await this.prisma.$transaction(async (tx) => {
       /**
        * Get Fee Config
@@ -112,6 +113,17 @@ export class PurchaseService {
           },
         },
       });
+
+      axios
+        .post('localhost:3003/api/v1/provider/payhere/qris', {
+          purchaseTransaction,
+        })
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       /**
        * Create Purchase Fee Detail
@@ -275,6 +287,21 @@ export class PurchaseService {
       pageable,
       total,
       data: purchaseDtos,
+    });
+  }
+
+  async updateStatusTransactions(data: UpdateStatusPurchaseTransactionDto) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.purchaseTransaction.update({
+        where: {
+          code: data.code,
+        },
+        data: {
+          status: data.status,
+          metadata: data.metadata,
+          externalId: data.external_id,
+        },
+      });
     });
   }
 }
