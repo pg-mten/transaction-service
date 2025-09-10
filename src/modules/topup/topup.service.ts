@@ -37,7 +37,7 @@ export class TopupService {
     await this.prisma.$transaction(async (trx) => {
       const feeDto = await this.feeCalculateService.calculateTopupFeeConfigTCP({
         merchantId,
-        providerName: 'NETZME',
+        providerName: 'INTERNAL',
         paymentMethodName: 'TRANSFERBANK',
         nominal: dto.nominal,
       });
