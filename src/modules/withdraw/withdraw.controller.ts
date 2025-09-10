@@ -25,6 +25,7 @@ export class WithdrawTransactionsController {
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
+    console.log({ body });
     await this.service.createWithdrawTransaction(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }

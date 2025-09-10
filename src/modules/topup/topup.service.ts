@@ -14,6 +14,7 @@ import { BalanceService } from '../balance/balance.service';
 import { TopupFeeSystemDto } from '../fee/dto-transaction-system/topup-fee.system.dto';
 import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
 import { SettlementService } from '../settlement/settlement.service';
+import { UuidHelper } from 'src/shared/helper/uuid.helper';
 
 @Injectable()
 export class TopupTransactionService {
@@ -30,6 +31,7 @@ export class TopupTransactionService {
 
     /// TODO URL Path dari Minio
     const receiptImage = 'image.png';
+    console.log({ dto });
 
     /// TODO Readme
     /**
@@ -62,7 +64,7 @@ export class TopupTransactionService {
       const topupTransaction = await trx.topUpTransaction.create({
         data: {
           externalId: 'external id faker',
-          referenceId: 'reference id faker',
+          referenceId: UuidHelper.v4(),
           merchantId,
           providerName: 'NETZME',
           paymentMethodName: 'TRANSFERBANK',
@@ -79,6 +81,7 @@ export class TopupTransactionService {
           topupId: topupTransaction.id,
           feeDto,
         });
+
       const topupFeeDetails = await trx.topupFeeDetail.createManyAndReturn({
         data: topupFeeDetailCreateManyInput,
       });
@@ -88,6 +91,7 @@ export class TopupTransactionService {
       return;
     });
   }
+
   private feeDetailMapper({
     topupId,
     feeDto,
@@ -233,7 +237,7 @@ export class TopupTransactionService {
   }
 
   async approveTopUp(transactionId: number) {
-    await this.prisma.$transaction(async (trx) => {
+    const topup = await this.prisma.$transaction(async (trx) => {
       const topup = await trx.topUpTransaction.update({
         data: {
           status: 'SUCCESS',
@@ -253,7 +257,38 @@ export class TopupTransactionService {
         },
       });
       await this.settlementService.settlementTopup(topup);
+      return topup;
     });
+
+    /// TODO Reduce Deadlock
+    // this.settlementService
+    //   .settlementTopup(topup)
+    //   .then(() => {})
+    //   .catch(() => {
+    //     /// Update topup untuk jadi Pending / Failed lagi sesuai bisnis process
+    //     const topup = this.prisma.$transaction(async (trx) => {
+    //       const topup = await trx.topUpTransaction.update({
+    //         data: {
+    //           status: 'PENDING',
+    //         },
+    //         where: {
+    //           id: transactionId,
+    //           status: 'SUCCESS',
+    //         },
+    //         select: {
+    //           merchantId: true,
+    //           id: true,
+    //           netNominal: true,
+    //           feeDetails: true,
+    //           providerName: true,
+    //           paymentMethodName: true,
+    //           nominal: true,
+    //         },
+    //       });
+    //       return topup;
+    //     });
+    //   });
+    return;
   }
 
   async rejectTopup(transactionId: number) {

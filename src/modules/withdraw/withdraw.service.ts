@@ -13,6 +13,7 @@ import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { WithdrawFeeSystemDto } from '../fee/dto-transaction-system/withdraw-fee.system.dto';
 import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
+import { UuidHelper } from 'src/shared/helper/uuid.helper';
 
 @Injectable()
 export class WithdrawTransactionService {
@@ -57,7 +58,7 @@ export class WithdrawTransactionService {
       const withdrawTransaction = await trx.withdrawTransaction.create({
         data: {
           externalId: 'external id faker',
-          referenceId: 'reference id faker',
+          referenceId: UuidHelper.v4(),
           merchantId,
           providerName: 'NETZME',
           paymentMethodName: 'TRANSFERBANK',
@@ -130,6 +131,7 @@ export class WithdrawTransactionService {
       return;
     });
   }
+
   private feeDetailMapper({
     withdrawId,
     feeDto,

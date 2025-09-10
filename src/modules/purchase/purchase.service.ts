@@ -22,7 +22,12 @@ export class PurchaseService {
     private balanceService: BalanceService,
   ) {}
 
+  hello() {
+    return 'This is purchase service';
+  }
+
   async create(dto: CreatePurchaseTransactionDto) {
+    console.log({ dto });
     await this.prisma.$transaction(async (tx) => {
       /**
        * Get Fee Config
@@ -272,44 +277,44 @@ export class PurchaseService {
       data: purchaseDtos,
     });
   }
-
-  // async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {
-  //   const trx = await this.prisma.purchaseTransaction.findUnique({
-  //     where: { externalId: external_id },
-  //   });
-  //   if (!trx) throw new NotFoundException('Transaction not found'); // TODO
-
-  //   if (['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED'].includes(trx.status)) {
-  //     return { message: 'Transaction already finalized' };
-  //   }
-
-  //   const updated = await this.prisma.purchaseTransaction.update({
-  //     where: { externalId: external_id },
-  //     data: {
-  //       status: newStatus as any,
-  //       updatedAt: DateHelper.nowDate(),
-  //     },
-  //   });
-
-  //   await this.prisma.purchaseTransactionAudit.create({
-  //     data: {
-  //       transactionId: updated.id,
-  //       oldStatus: trx.status,
-  //       newStatus: newStatus as any,
-  //       source: 'webhook',
-  //       createdAt: DateHelper.nowDate(),
-  //     },
-  //   });
-
-  //   await this.prisma.webhookLog.create({
-  //     data: {
-  //       transactionId: updated.id,
-  //       source: 'provider',
-  //       payload: rawPayload,
-  //       receivedAt: DateHelper.nowDate(),
-  //     },
-  //   });
-
-  //   return { message: 'Webhook processed', status: updated.status };
-  // }
 }
+
+// async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {
+//   const trx = await this.prisma.purchaseTransaction.findUnique({
+//     where: { externalId: external_id },
+//   });
+//   if (!trx) throw new NotFoundException('Transaction not found'); // TODO
+
+//   if (['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED'].includes(trx.status)) {
+//     return { message: 'Transaction already finalized' };
+//   }
+
+//   const updated = await this.prisma.purchaseTransaction.update({
+//     where: { externalId: external_id },
+//     data: {
+//       status: newStatus as any,
+//       updatedAt: DateHelper.nowDate(),
+//     },
+//   });
+
+//   await this.prisma.purchaseTransactionAudit.create({
+//     data: {
+//       transactionId: updated.id,
+//       oldStatus: trx.status,
+//       newStatus: newStatus as any,
+//       source: 'webhook',
+//       createdAt: DateHelper.nowDate(),
+//     },
+//   });
+
+//   await this.prisma.webhookLog.create({
+//     data: {
+//       transactionId: updated.id,
+//       source: 'provider',
+//       payload: rawPayload,
+//       receivedAt: DateHelper.nowDate(),
+//     },
+//   });
+
+//   return { message: 'Webhook processed', status: updated.status };
+// }
