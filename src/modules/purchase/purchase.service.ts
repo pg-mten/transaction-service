@@ -28,7 +28,24 @@ export class PurchaseService {
     return 'This is purchase service';
   }
 
+  async createPurchase(dto: CreatePurchaseTransactionDto) {
+    const code = `${DateHelper.now().toUnixInteger()}-${dto.merchantId}-PURCHASE-${dto.providerName}-${dto.paymentMethodName}`;
+    dto.code = code;
+    try {
+      const inquiry = await axios.post(
+        `http://localhost:3003/api/v1/provider/${dto.providerName}/${dto.paymentMethodName}`,
+        dto,
+      );
+      console.log(inquiry);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return inquiry.data;
+    } catch (error) {
+      throw new Error('Upstream not Response ', error);
+    }
+  }
+
   async create(dto: CreatePurchaseTransactionDto) {
+    console.log('callback');
     await this.prisma.$transaction(async (tx) => {
       /**
        * Get Fee Config
@@ -59,6 +76,7 @@ export class PurchaseService {
        */
       const purchaseTransaction = await tx.purchaseTransaction.create({
         data: {
+          code: dto.code,
           externalId: dto.externalId,
           referenceId: dto.referenceId,
           merchantId: dto.merchantId,
@@ -67,7 +85,7 @@ export class PurchaseService {
           nominal: dto.nominal,
           metadata: dto.metadata,
           netNominal: feeDto.merchantFee.netNominal,
-          status: 'PENDING',
+          status: dto.status,
           MerchantBalanceLog: {
             create: {
               merchantId: dto.merchantId,
@@ -114,17 +132,6 @@ export class PurchaseService {
         },
       });
 
-      axios
-        .post('localhost:3003/api/v1/provider/payhere/qris', {
-          purchaseTransaction,
-        })
-        .then((res) => {
-          console.log(res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-
       /**
        * Create Purchase Fee Detail
        */
@@ -139,9 +146,8 @@ export class PurchaseService {
         },
       );
       console.log({ purchaseTransaction, feeDto, purchsaeFeeDetails });
-
-      return;
     });
+    return;
   }
 
   private purchaseFeeDetailMapper({

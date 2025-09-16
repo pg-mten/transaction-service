@@ -1,6 +1,7 @@
 import { INestApplicationContext } from '@nestjs/common';
 import Decimal from 'decimal.js';
 import { PurchaseService } from 'src/modules/purchase/purchase.service';
+import { DateHelper } from 'src/shared/helper/date.helper';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 
 export async function purchaseSeed(app: INestApplicationContext) {
@@ -13,6 +14,8 @@ export async function purchaseSeed(app: INestApplicationContext) {
       providerName: 'NETZME',
       paymentMethodName: 'QRIS',
       referenceId: UuidHelper.v4(),
+      code: `${DateHelper.now().toUnixInteger()}-${1}-PURCHASE-NETZME-QRIS`,
+      status: 'PENDING',
     });
 
     await purchaseService.create({
@@ -21,6 +24,8 @@ export async function purchaseSeed(app: INestApplicationContext) {
       providerName: 'NETZME',
       paymentMethodName: 'VIRTUALACCOUNT',
       referenceId: UuidHelper.v4(),
+      code: `${DateHelper.now().toUnixInteger()}-${1}-PURCHASE-NETZME-VIRTUALACCOUNT`,
+      status: 'EXPIRED',
     });
 
     await purchaseService.create({
@@ -29,6 +34,8 @@ export async function purchaseSeed(app: INestApplicationContext) {
       providerName: 'DANA',
       paymentMethodName: 'DIRECTEWALLET',
       referenceId: UuidHelper.v4(),
+      code: `${DateHelper.now().toUnixInteger()}-${1}-PURCHASE-DANA-DIRECTEWALLET`,
+      status: 'SUCCESS',
     });
 
     await purchaseService.create({
@@ -37,6 +44,8 @@ export async function purchaseSeed(app: INestApplicationContext) {
       providerName: 'DANA',
       paymentMethodName: 'VIRTUALACCOUNT',
       referenceId: UuidHelper.v4(),
+      code: `${DateHelper.now().toUnixInteger()}-${1}-PURCHASE-DANA-VIRTUALACCOUNT`,
+      status: 'PENDING',
     });
   } catch (error) {
     console.log('Error');

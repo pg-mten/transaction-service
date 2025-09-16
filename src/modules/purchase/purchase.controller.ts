@@ -26,8 +26,11 @@ export class PurchaseController {
   @ApiBody({ type: CreatePurchaseTransactionDto })
   async create(@Body() body: CreatePurchaseTransactionDto) {
     console.log({ body });
-    await this.purchaseService.create(body);
-    return new ResponseDto({ status: ResponseStatus.CREATED });
+    // await this.purchaseService.create(body);
+    return new ResponseDto({
+      status: ResponseStatus.CREATED,
+      data: await this.purchaseService.createPurchase(body),
+    });
   }
 
   @Get(':id/detail')
@@ -51,11 +54,11 @@ export class PurchaseController {
 
   @Post('callback')
   @ApiOperation({ summary: 'untuk update status dari provider services' })
-  @ApiBody({ type: UpdateStatusPurchaseTransactionDto })
+  @ApiBody({ type: CreatePurchaseTransactionDto })
   async updateTransactionStatus(
-    @Body('body') body: UpdateStatusPurchaseTransactionDto,
+    @Body('body') body: CreatePurchaseTransactionDto,
   ) {
-    return this.purchaseService.updateStatusTransactions(body);
+    return this.purchaseService.create(body);
   }
 
   /// TODO: Transaction dan Settlement masih dijadikan satu

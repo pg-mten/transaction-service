@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { TransactionStatusEnum } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -22,6 +24,11 @@ export class CreatePurchaseTransactionDto {
   @IsString()
   referenceId?: string;
 
+  @ApiProperty({ example: 'sfeerdegersd' })
+  @IsString()
+  @IsOptional()
+  code: string;
+
   @ApiProperty({ example: 1 })
   @IsInt()
   merchantId: number;
@@ -33,6 +40,11 @@ export class CreatePurchaseTransactionDto {
   @ApiProperty({ example: 'QRIS' })
   @IsString()
   paymentMethodName: string;
+
+  @ApiProperty({ example: 'PENDING', default: 'PENDING' })
+  @IsEnum(TransactionStatusEnum)
+  @IsOptional()
+  status: TransactionStatusEnum;
 
   @ApiProperty({
     description: 'Amount in decimal string format, e.g. "10000.00"',
