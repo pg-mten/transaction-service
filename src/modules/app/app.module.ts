@@ -13,13 +13,13 @@ import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
 import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
-import { FeeModule } from '../fee/fee.module';
 import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
 import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
 import { SettlementModule } from '../settlement/settlement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
+import { MicroserviceModule } from 'src/microservice/microservice.module';
 
 @Module({
   imports: [
@@ -34,12 +34,14 @@ import { BalanceModule } from '../balance/balance.module';
     /// Business Module
     PurchaseModule,
     ReconciliationModule,
-    FeeModule,
     TopupTransactionModule,
     WithdrawTransactionModule,
     DisbursementTransactionModule,
     SettlementModule,
     BalanceModule,
+
+    /// Web Client
+    MicroserviceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -11,21 +10,22 @@ import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
-import { DisbursementFeeSystemDto } from '../fee/dto-transaction-system/disbursement-fee.system.dto';
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
+import { FeeCalculateClient } from 'src/microservice/config/fee-calculate.client';
+import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
 
 @Injectable()
 export class DisbursementService {
   constructor(
     private prisma: PrismaService,
-    private feeCalculateService: FeeCalculateService,
+    private readonly feeCalculateClient: FeeCalculateClient,
     private balanceService: BalanceService,
   ) {}
 
   async create(dto: CreateDisbursementTransactionDto) {
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
-        await this.feeCalculateService.calculateDisbursementFeeConfigTCP({
+        await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
