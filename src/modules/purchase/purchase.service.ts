@@ -13,14 +13,14 @@ import Decimal from 'decimal.js';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
 import axios from 'axios';
-import { FeeCalculateClient } from 'src/microservice/config/fee-calculate.client';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
 
 @Injectable()
 export class PurchaseService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly feeCalculateClient: FeeCalculateClient,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
 

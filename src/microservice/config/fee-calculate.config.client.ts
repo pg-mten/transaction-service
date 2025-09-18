@@ -14,7 +14,7 @@ import { DisbursementFeeSystemDto } from './dto-transaction-system/disbursement-
 import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
 
 @Injectable()
-export class FeeCalculateClient {
+export class FeeCalculateConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,

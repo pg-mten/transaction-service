@@ -11,14 +11,14 @@ import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
-import { FeeCalculateClient } from 'src/microservice/config/fee-calculate.client';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
 
 @Injectable()
 export class DisbursementService {
   constructor(
     private prisma: PrismaService,
-    private readonly feeCalculateClient: FeeCalculateClient,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
 

@@ -12,14 +12,14 @@ import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
-import { FeeCalculateClient } from 'src/microservice/config/fee-calculate.client';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 
 @Injectable()
 export class WithdrawService {
   constructor(
     private prisma: PrismaService,
-    private readonly feeCalculateClient: FeeCalculateClient,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
 

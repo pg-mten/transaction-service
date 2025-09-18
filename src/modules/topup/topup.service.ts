@@ -15,14 +15,14 @@ import { SettlementService } from '../settlement/settlement.service';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
 import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
-import { FeeCalculateClient } from 'src/microservice/config/fee-calculate.client';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { TopupFeeSystemDto } from 'src/microservice/config/dto-transaction-system/topup-fee.system.dto';
 
 @Injectable()
 export class TopupService {
   constructor(
     private prisma: PrismaService,
-    private readonly feeCalculateClient: FeeCalculateClient,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
     private settlementService: SettlementService,
   ) {}
