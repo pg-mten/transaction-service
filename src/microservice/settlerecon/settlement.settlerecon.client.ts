@@ -8,7 +8,7 @@ import { SettlementScheduleSystemDto } from './dto-system/settlement-schedule.sy
 import axios from 'axios';
 
 @Injectable()
-export class SettlementClient {
+export class SettlementSettleReconClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly settleReconClient: ClientProxy,

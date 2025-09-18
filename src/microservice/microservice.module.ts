@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { SERVICES } from 'src/shared/constant/client.constant';
-import { SettlementClient } from './settle-recon/settlement.client';
+import { SettlementSettleReconClient } from './settlerecon/settlement.settlerecon.client';
 import { FeeCalculateConfigClient } from './config/fee-calculate.config.client';
 import { UserAuthClient } from './auth/user.auth.client';
 import { AgentConfigClient } from './config/agent.config.client';
@@ -10,20 +10,20 @@ import { MerchantConfigClient } from './config/merchant.config.client';
 @Global()
 @Module({
   providers: [
-    SettlementClient,
+    SettlementSettleReconClient,
     FeeCalculateConfigClient,
     UserAuthClient,
     AgentConfigClient,
     MerchantConfigClient,
-    SettlementClient,
+    SettlementSettleReconClient,
   ],
   exports: [
-    SettlementClient,
+    SettlementSettleReconClient,
     FeeCalculateConfigClient,
     UserAuthClient,
     AgentConfigClient,
     MerchantConfigClient,
-    SettlementClient,
+    SettlementSettleReconClient,
   ],
   imports: [
     /// Register Client
