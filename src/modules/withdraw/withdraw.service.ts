@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -11,15 +10,16 @@ import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.
 import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
-import { WithdrawFeeSystemDto } from '../fee/dto-transaction-system/withdraw-fee.system.dto';
 import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
+import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 
 @Injectable()
 export class WithdrawService {
   constructor(
     private prisma: PrismaService,
-    private feeCalculateService: FeeCalculateService,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
 
@@ -27,7 +27,7 @@ export class WithdrawService {
     const merchantId = dto.merchantId;
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
-        await this.feeCalculateService.calculateWithdrawFeeConfigTCP({
+        await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
           merchantId,
           providerName: 'NETZME',
           paymentMethodName: 'TRANSFERBANK',

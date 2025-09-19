@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -11,18 +10,19 @@ import { FilterTopupDto } from './dto/filter-topup.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import Decimal from 'decimal.js';
 import { BalanceService } from '../balance/balance.service';
-import { TopupFeeSystemDto } from '../fee/dto-transaction-system/topup-fee.system.dto';
 import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
 import { SettlementService } from '../settlement/settlement.service';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
 import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
+import { TopupFeeSystemDto } from 'src/microservice/config/dto-transaction-system/topup-fee.system.dto';
 
 @Injectable()
 export class TopupService {
   constructor(
     private prisma: PrismaService,
-    private feeCalculateService: FeeCalculateService,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
     private settlementService: SettlementService,
   ) {}
@@ -35,7 +35,7 @@ export class TopupService {
     console.log({ dto });
 
     await this.prisma.$transaction(async (trx) => {
-      const feeDto = await this.feeCalculateService.calculateTopupFeeConfigTCP({
+      const feeDto = await this.feeCalculateClient.calculateTopupFeeConfigTCP({
         merchantId,
         providerName: 'INTERNAL',
         paymentMethodName: 'TRANSFERBANK',

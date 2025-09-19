@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { FeeCalculateService } from '../fee/fee-calculate.service';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
@@ -11,23 +10,21 @@ import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
-import { PurchaseFeeSystemDto } from '../fee/dto-transaction-system/purchase-fee.system.dto';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
 import axios from 'axios';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
+import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
 
 @Injectable()
 export class PurchaseService {
   constructor(
     private readonly prisma: PrismaService,
-    private feeCalculateService: FeeCalculateService,
+    private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
 
-  hello() {
-    return 'This is purchase service';
-  }
-
+  // TODO Nyambung ke Settle recon Service
   async createPurchase(dto: CreatePurchaseTransactionDto) {
     const code = `${DateHelper.now().toUnixInteger()}-${dto.merchantId}-PURCHASE-${dto.providerName}-${dto.paymentMethodName}`;
     dto.code = code;
@@ -51,7 +48,7 @@ export class PurchaseService {
        * Get Fee Config
        */
       const feeDto =
-        await this.feeCalculateService.calculatePurchaseFeeConfigTCP({
+        await this.feeCalculateClient.calculatePurchaseFeeConfigTCP({
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,

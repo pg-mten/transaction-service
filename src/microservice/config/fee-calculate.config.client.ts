@@ -1,8 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
-import { URL_CONFIG } from 'src/shared/constant/url.constant';
-import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { FilterPurchaseFeeSystemDto } from './dto-transaction-system/filter-purchase-fee.system.dto';
 import { PurchaseFeeSystemDto } from './dto-transaction-system/purchase-fee.system.dto';
@@ -12,10 +11,16 @@ import { FilterTopupFeeSystemDto } from './dto-transaction-system/filter-topup-f
 import { TopupFeeSystemDto } from './dto-transaction-system/topup-fee.system.dto';
 import { FilterDisbursementFeeSystemDto } from './dto-transaction-system/filter-disbursement-fee.system.dto';
 import { DisbursementFeeSystemDto } from './dto-transaction-system/disbursement-fee.system.dto';
+import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
 
 @Injectable()
-export class FeeCalculateService {
-  constructor(@Inject('FEE_SERVICE') private readonly feeClient: ClientProxy) {}
+export class FeeCalculateConfigClient {
+  constructor(
+    @Inject(SERVICES.CONFIG.name)
+    private readonly configClient: ClientProxy,
+  ) {}
+
+  private readonly cmd = SERVICES.CONFIG.cmd;
 
   /**
    * Purchase
@@ -38,8 +43,8 @@ export class FeeCalculateService {
   async calculatePurchaseFeeConfigTCP(filter: FilterPurchaseFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send<ResponseDto<PurchaseFeeSystemDto>>(
-          { cmd: 'calculate_fee_purchase' },
+        this.configClient.send<ResponseDto<PurchaseFeeSystemDto>>(
+          { cmd: this.cmd.calculate_fee_purchase },
           filter,
         ),
       );
@@ -71,8 +76,8 @@ export class FeeCalculateService {
   async calculateWithdrawFeeConfigTCP(filter: FilterWithdrawFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send<ResponseDto<WithdrawFeeSystemDto>>(
-          { cmd: 'calculate_fee_withdraw' },
+        this.configClient.send<ResponseDto<WithdrawFeeSystemDto>>(
+          { cmd: this.cmd.calculate_fee_withdraw },
           filter,
         ),
       );
@@ -104,8 +109,8 @@ export class FeeCalculateService {
   async calculateTopupFeeConfigTCP(filter: FilterTopupFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send<ResponseDto<TopupFeeSystemDto>>(
-          { cmd: 'calculate_fee_topup' },
+        this.configClient.send<ResponseDto<TopupFeeSystemDto>>(
+          { cmd: this.cmd.calculate_fee_topup },
           filter,
         ),
       );
@@ -140,8 +145,8 @@ export class FeeCalculateService {
   ) {
     try {
       const res = await firstValueFrom(
-        this.feeClient.send<ResponseDto<DisbursementFeeSystemDto>>(
-          { cmd: 'calculate_fee_disbursement' },
+        this.configClient.send<ResponseDto<DisbursementFeeSystemDto>>(
+          { cmd: this.cmd.calculate_fee_disbursement },
           filter,
         ),
       );
