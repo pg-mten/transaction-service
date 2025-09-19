@@ -11,12 +11,11 @@ import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import Decimal from 'decimal.js';
 import { BalanceService } from '../balance/balance.service';
 import { TopupFeeDetailDto } from './dto/topup-fee-detail.dto';
-import { SettlementService } from '../settlement/settlement.service';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
 import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
-import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { TopupFeeSystemDto } from 'src/microservice/config/dto-transaction-system/topup-fee.system.dto';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 
 @Injectable()
 export class TopupService {
@@ -24,7 +23,6 @@ export class TopupService {
     private prisma: PrismaService,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
-    private settlementService: SettlementService,
   ) {}
 
   async create(dto: CreateTopupTransactionDto) {

@@ -23,7 +23,7 @@ export class SettlementService {
   constructor(
     private readonly prisma: PrismaService,
     private balanceService: BalanceService,
-    @Inject('SETTLE_RECON_SERVICE') private readonly settleClient: ClientProxy,
+    @Inject('SETTLE_RECON_SERVICE') private readonly settleClient: ClientProxy, // TODO Pake WebClient
   ) {}
 
   async findAllSettlement(pageable: Pageable, filter: FilterSettlementDto) {

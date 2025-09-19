@@ -13,8 +13,8 @@ import Decimal from 'decimal.js';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
 import axios from 'axios';
-import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 
 @Injectable()
 export class PurchaseService {

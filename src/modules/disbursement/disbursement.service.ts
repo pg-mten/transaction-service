@@ -11,8 +11,8 @@ import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
-import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 
 @Injectable()
 export class DisbursementService {

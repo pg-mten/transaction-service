@@ -12,8 +12,8 @@ import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
-import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.client';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
+import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 
 @Injectable()
 export class WithdrawService {
