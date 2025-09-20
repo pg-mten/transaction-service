@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { SERVICES, URL_AUTH } from 'src/shared/constant/client.constant';
 import { FilterMerchantValidateSignatureSystemDto } from './dto-system/filter-merchant-validate-signature.system.dto';
@@ -7,6 +7,7 @@ import { ResponseDto } from 'src/shared/response.dto';
 import { MerchantValidateSignatureSystemDto } from './dto-system/merchant-validate-signature.system.dto';
 import { firstValueFrom } from 'rxjs';
 
+@Injectable()
 export class MerchantSignatureAuthClient {
   constructor(
     @Inject(SERVICES.AUTH.name)
