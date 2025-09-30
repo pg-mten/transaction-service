@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_SETTLERECON } from 'src/shared/constant/client.constant';
+import { SERVICES, URL_SETTLERECON } from 'src/microservice/client.constant';
 import { CreateSettlementScheduleSystemDto } from './dto-system/create-settlement-schedule.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResponseDto } from 'src/shared/response.dto';

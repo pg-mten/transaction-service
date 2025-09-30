@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { SERVICES } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/microservice/client.constant';
 import { SettlementSettleReconClient } from './settlerecon/settlement.settlerecon.client';
 import { FeeCalculateConfigClient } from './config/fee-calculate.config.client';
 import { UserAuthClient } from './auth/user.auth.client';
@@ -13,6 +13,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { RolesGuard } from './auth/guard/roles.guard';
 import { MerchantSignatureAuthClient } from './auth/merchant-signature.auth.client';
+import { HealthModule } from './health/health.module';
 
 @Global()
 @Module({
@@ -47,6 +48,9 @@ import { MerchantSignatureAuthClient } from './auth/merchant-signature.auth.clie
   ],
 
   imports: [
+    HealthModule,
+
+    /// JWT Authentication
     JwtModule.register({
       secret: JWT.accessToken.secret,
       signOptions: { expiresIn: JWT.accessToken.expireIn },

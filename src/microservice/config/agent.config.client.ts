@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
+import { SERVICES, URL_CONFIG } from 'src/microservice/client.constant';
 import { CreateAgentSystemDto } from './dto-system/create-agent.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResponseDto } from 'src/shared/response.dto';

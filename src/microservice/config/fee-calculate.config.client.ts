@@ -11,7 +11,7 @@ import { FilterTopupFeeSystemDto } from './dto-transaction-system/filter-topup-f
 import { TopupFeeSystemDto } from './dto-transaction-system/topup-fee.system.dto';
 import { FilterDisbursementFeeSystemDto } from './dto-transaction-system/filter-disbursement-fee.system.dto';
 import { DisbursementFeeSystemDto } from './dto-transaction-system/disbursement-fee.system.dto';
-import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
+import { SERVICES, URL_CONFIG } from 'src/microservice/client.constant';
 
 @Injectable()
 export class FeeCalculateConfigClient {

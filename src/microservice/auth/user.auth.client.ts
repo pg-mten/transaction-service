@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { SERVICES, URL_AUTH } from 'src/shared/constant/client.constant';
+import { SERVICES, URL_AUTH } from 'src/microservice/client.constant';
 import { ResponseDto } from 'src/shared/response.dto';
 import { FilterMerchantsAndAgentsByIdsSystemDto } from './dto-system/filter-merchants-and-agents-by-ids.system.dto';
 import axios from 'axios';
