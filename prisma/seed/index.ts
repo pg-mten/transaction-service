@@ -16,7 +16,7 @@ async function main() {
 
   try {
     // await purchaseSeed(app);
-    await topupSeed(app);
+    // await topupSeed(app);
     // await withdrawSeed(app);
     // await disbursementSeed(app);
     console.log('Proccess Done');

@@ -12,9 +12,6 @@ export class AgentSystemDto {
   userId: number;
 
   @ApiProperty({ type: String })
-  username: string;
-
-  @ApiProperty({ type: String })
   email: string;
 
   @ApiProperty({ type: String })
