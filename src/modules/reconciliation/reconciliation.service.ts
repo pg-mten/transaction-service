@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { CellValue, Row, Worksheet } from 'exceljs';
 import { FilterReconciliationDto } from './dto/filter-reconciliation.dto';
 import { Prisma, TransactionStatusEnum } from '@prisma/client';
@@ -10,10 +10,11 @@ import { FilterReconciliationCalculateDto } from './dto/filter-reconciliation-ca
 import Decimal from 'decimal.js';
 import { ReconciliationCalculateDto } from './dto/reconciliation-calculate.dto';
 import { PurchaseFeeDetailDto } from '../purchase/dto/purchase-fee-detail.dto';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class ReconciliationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient) {}
 
   processCSV(data: Worksheet, providerName: string) {
     console.log({ providerName });

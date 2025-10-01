@@ -1,5 +1,5 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
@@ -15,11 +15,12 @@ import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-sta
 import axios from 'axios';
 import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class PurchaseService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}

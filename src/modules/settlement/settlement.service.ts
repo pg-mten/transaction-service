@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { UpdateSettlementInternalDto } from './dto/update-settlement-internal.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
@@ -17,11 +17,12 @@ import { firstValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { WithdrawTransactionDto } from '../withdraw/dto/withdraw-transaction.dto';
 import { TopupSettlementDto } from './dto/top-up-settlement.dto';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class SettlementService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
     private balanceService: BalanceService,
     @Inject('SETTLE_RECON_SERVICE') private readonly settleClient: ClientProxy, // TODO Pake WebClient
   ) {}

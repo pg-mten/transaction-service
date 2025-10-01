@@ -12,6 +12,8 @@ RUN npm ci
 # Copy semua source code
 COPY . .
 
+RUN npx prisma generate
+
 # Build project (misalnya NestJS)
 RUN npm run build
 

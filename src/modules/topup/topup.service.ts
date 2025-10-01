@@ -1,5 +1,5 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -16,11 +16,12 @@ import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto'
 import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
 import { TopupFeeSystemDto } from 'src/microservice/config/dto-transaction-system/topup-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class TopupService {
   constructor(
-    private prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}

@@ -1,5 +1,5 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -13,11 +13,12 @@ import Decimal from 'decimal.js';
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class DisbursementService {
   constructor(
-    private prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private balanceService: BalanceService,
   ) {}
