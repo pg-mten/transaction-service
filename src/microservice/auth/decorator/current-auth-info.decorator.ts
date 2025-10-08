@@ -4,6 +4,6 @@ import { Request } from 'express';
 export const CurrentAuthInfo = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    return (request as Request).authInfo;
+    return (request as Request).user;
   },
 );

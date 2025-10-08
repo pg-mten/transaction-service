@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLE } from 'src/shared/constant/auth.constant';
+import { ROLE } from 'src/microservice/auth.constant';
 import { ROLES_KEY } from '../decorator/roles.decorator';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
@@ -24,7 +24,7 @@ export class RolesGuard implements CanActivate {
 
     if (!requiredRoles) return true;
     const req = context.switchToHttp().getRequest();
-    const authInfo: AuthInfoDto = (req as Request).authInfo;
+    const authInfo: AuthInfoDto = (req as Request).user;
     // const user = await this.userService.findOneByAuthInfoThrow(authInfo);
     // return requiredRoles.some((role) => user.role.name === role.toString());
     // return Object.values(Role).some()
