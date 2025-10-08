@@ -15,6 +15,8 @@ import { MerchantSignatureAuthClient } from './auth/merchant-signature.auth.clie
 import { HealthModule } from './health/health.module';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
+import { PurchaseTransactionClient } from './transaction/purchase/purchase.transaction.client';
+import { InacashProviderClient } from './provider/inacash/inacash.provider.client';
 
 @Global()
 @Module({
@@ -25,6 +27,8 @@ import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
     MerchantConfigClient,
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
+    PurchaseTransactionClient,
+    InacashProviderClient,
   ],
   providers: [
     /// Register Client
@@ -34,6 +38,8 @@ import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
     MerchantConfigClient,
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
+    PurchaseTransactionClient,
+    InacashProviderClient,
 
     /// TODO Non aktifkan dulu bolooo
     // JwtStrategy,

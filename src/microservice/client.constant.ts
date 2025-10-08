@@ -12,10 +12,15 @@ export const URL_SETTLERECON =
   process.env.URL_SETTLERECON || 'http://localhost:3003/api/v1';
 
 export const SERVICES = {
+  APP: {
+    name: process.env.APP_NAME || 'PG_SERVICE',
+    host: process.env.APP_HOST || '127.0.0.1',
+    port: parseInt(process.env.APP_PORT || '4000'),
+  },
   AUTH: {
     name: process.env.CLIENT_AUTH_NAME || 'AUTH_SERVICE',
     host: process.env.CLIENT_AUTH_HOST || '127.0.0.1',
-    port: parseInt(process.env.CLIENT_AUTH_HOST || '4000'),
+    port: parseInt(process.env.CLIENT_AUTH_PORT || '4000'),
     cmd: {
       find_all_merchants_and_agents_by_ids:
         'find_all_merchants_and_agents_by_ids',
@@ -25,7 +30,7 @@ export const SERVICES = {
   CONFIG: {
     name: process.env.CLIENT_CONFIG_NAME || 'CONFIG_SERVICE',
     host: process.env.CLIENT_CONFIG_HOST || '127.0.0.1',
-    port: parseInt(process.env.CLIENT_CONFIG_HOST || '4001'),
+    port: parseInt(process.env.CLIENT_CONFIG_PORT || '4001'),
     cmd: {
       calculate_fee_purchase: 'calculate_fee_purchase',
       calculate_fee_withdraw: 'calculate_fee_withdraw',
@@ -38,15 +43,18 @@ export const SERVICES = {
   TRANSACTION: {
     name: process.env.CLIENT_TRANSACTION_NAME || 'TRANSACTION_SERVICE',
     host: process.env.CLIENT_TRANSACTION_HOST || '127.0.0.1',
-    port: parseInt(process.env.CLIENT_TRANSACTION_HOST || '4002'),
-    cmd: {},
+    port: parseInt(process.env.CLIENT_TRANSACTION_PORT || '4002'),
+    cmd: {
+      purchase_callback: 'purchase_callback',
+    },
   },
   SETTLERECON: {
     name: process.env.CLIENT_SETTLERECON_NAME || 'SETTLERECON_SERVICE',
     host: process.env.CLIENT_SETTLERECON_HOST || '127.0.0.1',
-    port: parseInt(process.env.CLIENT_SETTLERECON_HOST || '4003'),
+    port: parseInt(process.env.CLIENT_SETTLERECON_PORT || '4003'),
     cmd: {
       settlement_schedule: 'settlement_schedule',
+      inacash_purchase_qris: 'inacash_purchase_qris',
     },
   },
 };

@@ -12,7 +12,7 @@ import {
 import { Decimal } from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
-export class CreatePurchaseTransactionDto {
+export class CreatePurchaseRequestDto {
   @ApiProperty({ example: 'trx_1234567890' })
   @IsString()
   @IsNotEmpty()
