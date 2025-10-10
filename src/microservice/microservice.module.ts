@@ -7,13 +7,16 @@ import { UserAuthClient } from './auth/user.auth.client';
 import { AgentConfigClient } from './config/agent.config.client';
 import { MerchantConfigClient } from './config/merchant.config.client';
 import { JwtModule } from '@nestjs/jwt';
-import { JWT } from 'src/shared/constant/auth.constant';
+import { JWT } from 'src/microservice/auth.constant';
 import { JwtStrategy } from './auth/strategy/jwt.strategy';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
-import { RolesGuard } from './auth/guard/roles.guard';
 import { MerchantSignatureAuthClient } from './auth/merchant-signature.auth.client';
 import { HealthModule } from './health/health.module';
+import { ClsModule, ClsService } from 'nestjs-cls';
+import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
+import { PurchaseTransactionClient } from './transaction/purchase/purchase.transaction.client';
+import { InacashProviderClient } from './provider/inacash/inacash.provider.client';
 
 @Global()
 @Module({
@@ -24,6 +27,8 @@ import { HealthModule } from './health/health.module';
     MerchantConfigClient,
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
+    PurchaseTransactionClient,
+    InacashProviderClient,
   ],
   providers: [
     /// Register Client
@@ -33,17 +38,25 @@ import { HealthModule } from './health/health.module';
     MerchantConfigClient,
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
+    PurchaseTransactionClient,
+    InacashProviderClient,
 
     /// TODO Non aktifkan dulu bolooo
     // JwtStrategy,
     /// Guard
     // {
-    //   provide: APP_GUARD, // Highest priority
+    //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
     // },
     // {
-    //   provide: APP_GUARD, // Lowest priority
+    //   provide: APP_GUARD,
     //   useClass: RolesGuard,
+    // },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useFactory: (clsService: ClsService) =>
+    //     new AuthInfoInterceptor(clsService),
+    //   inject: [ClsService],
     // },
   ],
 
@@ -54,6 +67,13 @@ import { HealthModule } from './health/health.module';
     JwtModule.register({
       secret: JWT.accessToken.secret,
       signOptions: { expiresIn: JWT.accessToken.expireIn },
+    }),
+
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+      },
     }),
 
     /// Register Client

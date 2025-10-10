@@ -1,6 +1,6 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JWT } from 'src/shared/constant/auth.constant';
+import { JWT } from 'src/microservice/auth.constant';
 import { AuthInfoDto } from '../dto/auth-info.dto';
 
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -12,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: any): unknown {
+  validate(payload: any): AuthInfoDto {
     // return { userId: payload.sub, username: payload.username };
     return payload as AuthInfoDto;
   }

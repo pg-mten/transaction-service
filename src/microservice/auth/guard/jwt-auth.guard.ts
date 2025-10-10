@@ -8,6 +8,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 import { ResponseException } from 'src/exception/response.exception';
 import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
+import { AuthInfoDto } from '../dto/auth-info.dto';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -26,14 +27,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest<TUser = any>(
+  handleRequest<TUser extends AuthInfoDto>(
     err: any,
-    user: any,
+    user: TUser,
     info: any,
     context: ExecutionContext,
     status?: any,
   ): TUser {
-    // console.log({ err, user, info, context, status });
+    console.log('JwtAuthGuard');
+    console.log({ err, user, info, context, status });
+    /// TODO Sampai semua backend apps sudah implement JWT, di uncomment dulu
     if (err || !user) {
       throw ResponseException.fromHttpExecption(new UnauthorizedException());
     }

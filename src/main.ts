@@ -9,13 +9,13 @@ import {
   APP_NAME,
   IS_DEVELOPMENT,
   PORT,
-  PORT_TCP,
   VERSION,
 } from './shared/constant/global.constant';
 import { logger } from './shared/constant/logger.constant';
 import { useContainer } from 'class-validator';
 import { MyLogger } from './modules/logger/logger.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { SERVICES } from './microservice/client.constant';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -47,8 +47,8 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
     options: {
-      host: '127.0.0.1',
-      port: PORT_TCP,
+      host: SERVICES.TRANSACTION.host,
+      port: SERVICES.TRANSACTION.port,
     },
   });
 
