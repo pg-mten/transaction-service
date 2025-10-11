@@ -50,3 +50,16 @@ export class BalanceAgentDto {
   @ApiProperty({ type: Number })
   agentId: number;
 }
+
+export class BalanceInternalDto {
+  constructor(data: BalanceInternalDto) {
+    DtoHelper.assign(this, data);
+  }
+  @ApiProperty({ type: Decimal })
+  @ToDecimalFixed()
+  balanceActive: Decimal;
+
+  @ApiProperty({ type: Decimal })
+  @ToDecimalFixed()
+  balancePending: Decimal;
+}
