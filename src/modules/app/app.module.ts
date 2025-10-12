@@ -21,6 +21,7 @@ import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { PrismaClient } from '@prisma/client';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -43,6 +44,12 @@ import { PrismaClient } from '@prisma/client';
 
     /// Web Client
     MicroserviceModule,
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: {
+        enabled: true,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
