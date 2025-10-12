@@ -10,6 +10,12 @@ export class ResponseInterceptor<T>
     context: ExecutionContext,
     next: CallHandler<T>,
   ): Observable<ResponseDto<T>> | Promise<Observable<ResponseDto<T>>> {
+    const request = context.switchToHttp().getRequest();
+
+    if (request.path === '/metrics') {
+      return next.handle() as Observable<ResponseDto<T>>;
+    }
+
     return next.handle().pipe(
       map((response) => {
         if (response instanceof ResponseDto) {
