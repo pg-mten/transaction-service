@@ -30,9 +30,9 @@ export class CsvOrXlsxMulterEngine {
       ) {
         throw new Error(`Max file size is ${this.maxFileSize} bytes.`);
       }
-      const fileStream = await fileType.fileTypeStream(file.stream);
-      console.log({ fileStream });
-      const mime = fileStream.fileType?.mime ?? file.mimetype;
+      const detectedType = await fileType.fileTypeFromStream(file.stream);
+      console.log({ detectedType });
+      const mime = detectedType?.mime ?? file.mimetype;
       console.log({ mime });
       if (!ALLOWED_MIME_TYPES.includes(mime)) {
         throw new BadRequestException('File must be *.csv or *.xlsx');
