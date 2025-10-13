@@ -73,7 +73,7 @@ model WithdrawTransaction {
   merchantId        Int
   referenceId       String                @unique //reff id from bank
   nominal           Decimal
-  netNominal        Decimal // nominal setelah dipotong fee
+  netNominal        Decimal // nominal setelah dikenakan fee
   status            TransactionStatusEnum @default(PENDING)
   providerName      String
   paymentMethodName String // transfer_bank, virtual_account, dll

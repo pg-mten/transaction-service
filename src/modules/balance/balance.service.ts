@@ -4,6 +4,7 @@ import Decimal from 'decimal.js';
 import {
   BalanceAgentDto,
   BalanceDto,
+  BalanceInternalDto,
   BalanceMerchantDto,
 } from './dto/balance.dto';
 import { Prisma, TransactionTypeEnum } from '@prisma/client';
@@ -207,6 +208,21 @@ export class BalanceService {
    *
    * Internal Balance
    */
+  async checkBalanceInternal() {
+    const lastRow = await this.prisma.internalBalanceLog.findFirst({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+    return new BalanceInternalDto({
+      balanceActive: lastRow?.balanceActive ?? new Decimal(0),
+      balancePending: lastRow?.balancePending ?? new Decimal(0),
+    });
+  }
   async aggregateBalanceInternal(providerName?: string | null) {
     const whereClause: Prisma.InternalBalanceLogWhereInput = {};
 
@@ -228,24 +244,7 @@ export class BalanceService {
       select: { balanceActive: true, balancePending: true },
     });
 
-    return new BalanceDto({
-      balanceActive: lastRow?.balanceActive ?? new Decimal(0),
-      balancePending: lastRow?.balancePending ?? new Decimal(0),
-    });
-  }
-
-  async checkBalanceInternal() {
-    const lastRow = await this.prisma.internalBalanceLog.findFirst({
-      orderBy: {
-        createdAt: 'desc',
-      },
-      select: {
-        balanceActive: true,
-        balancePending: true,
-      },
-    });
-
-    return new BalanceDto({
+    return new BalanceInternalDto({
       balanceActive: lastRow?.balanceActive ?? new Decimal(0),
       balancePending: lastRow?.balancePending ?? new Decimal(0),
     });

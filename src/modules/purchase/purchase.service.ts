@@ -1,7 +1,11 @@
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { CreatePurchaseTransactionDto } from './dto/create-purchase-transaction.dto';
-import { Prisma } from '@prisma/client';
+import {
+  BadGatewayException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreatePurchaseRequestDto } from './dto/create-purchase.request.dto';
+import { Prisma, TransactionStatusEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseException } from 'src/exception/response.exception';
@@ -12,37 +16,47 @@ import { BalanceService } from '../balance/balance.service';
 import Decimal from 'decimal.js';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
-import axios from 'axios';
 import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
+import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
+import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class PurchaseService {
   constructor(
-    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
+    private readonly prisma: PrismaService,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-    private balanceService: BalanceService,
+    private readonly balanceService: BalanceService,
+    private readonly inacashProviderClient: InacashProviderClient,
   ) {}
 
-  // TODO Nyambung ke Settle recon Service
-  async createPurchase(dto: CreatePurchaseTransactionDto) {
-    const code = `${DateHelper.now().toUnixInteger()}-${dto.merchantId}-PURCHASE-${dto.providerName}-${dto.paymentMethodName}`;
-    dto.code = code;
-    try {
-      const inquiry = await axios.post(
-        `http://localhost:3003/api/v1/provider/${dto.providerName}/${dto.paymentMethodName}`,
-        dto,
-      );
-      console.log(inquiry);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return inquiry.data;
-    } catch (error) {
-      throw new Error('Upstream not Response ', error);
+  async createPurchase(body: CreatePurchaseRequestDto) {
+    const code = `${DateHelper.now().toUnixInteger()}#${body.merchantId}#PURCHASE#${body.providerName}#${body.paymentMethodName}`;
+
+    if (body.providerName === 'INACASH') {
+      const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
+        code: code,
+        merchantId: body.merchantId,
+        nominal: body.nominal,
+      });
+      const data = clientRes.data!;
+      return new CreatePurchaseResponseDto({
+        content: data.content,
+        nominal: data.nominal,
+        productCode: data.productCode,
+        providerName: body.providerName,
+        paymentMethodName: body.paymentMethodName,
+      });
     }
+
+    throw ResponseException.fromHttpExecption(
+      new BadGatewayException('Provider Name Not Found'),
+    );
   }
 
-  async create(dto: CreatePurchaseTransactionDto) {
+  async createCallbackProvider(dto: CreatePurchaseCallbackSystemDto) {
     console.log('callback');
     await this.prisma.$transaction(async (tx) => {
       /**
@@ -76,14 +90,14 @@ export class PurchaseService {
         data: {
           code: dto.code,
           externalId: dto.externalId,
-          referenceId: dto.referenceId,
+          // referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
-          metadata: dto.metadata,
+          metadata: dto.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: dto.status,
+          status: dto.status as TransactionStatusEnum, /// TODO Masukin ke constant di transaction microservices
           MerchantBalanceLog: {
             create: {
               merchantId: dto.merchantId,
@@ -294,6 +308,7 @@ export class PurchaseService {
     });
   }
 
+  /// TODO Buat apa ?
   async updateStatusTransactions(data: UpdateStatusPurchaseTransactionDto) {
     await this.prisma.$transaction(async (tx) => {
       await tx.purchaseTransaction.update({

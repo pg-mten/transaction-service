@@ -4,11 +4,14 @@ import { auditTrailExtension } from './extensions/audit.extension';
 
 export const PRISMA_SERVICE = 'PrismaService';
 
-export const prismaProvider: Provider = {
+export const PrismaProvider: Provider = {
   provide: PRISMA_SERVICE,
   useFactory: () => {
-    return new PrismaClient({
+    const prisma = new PrismaClient({
       log: ['query', 'info', 'warn', 'error'],
-    }).$extends(auditTrailExtension);
+    });
+    //.$extends(auditTrailExtension); // TODO
+
+    return prisma;
   },
 };
