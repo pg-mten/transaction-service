@@ -126,7 +126,8 @@ model DisbursementTransaction {
   merchantId        Int
   providerName      String
   recipientName     String // bisa merchant, agent, atau pihak ketiga
-  recipientBank     String
+  recipientBankCode String
+  recipientBankName String
   recipientAccount  String
   nominal           Decimal
   netNominal        Decimal

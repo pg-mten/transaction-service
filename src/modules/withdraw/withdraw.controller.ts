@@ -20,7 +20,7 @@ export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
+  @ApiOperation({ summary: 'Buat Withdraw baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
     console.log({ body });

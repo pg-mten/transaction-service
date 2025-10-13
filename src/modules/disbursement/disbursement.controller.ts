@@ -20,7 +20,7 @@ export class DisbursementTransactionsController {
   constructor(private readonly service: DisbursementService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
+  @ApiOperation({ summary: 'Buat Disbursement baru' })
   @ApiBody({ type: CreateDisbursementTransactionDto })
   async create(@Body() body: CreateDisbursementTransactionDto) {
     await this.service.create(body);

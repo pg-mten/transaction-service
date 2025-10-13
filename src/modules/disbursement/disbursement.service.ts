@@ -1,5 +1,9 @@
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import {
+  Inject,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { PrismaClient, TransactionTypeEnum } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -14,22 +18,66 @@ import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
+import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
+import { ProviderDisbursementSystemDto } from 'src/microservice/provider/provider-disbursement.system.dto';
 
 @Injectable()
 export class DisbursementService {
   constructor(
     @Inject(PRISMA_SERVICE) private prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-    private balanceService: BalanceService,
+    private readonly balanceService: BalanceService,
+    private readonly inacashProviderClient: InacashProviderClient,
   ) {}
 
+  private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
+
+  private async callProvider(dto: {
+    code: string;
+    providerName: string;
+    paymentMethodName: string;
+    recipientBankCode: string;
+    recipientBankName: string;
+    recipientAccountNumber: string;
+    nominal: Decimal;
+  }): Promise<ProviderDisbursementSystemDto> {
+    try {
+      if (dto.providerName === 'INACASH') {
+        const clientRes = await this.inacashProviderClient.disbursementTCP({
+          ...dto,
+        });
+
+        const clientData = clientRes.data!;
+        return clientData;
+      } else throw new Error('Not calling any Provider');
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
   async create(dto: CreateDisbursementTransactionDto) {
+    const merchantId = dto.merchantId;
+
+    // TODO Masih Hardcoded
+    const providerName = 'INACASH';
+    const paymentMethodName = 'TRANSFERBANK';
+
+    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
+
+    const clientData = await this.callProvider({
+      code,
+      providerName,
+      paymentMethodName,
+      ...dto,
+    });
+
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
+          merchantId,
+          providerName,
+          paymentMethodName,
           nominal: dto.nominal,
         });
 
@@ -46,18 +94,18 @@ export class DisbursementService {
 
       const transaction = await trx.disbursementTransaction.create({
         data: {
-          externalId: dto.externalId,
-          referenceId: dto.referenceId,
-          merchantId: dto.merchantId,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-          recipientBank: dto.recipientBank,
+          externalId: code,
+          merchantId: merchantId,
+          providerName: providerName,
+          paymentMethodName: paymentMethodName,
+          recipientBankCode: dto.recipientBankCode,
+          recipientBankName: dto.recipientBankName,
           recipientName: dto.recipientName,
           recipientAccount: dto.recipientName,
           nominal: dto.nominal,
-          metadata: dto.metadata,
+          metadata: clientData.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: 'PENDING',
+          status: 'SUCCESS',
           MerchantBalanceLog: {
             create: {
               merchantId: dto.merchantId,
@@ -66,7 +114,7 @@ export class DisbursementService {
                 feeDto.merchantFee.netNominal,
               ),
               balancePending: lastBalanceMerchant.balancePending,
-              transactionType: 'DISBURSEMENT',
+              transactionType: this.transactionType,
             },
           },
           InternalBalanceLog: {
@@ -77,9 +125,9 @@ export class DisbursementService {
               balanceActive: lastBalanceInternal.balanceActive?.plus(
                 feeDto.internalFee.nominal,
               ),
-              providerName: dto.providerName,
-              paymentMethodName: dto.paymentMethodName,
-              transactionType: 'DISBURSEMENT',
+              providerName,
+              paymentMethodName,
+              transactionType: this.transactionType,
             },
           },
           AgentBalanceLog: {
@@ -96,7 +144,7 @@ export class DisbursementService {
                     lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balanceActive.plus(item.nominal) || new Decimal(0),
-                  transactionType: 'DISBURSEMENT',
+                  transactionType: this.transactionType,
                 };
               }),
             },

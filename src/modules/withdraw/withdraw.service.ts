@@ -1,10 +1,5 @@
-import {
-  Inject,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Prisma, TransactionTypeEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
@@ -19,8 +14,8 @@ import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
-import { InacashWithdrawResponseSystemDto } from 'src/microservice/provider/inacash/dto-system/inacash-withdraw.response.system.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
 
 @Injectable()
 export class WithdrawService {
@@ -31,6 +26,8 @@ export class WithdrawService {
     private readonly inacashProviderClient: InacashProviderClient,
   ) {}
 
+  private readonly transactionType = TransactionTypeEnum.WITHDRAW;
+
   private async callProvider(dto: {
     code: string;
     providerName: string;
@@ -39,7 +36,7 @@ export class WithdrawService {
     bankName: string;
     accountNumber: string;
     nominal: Decimal;
-  }): Promise<InacashWithdrawResponseSystemDto> {
+  }): Promise<ProviderWithdrawSystemDto> {
     try {
       if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.withdrawTCP({
@@ -62,7 +59,7 @@ export class WithdrawService {
     const providerName = 'INACASH';
     const paymentMethodName = 'TRANSFERBANK';
 
-    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#WITHDRAW#${providerName}#${paymentMethodName}`;
+    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
 
     const clientData = await this.callProvider({
       code,
@@ -120,7 +117,7 @@ export class WithdrawService {
                 feeDto.merchantFee.netNominal,
               ),
               balancePending: lastBalanceMerchant.balancePending,
-              transactionType: 'WITHDRAW',
+              transactionType: this.transactionType,
             },
           },
           InternalBalanceLog: {
@@ -133,7 +130,7 @@ export class WithdrawService {
               ),
               providerName,
               paymentMethodName,
-              transactionType: 'WITHDRAW',
+              transactionType: this.transactionType,
             },
           },
           AgentBalanceLog: {
@@ -150,7 +147,7 @@ export class WithdrawService {
                     lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balanceActive.plus(item.nominal) || new Decimal(0),
-                  transactionType: 'WITHDRAW',
+                  transactionType: this.transactionType,
                 };
               }),
             },

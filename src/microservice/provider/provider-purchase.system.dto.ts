@@ -3,8 +3,8 @@ import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class InacashCreatePurchaseQrisResponseSystemDto {
-  constructor(data: InacashCreatePurchaseQrisResponseSystemDto) {
+export class ProviderPurchaseSystemDto {
+  constructor(data: ProviderPurchaseSystemDto) {
     DtoHelper.assign(this, data);
   }
 

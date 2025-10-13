@@ -56,6 +56,7 @@ export const SERVICES = {
       settlement_schedule: 'settlement_schedule',
       inacash_purchase_qris: 'inacash_purchase_qris',
       inacash_withdraw: 'inacash_withdraw',
+      inacash_disbursement: 'inacash_disbursement',
     },
   },
 };
