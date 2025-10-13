@@ -1,8 +1,7 @@
-import { ClassSerializerInterceptor, Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Inject, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
-import { PrismaService } from '../prisma/prisma.service';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from '@nestjs/core';
 import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
 import { PrismaClientKnownExceptionFilter } from 'src/filter/prisma-client-known.exception.filter';
@@ -18,6 +17,9 @@ import { DisbursementTransactionModule } from '../disbursement/disbursement.modu
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
+import { PrismaClient } from '@prisma/client';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -38,11 +40,16 @@ import { MicroserviceModule } from 'src/microservice/microservice.module';
 
     /// Web Client
     MicroserviceModule,
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: {
+        enabled: true,
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService,
     /// PIPE
     {
       provide: APP_PIPE,
@@ -81,8 +88,8 @@ import { MicroserviceModule } from 'src/microservice/microservice.module';
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     {
       provide: APP_INTERCEPTOR,
-      useFactory: (prisma: PrismaService) => new PrismaUserInterceptor(prisma),
-      inject: [PrismaService],
+      useFactory: (prisma: PrismaClient) => new PrismaUserInterceptor(prisma),
+      inject: [PRISMA_SERVICE],
     },
   ],
 })

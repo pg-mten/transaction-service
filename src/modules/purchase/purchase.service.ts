@@ -21,6 +21,7 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class PurchaseService {

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import Decimal from 'decimal.js';
 import {
   BalanceAgentDto,
@@ -8,12 +8,14 @@ import {
   BalanceMerchantDto,
 } from './dto/balance.dto';
 import { Prisma, TransactionTypeEnum } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class BalanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PRISMA_SERVICE) private prisma: PrismaClient) {}
 
   /**
+   *
    * Merchant Balance
    */
   async checkBalanceMerchant(merchantId: number) {
@@ -87,6 +89,7 @@ export class BalanceService {
   }
 
   /**
+   *
    * Agent Balance
    */
   async checkBalanceAgent(agentId: number) {
@@ -202,6 +205,7 @@ export class BalanceService {
   }
 
   /**
+   *
    * Internal Balance
    */
   async checkBalanceInternal() {
