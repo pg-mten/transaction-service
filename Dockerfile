@@ -73,6 +73,9 @@ RUN npx prisma generate
 # Build project (misalnya NestJS)
 RUN npm run build
 
+# Seeder Configuration Fee
+RUN npm run prisma:seed
+
 # Stage kedua untuk image lebih kecil
 FROM node:20-alpine AS runner
 WORKDIR /app
