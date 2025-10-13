@@ -1,4 +1,3 @@
-// src/transactions/transactions.controller.ts
 import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
@@ -7,7 +6,6 @@ import {
   ApiOkResponse,
   ApiBody,
 } from '@nestjs/swagger';
-
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
@@ -22,7 +20,7 @@ export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
+  @ApiOperation({ summary: 'Buat Withdraw baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
     console.log({ body });

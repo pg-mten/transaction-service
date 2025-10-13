@@ -1,4 +1,3 @@
-// src/transactions/transactions.controller.ts
 import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
@@ -7,7 +6,6 @@ import {
   ApiOkResponse,
   ApiBody,
 } from '@nestjs/swagger';
-
 import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
@@ -22,7 +20,7 @@ export class DisbursementTransactionsController {
   constructor(private readonly service: DisbursementService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
+  @ApiOperation({ summary: 'Buat Disbursement baru' })
   @ApiBody({ type: CreateDisbursementTransactionDto })
   async create(@Body() body: CreateDisbursementTransactionDto) {
     await this.service.create(body);

@@ -21,6 +21,7 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 
 @Injectable()
 export class PurchaseService {
@@ -35,15 +36,15 @@ export class PurchaseService {
     const code = `${DateHelper.now().toUnixInteger()}#${body.merchantId}#PURCHASE#${body.providerName}#${body.paymentMethodName}`;
 
     if (body.providerName === 'INACASH') {
-      const res = await this.inacashProviderClient.purchaseQRISTCP({
+      const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
         code: code,
         merchantId: body.merchantId,
         nominal: body.nominal,
       });
-      const data = res.data!;
+      const data = clientRes.data!;
       return new CreatePurchaseResponseDto({
         content: data.content,
-        nominal: data.amount,
+        nominal: data.nominal,
         productCode: data.productCode,
         providerName: body.providerName,
         paymentMethodName: body.paymentMethodName,

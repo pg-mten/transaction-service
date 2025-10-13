@@ -1,6 +1,5 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, TransactionTypeEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
@@ -14,23 +13,67 @@ import { WithdrawFeeDetailDto } from './dto/withdraw-fee-detail.dto';
 import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
+import { PrismaService } from '../prisma/prisma.service';
+import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
 
 @Injectable()
 export class WithdrawService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-    private balanceService: BalanceService,
+    private readonly balanceService: BalanceService,
+    private readonly inacashProviderClient: InacashProviderClient,
   ) {}
+
+  private readonly transactionType = TransactionTypeEnum.WITHDRAW;
+
+  private async callProvider(dto: {
+    code: string;
+    providerName: string;
+    paymentMethodName: string;
+    bankCode: string;
+    bankName: string;
+    accountNumber: string;
+    nominal: Decimal;
+  }): Promise<ProviderWithdrawSystemDto> {
+    try {
+      if (dto.providerName === 'INACASH') {
+        const clientRes = await this.inacashProviderClient.withdrawTCP({
+          ...dto,
+        });
+
+        const clientData = clientRes.data!;
+        return clientData;
+      } else throw new Error('Not calling any Provider');
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
 
   async create(dto: CreateWithdrawTransactionDto) {
     const merchantId = dto.merchantId;
+
+    // TODO Masih Hardcoded
+    const providerName = 'INACASH';
+    const paymentMethodName = 'TRANSFERBANK';
+
+    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
+
+    const clientData = await this.callProvider({
+      code,
+      providerName,
+      paymentMethodName,
+      ...dto,
+    });
+
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
           merchantId,
-          providerName: 'NETZME',
-          paymentMethodName: 'TRANSFERBANK',
+          providerName,
+          paymentMethodName,
           nominal: dto.nominal,
         });
 
@@ -41,7 +84,7 @@ export class WithdrawService {
       const lastBalanceMerchant =
         await this.balanceService.checkBalanceMerchant(merchantId);
       const lastBalanceInternal =
-        await this.balanceService.aggregateBalanceInternal();
+        await this.balanceService.checkBalanceInternal();
       const lastBalanceAgents =
         await this.balanceService.checkBalanceAgents(agentIds);
 
@@ -56,15 +99,16 @@ export class WithdrawService {
 
       const withdrawTransaction = await trx.withdrawTransaction.create({
         data: {
-          externalId: 'external id faker',
+          code: code,
+          externalId: clientData.externalId,
           referenceId: UuidHelper.v4(),
           merchantId,
-          providerName: 'NETZME',
-          paymentMethodName: 'TRANSFERBANK',
+          providerName,
+          paymentMethodName,
           nominal: dto.nominal,
-          metadata: {},
+          metadata: clientData.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: 'PENDING',
+          status: 'SUCCESS',
           MerchantBalanceLog: {
             create: {
               merchantId: merchantId,
@@ -73,7 +117,7 @@ export class WithdrawService {
                 feeDto.merchantFee.netNominal,
               ),
               balancePending: lastBalanceMerchant.balancePending,
-              transactionType: 'WITHDRAW',
+              transactionType: this.transactionType,
             },
           },
           InternalBalanceLog: {
@@ -84,9 +128,9 @@ export class WithdrawService {
               balanceActive: lastBalanceInternal.balanceActive?.plus(
                 feeDto.internalFee.nominal,
               ),
-              providerName: 'NETZME',
-              paymentMethodName: 'TRANSFERBANK',
-              transactionType: 'WITHDRAW',
+              providerName,
+              paymentMethodName,
+              transactionType: this.transactionType,
             },
           },
           AgentBalanceLog: {
@@ -103,7 +147,7 @@ export class WithdrawService {
                     lastBalanceAgents
                       .find((a) => a.agentId == item.id)
                       ?.balanceActive.plus(item.nominal) || new Decimal(0),
-                  transactionType: 'WITHDRAW',
+                  transactionType: this.transactionType,
                 };
               }),
             },

@@ -3,29 +3,31 @@ import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class InacashCreatePurchaseQrisResponseSystemDto {
-  constructor(data: InacashCreatePurchaseQrisResponseSystemDto) {
+export class ProviderWithdrawSystemDto {
+  constructor(data: ProviderWithdrawSystemDto) {
     DtoHelper.assign(this, data);
   }
 
+  @ToDecimalFixed()
   @ApiProperty()
-  message: string;
+  nominal: Decimal;
 
   @ToDecimalFixed()
   @ApiProperty()
-  amount: Decimal;
+  feeProviderRealized: Decimal;
 
+  @ToDecimalFixed()
   @ApiProperty()
-  content: string;
+  netNominal: Decimal;
 
   @ApiProperty()
   externalId: string;
 
   @ApiProperty()
-  code: string;
+  accountNumber: string;
 
   @ApiProperty()
-  productCode: string;
+  accountHolderName: string;
 
   @ApiProperty()
   metadata: Record<string, unknown>;
