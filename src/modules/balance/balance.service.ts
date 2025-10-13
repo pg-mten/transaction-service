@@ -240,7 +240,7 @@ export class BalanceService {
       select: { balanceActive: true, balancePending: true },
     });
 
-    return new BalanceDto({
+    return new BalanceInternalDto({
       balanceActive: lastRow?.balanceActive ?? new Decimal(0),
       balancePending: lastRow?.balancePending ?? new Decimal(0),
     });

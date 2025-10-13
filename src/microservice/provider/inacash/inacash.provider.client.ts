@@ -6,6 +6,8 @@ import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
 import { firstValueFrom } from 'rxjs';
 import { InacashCreatePurchaseQrisResponseSystemDto } from './dto-system/inacash-create-purchase-qris.response.system.dto';
+import { InacashWithdrawRequestSystemDto } from './dto-system/inacash-withdraw.request.system.dto';
+import { InacashWithdrawResponseSystemDto } from './dto-system/inacash-withdraw.response.system.dto';
 
 @Injectable()
 export class InacashProviderClient {
@@ -34,6 +36,32 @@ export class InacashProviderClient {
         this.inacashProviderClient.send<
           ResponseDto<InacashCreatePurchaseQrisResponseSystemDto>
         >({ cmd: this.cmd.inacash_purchase_qris }, body),
+      );
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async withdraw(body: InacashWithdrawRequestSystemDto) {
+    try {
+      const res = await axios.post<
+        ResponseDto<InacashWithdrawResponseSystemDto>
+      >(`${URL_SETTLERECON}/provider/inacash/internal/withdraw`, body);
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async withdrawTCP(body: InacashWithdrawRequestSystemDto) {
+    try {
+      const res = await firstValueFrom(
+        this.inacashProviderClient.send<
+          ResponseDto<InacashWithdrawResponseSystemDto>
+        >({ cmd: this.cmd.inacash_withdraw }, body),
       );
       return res;
     } catch (error) {

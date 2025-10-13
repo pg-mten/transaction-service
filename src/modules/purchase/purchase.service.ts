@@ -35,15 +35,15 @@ export class PurchaseService {
     const code = `${DateHelper.now().toUnixInteger()}#${body.merchantId}#PURCHASE#${body.providerName}#${body.paymentMethodName}`;
 
     if (body.providerName === 'INACASH') {
-      const res = await this.inacashProviderClient.purchaseQRISTCP({
+      const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
         code: code,
         merchantId: body.merchantId,
         nominal: body.nominal,
       });
-      const data = res.data!;
+      const data = clientRes.data!;
       return new CreatePurchaseResponseDto({
         content: data.content,
-        nominal: data.amount,
+        nominal: data.nominal,
         productCode: data.productCode,
         providerName: body.providerName,
         paymentMethodName: body.paymentMethodName,

@@ -1,31 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
-export class InacashCreatePurchaseQrisResponseSystemDto {
-  constructor(data: InacashCreatePurchaseQrisResponseSystemDto) {
+export class InacashWithdrawResponseSystemDto {
+  constructor(data: InacashWithdrawResponseSystemDto) {
     DtoHelper.assign(this, data);
   }
-
-  @ApiProperty()
-  message: string;
 
   @ToDecimalFixed()
   @ApiProperty()
   nominal: Decimal;
 
+  @ToDecimalFixed()
   @ApiProperty()
-  content: string;
+  feeProviderRealized: Decimal;
 
+  @ToDecimalFixed()
+  @ApiProperty()
+  netNominal: Decimal;
+
+  @IsString()
   @ApiProperty()
   externalId: string;
 
+  @IsString()
   @ApiProperty()
-  code: string;
+  accountNumber: string;
 
+  @IsString()
   @ApiProperty()
-  productCode: string;
+  accountHolderName: string;
 
   @ApiProperty()
   metadata: Record<string, unknown>;

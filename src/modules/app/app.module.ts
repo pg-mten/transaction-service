@@ -10,13 +10,11 @@ import { ResponseExceptionFilter } from 'src/filter/response.exception.filter';
 import { InvalidRequestExceptionFilter } from 'src/filter/invalid-request.exception.filter';
 import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
 import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
-import { ReconciliationModule } from '../reconciliation/reconciliation.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
 import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
-import { SettlementModule } from '../settlement/settlement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
@@ -33,11 +31,9 @@ import { MicroserviceModule } from 'src/microservice/microservice.module';
 
     /// Business Module
     PurchaseModule,
-    ReconciliationModule,
     TopupTransactionModule,
     WithdrawTransactionModule,
     DisbursementTransactionModule,
-    SettlementModule,
     BalanceModule,
 
     /// Web Client
