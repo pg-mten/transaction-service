@@ -70,11 +70,11 @@ COPY . .
 
 RUN npx prisma generate
 
-# Build project (misalnya NestJS)
-RUN npm run build
-
 # Seeder Configuration Fee
 RUN npm run prisma:seed
+
+# Build project (misalnya NestJS)
+RUN npm run build
 
 # Stage kedua untuk image lebih kecil
 FROM node:20-alpine AS runner
