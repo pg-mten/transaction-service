@@ -19,7 +19,7 @@ export const SERVICES = {
   },
   AUTH: {
     name: process.env.CLIENT_AUTH_NAME || 'AUTH_SERVICE',
-    host: process.env.CLIENT_AUTH_HOST || '127.0.0.1',
+    host: process.env.CLIENT_AUTH_HOST || 'auth-service',
     port: parseInt(process.env.CLIENT_AUTH_PORT || '4000'),
     cmd: {
       find_all_merchants_and_agents_by_ids:
@@ -29,7 +29,7 @@ export const SERVICES = {
   },
   CONFIG: {
     name: process.env.CLIENT_CONFIG_NAME || 'CONFIG_SERVICE',
-    host: process.env.CLIENT_CONFIG_HOST || '127.0.0.1',
+    host: process.env.CLIENT_CONFIG_HOST || 'config-service',
     port: parseInt(process.env.CLIENT_CONFIG_PORT || '4001'),
     cmd: {
       calculate_fee_purchase: 'calculate_fee_purchase',
@@ -50,7 +50,7 @@ export const SERVICES = {
   },
   SETTLERECON: {
     name: process.env.CLIENT_SETTLERECON_NAME || 'SETTLERECON_SERVICE',
-    host: process.env.CLIENT_SETTLERECON_HOST || '127.0.0.1',
+    host: process.env.CLIENT_SETTLERECON_HOST || 'settlerecon-service',
     port: parseInt(process.env.CLIENT_SETTLERECON_PORT || '4003'),
     cmd: {
       settlement_schedule: 'settlement_schedule',
