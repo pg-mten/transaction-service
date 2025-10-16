@@ -31,6 +31,14 @@ jobs:
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Debug build args
+        run: |
+          echo "CLIENT_SETTLERECON_HOST: ${{ vars.CLIENT_SETTLERECON_HOST }}"
+          echo "CLIENT_SETTLERECON_PORT: ${{ vars.CLIENT_SETTLERECON_PORT }}"
+          echo "CLIENT_TRANSACTION_HOST: ${{ vars.CLIENT_TRANSACTION_HOST }}"
+          echo "CLIENT_CONFIG_HOST: ${{ vars.CLIENT_CONFIG_HOST }}"
+
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
