@@ -43,7 +43,7 @@ import { InacashProviderClient } from './provider/inacash/inacash.provider.clien
 
     /// TODO Non aktifkan dulu bolooo
     // JwtStrategy,
-    /// Guard
+    // /// Guard
     // {
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,
