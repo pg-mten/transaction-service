@@ -42,6 +42,7 @@ export class AgentConfigClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.create(body);
       throw error;
     }
   }

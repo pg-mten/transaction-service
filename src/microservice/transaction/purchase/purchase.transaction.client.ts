@@ -44,6 +44,7 @@ export class PurchaseTransactionClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.createCallbackProvider(body);
       throw error;
     }
   }

@@ -45,6 +45,7 @@ export class UserAuthClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.findAllMerchantsAndAgentsByIds(filter);
       throw error;
     }
   }

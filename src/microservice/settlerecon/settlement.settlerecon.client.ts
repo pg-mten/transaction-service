@@ -40,6 +40,7 @@ export class SettlementSettleReconClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.schedule(body);
       throw error;
     }
   }

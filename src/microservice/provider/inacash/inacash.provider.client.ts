@@ -44,6 +44,7 @@ export class InacashProviderClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.purchaseQRIS(body);
       throw error;
     }
   }
@@ -72,6 +73,7 @@ export class InacashProviderClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.withdraw(body);
       throw error;
     }
   }
@@ -99,6 +101,7 @@ export class InacashProviderClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.disbursement(body);
       throw error;
     }
   }

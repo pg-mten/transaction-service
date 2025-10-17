@@ -41,6 +41,7 @@ export class MerchantSignatureAuthClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.validateSignature(filter);
       throw error;
     }
   }
