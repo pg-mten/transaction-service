@@ -23,7 +23,7 @@ export class MerchantSignatureAuthClient {
       >(`${URL_AUTH}/merchant-detail/internal/validate-signature`, {
         params: filter,
       });
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;

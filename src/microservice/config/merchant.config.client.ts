@@ -24,7 +24,7 @@ export class MerchantConfigClient {
         `${URL_CONFIG}/merchant/internal`,
         { data: body },
       );
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;
