@@ -6,6 +6,10 @@ export class CreateMerchantSystemDto {
   @IsNumber()
   id: number;
 
+  @ApiProperty({ type: Number })
+  @IsNumber()
+  agentId: number;
+
   @ApiProperty({ type: Number, required: false })
   @IsOptional()
   settlementInterval: number | null;

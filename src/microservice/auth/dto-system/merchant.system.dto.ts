@@ -14,21 +14,60 @@ export class MerchantSystemDto {
   @ApiProperty({ type: String })
   email: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
+  ownerName: string;
+
+  @ApiProperty()
   businessName: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
+  brandName: string;
+
+  @ApiProperty()
+  phoneNumber: string;
+
+  @ApiProperty()
+  nik: string;
+
+  @ApiProperty({ type: String, required: false })
+  ktpImage: string | null;
+
+  @ApiProperty()
   npwp: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
   address: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
+  province: string;
+
+  @ApiProperty()
+  regency: string;
+
+  @ApiProperty()
+  district: string;
+
+  @ApiProperty()
+  village: string;
+
+  @ApiProperty()
+  postalCode: string;
+
+  @ApiProperty()
+  bankCode: string;
+
+  @ApiProperty()
   bankName: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
   accountNumber: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty()
   accountHolderName: string;
+
+  @ApiProperty({ type: String, required: false })
+  siupFile: string | null;
+
+  @ApiProperty({ type: String, required: false })
+  coordinate: string | null;
 }
