@@ -22,7 +22,7 @@ export class SettlementSettleReconClient {
         `${URL_SETTLERECON}/settlement/internal`,
         body,
       );
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;
@@ -40,6 +40,7 @@ export class SettlementSettleReconClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.schedule(body);
       throw error;
     }
   }

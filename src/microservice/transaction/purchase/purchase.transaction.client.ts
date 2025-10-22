@@ -24,7 +24,7 @@ export class PurchaseTransactionClient {
         `${URL_SETTLERECON}/transaction/purchase/callback`,
         body,
       );
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;
@@ -44,6 +44,7 @@ export class PurchaseTransactionClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.createCallbackProvider(body);
       throw error;
     }
   }

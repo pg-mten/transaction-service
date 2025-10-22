@@ -51,6 +51,7 @@ export class FeeCalculateConfigClient {
       return res.data!;
     } catch (error) {
       console.error(error);
+      return this.calculatePurchaseFeeConfig(filter);
       throw error;
     }
   }
@@ -84,6 +85,7 @@ export class FeeCalculateConfigClient {
       return res.data!;
     } catch (error) {
       console.error(error);
+      return this.calculateWithdrawFeeConfig(filter);
       throw error;
     }
   }
@@ -118,6 +120,7 @@ export class FeeCalculateConfigClient {
       return res.data!;
     } catch (error) {
       console.error(error);
+      return this.calculateTopupFeeConfig(filter);
       throw error;
     }
   }
@@ -153,6 +156,7 @@ export class FeeCalculateConfigClient {
       return res.data!;
     } catch (error) {
       console.error(error);
+      return this.calculateDisbursementFeeConfig(filter);
       throw error;
     }
   }

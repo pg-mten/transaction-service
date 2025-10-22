@@ -1,24 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, ValidateIf } from 'class-validator';
+import { IsInt, IsString, ValidateIf } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTime } from 'src/decorator/date.decorator';
-import { DtoHelper } from 'src/shared/helper/dto.helper';
 
 export class CreateSettlementScheduleSystemDto {
-  constructor(data: CreateSettlementScheduleSystemDto) {
-    DtoHelper.assign(this, data);
-  }
-
-  @ApiProperty({
-    type: [Number],
-    description: 'List of IDs',
-    example: [1, 2, 3, 4],
-  })
-  @IsArray()
-  @IsInt({ each: true })
-  @Type(() => Number)
-  merchantIds: number[];
+  @ApiProperty()
+  @IsString()
+  merchantIds: string;
 
   @ApiProperty({ type: Number })
   @IsInt()

@@ -25,7 +25,7 @@ export class UserAuthClient {
       >(`${URL_AUTH}/user/internal/merchants-and-agents-by-ids`, {
         params: filter,
       });
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;
@@ -45,6 +45,7 @@ export class UserAuthClient {
       return res;
     } catch (error) {
       console.log(error);
+      return this.findAllMerchantsAndAgentsByIds(filter);
       throw error;
     }
   }

@@ -3,19 +3,29 @@ import { Reflector } from '@nestjs/core';
 import { ROLE } from 'src/microservice/auth.constant';
 import { ROLES_KEY } from '../decorator/roles.decorator';
 import { Request } from 'express';
-import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
+import { PUBLIC_API_KEY } from '../decorator/public.decorator';
 import { AuthInfoDto } from '../dto/auth-info.dto';
+import { SYSTEM_API_KEY } from '../decorator/system.decorator';
+import { MERCHANT_API_KEY } from '../decorator/merchant.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext) {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
+    const isPublicApi = this.reflector.getAllAndOverride<boolean>(
+      PUBLIC_API_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const isSystemApi = this.reflector.getAllAndOverride<boolean>(
+      SYSTEM_API_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const isMerchantApi = this.reflector.getAllAndOverride<boolean>(
+      MERCHANT_API_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (isPublicApi || isSystemApi || isMerchantApi) return true;
 
     const requiredRoles = this.reflector.getAllAndOverride<ROLE[]>(ROLES_KEY, [
       context.getHandler(),
