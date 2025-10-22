@@ -11,6 +11,7 @@ import { PUBLIC_API_KEY } from '../decorator/public.decorator';
 import { AuthInfoDto } from '../dto/auth-info.dto';
 import { SYSTEM_API_KEY } from '../decorator/system.decorator';
 import { MERCHANT_API_KEY } from '../decorator/merchant.decorator';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -21,6 +22,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    const req: Request = context.switchToHttp().getRequest();
+
+    /// TODO: Temporary, Prometheus, Buatkan MetricsController dan pasang Decorator @SystemApi()
+    if (req.path === '/metrics') return true;
+
     const isPublicApi = this.reflector.getAllAndOverride<boolean>(
       PUBLIC_API_KEY,
       [context.getHandler(), context.getClass()],
