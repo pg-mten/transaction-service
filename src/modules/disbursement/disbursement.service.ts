@@ -20,6 +20,7 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { ProviderDisbursementSystemDto } from 'src/microservice/provider/provider-disbursement.system.dto';
+import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 
 @Injectable()
 export class DisbursementService {
@@ -63,7 +64,12 @@ export class DisbursementService {
     const providerName = 'INACASH';
     const paymentMethodName = 'TRANSFERBANK';
 
-    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
+    const code = TransactionHelper.createCode({
+      transactionType: this.transactionType,
+      merchantId: dto.merchantId,
+      providerName: providerName,
+      paymentMethodName: paymentMethodName,
+    });
 
     const clientData = await this.callProvider({
       code,

@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseRequestDto } from './dto/create-purchase.request.dto';
-import { Prisma, TransactionStatusEnum } from '@prisma/client';
+import {
+  Prisma,
+  TransactionStatusEnum,
+  TransactionTypeEnum,
+} from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseException } from 'src/exception/response.exception';
@@ -22,6 +26,7 @@ import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/pu
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
+import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 
 @Injectable()
 export class PurchaseService {
@@ -32,8 +37,15 @@ export class PurchaseService {
     private readonly inacashProviderClient: InacashProviderClient,
   ) {}
 
+  private readonly transactionType = TransactionTypeEnum.PURCHASE;
+
   async createPurchase(body: CreatePurchaseRequestDto) {
-    const code = `${DateHelper.now().toUnixInteger()}#${body.merchantId}#PURCHASE#${body.providerName}#${body.paymentMethodName}`;
+    const code = TransactionHelper.createCode({
+      transactionType: this.transactionType,
+      merchantId: body.merchantId,
+      providerName: body.providerName,
+      paymentMethodName: body.paymentMethodName,
+    });
 
     if (body.providerName === 'INACASH') {
       const clientRes = await this.inacashProviderClient.purchaseQRISTCP({

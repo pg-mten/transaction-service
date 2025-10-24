@@ -18,4 +18,13 @@ export class DateHelper {
     if (!date) return null;
     return DateTime.fromJSDate(date);
   }
+
+  static nowUnixInteger(): number {
+    return this.now().toUnixInteger();
+  }
+
+  static fromUnixInteger(date: string | number) {
+    const dateUnix: number = typeof date === 'string' ? Number(date) : date;
+    return DateTime.fromSeconds(dateUnix);
+  }
 }
