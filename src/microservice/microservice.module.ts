@@ -17,6 +17,8 @@ import { HealthModule } from './health/health.module';
 import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
 import { PurchaseTransactionClient } from './transaction/purchase/purchase.transaction.client';
 import { InacashProviderClient } from './provider/inacash/inacash.provider.client';
+import { WithdrawTransacionClient } from './transaction/withdraw/withdraw.transaction.client';
+import { DisbursementTransactionClient } from './transaction/disbursement/disbursement.transaction.client';
 
 @Global()
 @Module({
@@ -28,6 +30,8 @@ import { InacashProviderClient } from './provider/inacash/inacash.provider.clien
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
     PurchaseTransactionClient,
+    WithdrawTransacionClient,
+    DisbursementTransactionClient,
     InacashProviderClient,
   ],
   providers: [
@@ -39,6 +43,8 @@ import { InacashProviderClient } from './provider/inacash/inacash.provider.clien
     SettlementSettleReconClient,
     MerchantSignatureAuthClient,
     PurchaseTransactionClient,
+    WithdrawTransacionClient,
+    DisbursementTransactionClient,
     InacashProviderClient,
 
     /// TODO Non aktifkan dulu bolooo

@@ -8,6 +8,9 @@ export class ProviderWithdrawSystemDto {
     DtoHelper.assign(this, data);
   }
 
+  @ApiProperty()
+  status: string;
+
   @ToDecimalFixed()
   @ApiProperty()
   nominal: Decimal;

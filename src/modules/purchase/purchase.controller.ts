@@ -78,17 +78,4 @@ export class PurchaseController {
   ) {
     return this.purchaseService.createCallbackProvider(payload);
   }
-
-  /// TODO: Transaction dan Settlement masih dijadikan satu
-  // @Get('internal/settlement')
-  // @ApiOperation({ summary: 'Settlement process hourly' })
-  // async settlement(@Query() filter: FilterTransactionSettlementDto) {
-  //   console.log({ filter });
-  //   return this.transactionsService.internalTransactionSettlement(filter);
-  // }
-  // @Post('webhook')
-  // webhook(@Body() body: any) {
-  //   const { external_id, status } = body;
-  //   return this.purchaseService.handleWebhook(external_id, status, body);
-  // }
 }
