@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -51,7 +55,10 @@ export class WithdrawService {
 
         const clientData = clientRes.data!;
         return clientData;
-      } else throw new Error('Not calling any Provider');
+      } else
+        throw ResponseException.fromHttpExecption(
+          new BadGatewayException('Provider Name Not Found'),
+        );
     } catch (error) {
       console.log(error);
       throw error;

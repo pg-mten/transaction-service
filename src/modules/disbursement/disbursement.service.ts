@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   Inject,
   Injectable,
   UnprocessableEntityException,
@@ -55,7 +56,10 @@ export class DisbursementService {
 
         const clientData = clientRes.data!;
         return clientData;
-      } else throw new Error('Not calling any Provider');
+      } else
+        throw ResponseException.fromHttpExecption(
+          new BadGatewayException('Provider Name Not Found'),
+        );
     } catch (error) {
       console.log(error);
       throw error;
