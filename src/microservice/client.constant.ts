@@ -46,6 +46,8 @@ export const SERVICES = {
     port: parseInt(process.env.CLIENT_TRANSACTION_PORT || '4002'),
     cmd: {
       purchase_callback: 'purchase_callback',
+      withdraw_callback: 'withdraw_callback',
+      disbursement_callback: 'disbursement_callback',
     },
   },
   SETTLERECON: {

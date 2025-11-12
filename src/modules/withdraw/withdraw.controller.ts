@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -13,6 +21,11 @@ import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { CreateWithdrawTransactionDto } from './dto/create-withdraw-transaction.dto';
 import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 import { WithdrawService } from './withdraw.service';
+import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { SERVICES } from 'src/microservice/client.constant';
+import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
+import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
 
 @ApiTags('Transactions', 'Withdraw')
 @Controller('transactions/withdraw')
@@ -28,7 +41,7 @@ export class WithdrawTransactionsController {
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get(':id')
+  @Get(':id/detail')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
@@ -44,5 +57,24 @@ export class WithdrawTransactionsController {
   ) {
     console.log({ filter, pageable });
     return this.service.findAll(pageable, filter);
+  }
+
+  @Post('/internal/callback')
+  @ApiTags('Internal')
+  @ApiOperation({
+    summary:
+      'Pengubahan status berdasarkan external id dan code dari provider services',
+  })
+  @ApiBody({ type: UpdateWithdrawCallbackSystemDto })
+  callback(@Body() body: UpdateWithdrawCallbackSystemDto) {
+    return this.service.callback(body);
+  }
+
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
+  @UseInterceptors(ResponseInterceptor)
+  async callbackTCP(
+    @Payload(CustomValidationPipe) payload: UpdateWithdrawCallbackSystemDto,
+  ) {
+    return this.service.callback(payload);
   }
 }

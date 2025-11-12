@@ -1,9 +1,14 @@
 import {
+  BadGatewayException,
   Inject,
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { PrismaClient, TransactionTypeEnum } from '@prisma/client';
+import {
+  PrismaClient,
+  TransactionStatusEnum,
+  TransactionTypeEnum,
+} from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
@@ -20,6 +25,8 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { ProviderDisbursementSystemDto } from 'src/microservice/provider/provider-disbursement.system.dto';
+import { TransactionHelper } from 'src/shared/helper/transaction.helper';
+import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 
 @Injectable()
 export class DisbursementService {
@@ -49,7 +56,10 @@ export class DisbursementService {
 
         const clientData = clientRes.data!;
         return clientData;
-      } else throw new Error('Not calling any Provider');
+      } else
+        throw ResponseException.fromHttpExecption(
+          new BadGatewayException('Provider Name Not Found'),
+        );
     } catch (error) {
       console.log(error);
       throw error;
@@ -63,7 +73,12 @@ export class DisbursementService {
     const providerName = 'INACASH';
     const paymentMethodName = 'TRANSFERBANK';
 
-    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
+    const code = TransactionHelper.createCode({
+      transactionType: this.transactionType,
+      merchantId: dto.merchantId,
+      providerName: providerName,
+      paymentMethodName: paymentMethodName,
+    });
 
     const clientData = await this.callProvider({
       code,
@@ -81,18 +96,7 @@ export class DisbursementService {
           nominal: dto.nominal,
         });
 
-      const agentIds: number[] = feeDto.agentFee.agents.map(
-        (agent) => agent.id,
-      );
-
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(dto.merchantId);
-      const lastBalanceInternal =
-        await this.balanceService.aggregateBalanceInternal();
-      const lastBalanceAgents =
-        await this.balanceService.checkBalanceAgents(agentIds);
-
-      const transaction = await trx.disbursementTransaction.create({
+      const disbursement = await trx.disbursementTransaction.create({
         data: {
           externalId: code,
           merchantId: merchantId,
@@ -105,67 +109,110 @@ export class DisbursementService {
           nominal: dto.nominal,
           metadata: clientData.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: 'SUCCESS',
-          MerchantBalanceLog: {
-            create: {
-              merchantId: dto.merchantId,
-              changeAmount: dto.nominal,
-              balanceActive: lastBalanceMerchant.balanceActive?.minus(
-                feeDto.merchantFee.netNominal,
-              ),
-              balancePending: lastBalanceMerchant.balancePending,
-              transactionType: this.transactionType,
-            },
-          },
-          InternalBalanceLog: {
-            create: {
-              changeAmount: feeDto.internalFee.nominal,
-              balancePending: lastBalanceInternal.balancePending,
-              merchantId: dto.merchantId,
-              balanceActive: lastBalanceInternal.balanceActive?.plus(
-                feeDto.internalFee.nominal,
-              ),
-              providerName,
-              paymentMethodName,
-              transactionType: this.transactionType,
-            },
-          },
-          AgentBalanceLog: {
-            createMany: {
-              skipDuplicates: true,
-              data: feeDto.agentFee.agents.map((item) => {
-                return {
-                  agentId: item.id,
-                  changeAmount: item.nominal,
-                  balancePending:
-                    lastBalanceAgents.find((a) => a.agentId == item.id)
-                      ?.balancePending || new Decimal(0),
-                  balanceActive:
-                    lastBalanceAgents
-                      .find((a) => a.agentId == item.id)
-                      ?.balanceActive.plus(item.nominal) || new Decimal(0),
-                  transactionType: this.transactionType,
-                };
-              }),
-            },
-          },
+          status: clientData.status as TransactionStatusEnum,
         },
       });
 
-      const feeDetailCreateManyInput: Prisma.DisbursementFeeDetailCreateManyInput[] =
-        this.feeDetailMapper({
-          disbursementId: transaction.id,
+      if (clientData.status === TransactionStatusEnum.SUCCESS) {
+        const disbursementFeeDetails =
+          await trx.disbursementFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              disbursementId: disbursement.id,
+              feeDto,
+            }),
+          });
+        console.log({ disbursementFeeDetails });
+
+        await this.createBalanceLog({
+          disbursementId: disbursement.id,
+          merchantId,
+          providerName,
+          paymentMethodName,
+          nominal: dto.nominal,
           feeDto,
         });
-      const disbursementFeeDetails =
-        await trx.disbursementFeeDetail.createManyAndReturn({
-          data: feeDetailCreateManyInput,
-        });
-      console.log({ transaction, feeDto, disbursementFeeDetails });
+      }
+
+      console.log({ disbursement, feeDto });
 
       return;
     });
   }
+
+  private async createBalanceLog(dto: {
+    disbursementId: number;
+    merchantId: number;
+    providerName: string;
+    paymentMethodName: string;
+    nominal: Decimal;
+    feeDto: DisbursementFeeSystemDto;
+  }) {
+    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
+      (agent) => agent.id,
+    );
+    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
+      dto.merchantId,
+    );
+    const lastBalanceInternal =
+      await this.balanceService.checkBalanceInternal();
+    const lastBalanceAgents =
+      await this.balanceService.checkBalanceAgents(agentIds);
+
+    /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
+    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+      throw new Error('Balance Tidak Mencukupi');
+    }
+
+    return Promise.all([
+      this.prisma.merchantBalanceLog.create({
+        data: {
+          disbursementId: dto.disbursementId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.nominal,
+          balanceActive: lastBalanceMerchant.balanceActive?.minus(
+            dto.feeDto.merchantFee.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
+          transactionType: this.transactionType,
+        },
+      }),
+
+      this.prisma.internalBalanceLog.create({
+        data: {
+          disbursementId: dto.disbursementId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.feeDto.internalFee.nominal,
+          balanceActive: lastBalanceInternal.balanceActive?.plus(
+            dto.feeDto.internalFee.nominal,
+          ),
+          balancePending: lastBalanceInternal.balancePending,
+          providerName: dto.providerName,
+          paymentMethodName: dto.paymentMethodName,
+          transactionType: this.transactionType,
+        },
+      }),
+
+      this.prisma.agentBalanceLog.createMany({
+        skipDuplicates: true,
+        data: dto.feeDto.agentFee.agents.map((item) => {
+          return {
+            disbursementId: dto.disbursementId,
+            agentId: item.id,
+            changeAmount: item.nominal,
+            balancePending:
+              lastBalanceAgents.find((a) => a.agentId == item.id)
+                ?.balancePending || new Decimal(0),
+            balanceActive:
+              lastBalanceAgents
+                .find((a) => a.agentId == item.id)
+                ?.balanceActive.plus(item.nominal) || new Decimal(0),
+            transactionType: this.transactionType,
+          } as Prisma.AgentBalanceLogCreateManyInput;
+        }),
+      }),
+    ]);
+  }
+
   private feeDetailMapper({
     disbursementId,
     feeDto,
@@ -307,6 +354,51 @@ export class DisbursementService {
       pageable,
       total,
       data: disbursementDtos,
+    });
+  }
+
+  async callback(dto: UpdateDisbursementCallbackSystemDto) {
+    const codeExtract = TransactionHelper.extractCode(dto.code);
+
+    await this.prisma.$transaction(async (trx) => {
+      const disbursement = await trx.disbursementTransaction.update({
+        where: {
+          code: dto.code,
+          merchantId: codeExtract.merchantId,
+          externalId: dto.externalId,
+        },
+        data: {
+          status: dto.status as TransactionStatusEnum,
+        },
+      });
+
+      if (disbursement.status === TransactionStatusEnum.SUCCESS) {
+        const feeDto =
+          await this.feeCalculateClient.calculateDisbursementFeeConfig({
+            merchantId: disbursement.merchantId,
+            providerName: disbursement.providerName,
+            paymentMethodName: disbursement.paymentMethodName,
+            nominal: disbursement.nominal,
+          });
+
+        const disbursementFeeDetails =
+          await trx.disbursementFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              disbursementId: disbursement.id,
+              feeDto,
+            }),
+          });
+        console.log({ disbursementFeeDetails });
+
+        await this.createBalanceLog({
+          disbursementId: disbursement.id,
+          merchantId: disbursement.id,
+          providerName: disbursement.providerName,
+          paymentMethodName: disbursement.paymentMethodName,
+          nominal: disbursement.nominal,
+          feeDto,
+        });
+      }
     });
   }
 }

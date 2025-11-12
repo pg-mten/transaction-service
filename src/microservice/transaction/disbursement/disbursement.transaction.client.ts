@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { SERVICES, URL_TRANSACTION } from 'src/microservice/client.constant';
-import { CreatePurchaseCallbackSystemDto } from './dto-system/create-purchase-callback.system.dto';
-import axios from 'axios';
+import { UpdateDisbursementCallbackSystemDto } from './dto-system/update-disbursement-callback.system.dto';
 import { ResponseDto } from 'src/shared/response.dto';
+import axios from 'axios';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
-export class PurchaseTransactionClient {
+export class DisbursementTransactionClient {
   constructor(
     @Inject(SERVICES.TRANSACTION.name)
     private readonly transactionClient: ClientProxy,
@@ -16,12 +16,12 @@ export class PurchaseTransactionClient {
   private readonly cmd = SERVICES.TRANSACTION.cmd;
 
   /**
-   * Create Purchase Transaction from Return URL / Callback Provider
+   * Mainly for update status based on code and external id
    */
-  async createCallbackProvider(body: CreatePurchaseCallbackSystemDto) {
+  async callback(body: UpdateDisbursementCallbackSystemDto) {
     try {
       const res = await axios.post<ResponseDto<null>>(
-        `${URL_TRANSACTION}/transaction/purchase/internal/callback`,
+        `${URL_TRANSACTION}/transaction/disbursement/internal/callback`,
         body,
       );
       return res;
@@ -31,20 +31,18 @@ export class PurchaseTransactionClient {
     }
   }
 
-  async createCallbackProviderTCP(body: CreatePurchaseCallbackSystemDto) {
+  async callbackTCP(body: UpdateDisbursementCallbackSystemDto) {
     try {
       const res = await firstValueFrom(
         this.transactionClient.send<ResponseDto<null>>(
-          {
-            cmd: this.cmd.purchase_callback,
-          },
+          { cmd: this.cmd.disbursement_callback },
           body,
         ),
       );
       return res;
     } catch (error) {
       console.log(error);
-      return this.createCallbackProvider(body);
+      return this.callback(body);
       throw error;
     }
   }

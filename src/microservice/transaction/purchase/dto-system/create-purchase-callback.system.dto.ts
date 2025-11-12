@@ -1,21 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  ValidateIf,
-} from 'class-validator';
+import { IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
 export class CreatePurchaseCallbackSystemDto {
   @IsString()
-  @IsOptional()
-  @IsNotEmpty()
   @ApiProperty()
-  externalId: string | null;
+  externalId: string;
 
   @IsString()
   @ApiProperty()

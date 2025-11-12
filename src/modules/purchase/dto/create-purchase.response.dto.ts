@@ -8,6 +8,9 @@ export class CreatePurchaseResponseDto {
     DtoHelper.assign(this, data);
   }
 
+  @ApiProperty()
+  code: string;
+
   @ToDecimalFixed()
   @ApiProperty()
   nominal: Decimal;

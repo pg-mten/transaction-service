@@ -4,8 +4,12 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePurchaseRequestDto } from './dto/create-purchase.request.dto';
-import { Prisma, TransactionStatusEnum } from '@prisma/client';
+import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto';
+import {
+  Prisma,
+  TransactionStatusEnum,
+  TransactionTypeEnum,
+} from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseException } from 'src/exception/response.exception';
@@ -21,7 +25,7 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
-import { PRISMA_SERVICE } from '../prisma/prisma.provider';
+import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 
 @Injectable()
 export class PurchaseService {
@@ -32,36 +36,70 @@ export class PurchaseService {
     private readonly inacashProviderClient: InacashProviderClient,
   ) {}
 
-  async createPurchase(body: CreatePurchaseRequestDto) {
-    const code = `${DateHelper.now().toUnixInteger()}#${body.merchantId}#PURCHASE#${body.providerName}#${body.paymentMethodName}`;
+  private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
-    if (body.providerName === 'INACASH') {
-      const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
-        code: code,
-        merchantId: body.merchantId,
-        nominal: body.nominal,
-      });
-      const data = clientRes.data!;
-      return new CreatePurchaseResponseDto({
-        content: data.content,
-        nominal: data.nominal,
-        productCode: data.productCode,
-        providerName: body.providerName,
-        paymentMethodName: body.paymentMethodName,
-      });
+  private async callProvider(dto: {
+    code: string;
+    merchantId: number;
+    providerName: string;
+    nominal: Decimal;
+  }) {
+    try {
+      if (dto.providerName === 'INACASH') {
+        const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
+          ...dto,
+        });
+        const clientData = clientRes.data!;
+        return clientData;
+      } else
+        throw ResponseException.fromHttpExecption(
+          new BadGatewayException('Provider Name Not Found'),
+        );
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    throw ResponseException.fromHttpExecption(
-      new BadGatewayException('Provider Name Not Found'),
-    );
   }
 
-  async createCallbackProvider(dto: CreatePurchaseCallbackSystemDto) {
-    console.log('callback');
+  async create(dto: CreatePurchaseTransactionDto) {
+    const code = TransactionHelper.createCode({
+      transactionType: this.transactionType,
+      merchantId: dto.merchantId,
+      providerName: dto.providerName,
+      paymentMethodName: dto.paymentMethodName,
+    });
+
+    const clientData = await this.callProvider({
+      code,
+      merchantId: dto.merchantId,
+      nominal: dto.nominal,
+      providerName: dto.providerName,
+    });
+
+    this.prisma.purchaseTransaction.create({
+      data: {
+        code: code,
+        merchantId: dto.merchantId,
+        providerName: dto.providerName,
+        paymentMethodName: dto.paymentMethodName,
+        nominal: dto.nominal,
+        netNominal: new Decimal(0),
+        status: TransactionStatusEnum.PENDING,
+      },
+    });
+
+    return new CreatePurchaseResponseDto({
+      code,
+      content: clientData.content,
+      nominal: clientData.nominal,
+      productCode: clientData.productCode,
+      providerName: dto.providerName,
+      paymentMethodName: dto.paymentMethodName,
+    });
+  }
+
+  async callback(dto: CreatePurchaseCallbackSystemDto) {
     await this.prisma.$transaction(async (tx) => {
-      /**
-       * Get Fee Config
-       */
       const feeDto =
         await this.feeCalculateClient.calculatePurchaseFeeConfigTCP({
           merchantId: dto.merchantId,
@@ -72,97 +110,130 @@ export class PurchaseService {
 
       console.log({ feeDto });
 
-      const agentIds: number[] = feeDto.agentFee.agents.map(
-        (agent) => agent.id,
-      );
-
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(dto.merchantId);
-      const lastBalanceInternal =
-        await this.balanceService.aggregateBalanceInternal();
-      const lastBalanceAgents =
-        await this.balanceService.checkBalanceAgents(agentIds);
-
-      /**
-       * Create Purchase Transaction
-       */
-      const purchaseTransaction = await tx.purchaseTransaction.create({
-        data: {
+      const purchase = await tx.purchaseTransaction.upsert({
+        where: {
           code: dto.code,
           externalId: dto.externalId,
+          merchantId: dto.merchantId,
+          providerName: dto.providerName,
+          paymentMethodName: dto.paymentMethodName,
+        },
+        create: {
+          code: dto.code,
           // referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
-          metadata: dto.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: dto.status as TransactionStatusEnum, /// TODO Masukin ke constant di transaction microservices
-          MerchantBalanceLog: {
-            create: {
-              merchantId: dto.merchantId,
-              changeAmount: dto.nominal,
-              balancePending: lastBalanceMerchant.balancePending.plus(
-                feeDto.merchantFee.netNominal,
-              ),
-              balanceActive: lastBalanceMerchant.balanceActive,
-              transactionType: 'PURCHASE',
-            },
-          },
-          InternalBalanceLog: {
-            create: {
-              changeAmount: feeDto.internalFee.nominal,
-              balancePending: lastBalanceInternal.balancePending,
-              merchantId: dto.merchantId,
-              balanceActive: lastBalanceInternal.balanceActive?.plus(
-                feeDto.internalFee.nominal,
-              ),
-              providerName: dto.providerName,
-              paymentMethodName: dto.paymentMethodName,
-              transactionType: 'PURCHASE',
-            },
-          },
-          AgentBalanceLog: {
-            createMany: {
-              skipDuplicates: true,
-              data: feeDto.agentFee.agents.map((item) => {
-                return {
-                  agentId: item.id,
-                  changeAmount: item.nominal,
-                  balanceActive:
-                    lastBalanceAgents.find((a) => a.agentId == item.id)
-                      ?.balanceActive || new Decimal(0),
-                  balancePending:
-                    lastBalanceAgents
-                      .find((a) => a.agentId == item.id)
-                      ?.balancePending.plus(item.nominal) || new Decimal(0),
-                  transactionType: 'PURCHASE',
-                };
-              }),
-            },
-          },
+          status: TransactionStatusEnum.PENDING,
+          metadata: dto.metadata as Prisma.InputJsonValue,
+        },
+        update: {
+          status: dto.status as TransactionStatusEnum,
         },
       });
 
-      /**
-       * Create Purchase Fee Detail
-       */
-      const purchaseFeeDetailManyInput: Prisma.PurchaseFeeDetailCreateManyInput[] =
-        this.purchaseFeeDetailMapper({
-          purchaseId: purchaseTransaction.id,
-          feeDto,
+      if (dto.status === TransactionStatusEnum.SUCCESS) {
+        const purchsaeFeeDetails =
+          await tx.purchaseFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              purchaseId: purchase.id,
+              feeDto,
+            }),
+          });
+        console.log({ purchsaeFeeDetails });
+
+        await this.createBalanceLog({
+          purchaseId: purchase.id,
+          merchantId: purchase.merchantId,
+          providerName: purchase.providerName,
+          paymentMethodName: purchase.paymentMethodName,
+          nominal: purchase.nominal,
+          feeDto: feeDto,
         });
-      const purchsaeFeeDetails = await tx.purchaseFeeDetail.createManyAndReturn(
-        {
-          data: purchaseFeeDetailManyInput,
-        },
-      );
-      console.log({ purchaseTransaction, feeDto, purchsaeFeeDetails });
+      }
+
+      console.log({ purchase, feeDto });
     });
     return;
   }
 
-  private purchaseFeeDetailMapper({
+  private async createBalanceLog(dto: {
+    purchaseId: number;
+    merchantId: number;
+    providerName: string;
+    paymentMethodName: string;
+    nominal: Decimal;
+    feeDto: PurchaseFeeSystemDto;
+  }) {
+    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
+      (agent) => agent.id,
+    );
+    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
+      dto.merchantId,
+    );
+    const lastBalanceInternal =
+      await this.balanceService.checkBalanceInternal();
+    const lastBalanceAgents =
+      await this.balanceService.checkBalanceAgents(agentIds);
+
+    /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
+    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+      throw new Error('Balance Tidak Mencukupi');
+    }
+
+    return Promise.all([
+      this.prisma.merchantBalanceLog.create({
+        data: {
+          transactionType: this.transactionType,
+          purchaseId: dto.purchaseId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.nominal,
+          balanceActive: lastBalanceMerchant.balanceActive?.minus(
+            dto.feeDto.merchantFee.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
+        },
+      }),
+
+      this.prisma.internalBalanceLog.create({
+        data: {
+          transactionType: this.transactionType,
+          purchaseId: dto.purchaseId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.feeDto.internalFee.nominal,
+          balanceActive: lastBalanceInternal.balanceActive?.plus(
+            dto.feeDto.internalFee.nominal,
+          ),
+          balancePending: lastBalanceInternal.balancePending,
+          providerName: dto.providerName,
+          paymentMethodName: dto.paymentMethodName,
+        },
+      }),
+
+      this.prisma.agentBalanceLog.createMany({
+        skipDuplicates: true,
+        data: dto.feeDto.agentFee.agents.map((item) => {
+          return {
+            transactionType: this.transactionType,
+            purchaseId: dto.purchaseId,
+            agentId: item.id,
+            changeAmount: item.nominal,
+            balancePending:
+              lastBalanceAgents.find((a) => a.agentId == item.id)
+                ?.balancePending || new Decimal(0),
+            balanceActive:
+              lastBalanceAgents
+                .find((a) => a.agentId == item.id)
+                ?.balanceActive.plus(item.nominal) || new Decimal(0),
+          } as Prisma.AgentBalanceLogCreateManyInput;
+        }),
+      }),
+    ]);
+  }
+
+  private feeDetailMapper({
     purchaseId,
     feeDto,
   }: {
@@ -324,43 +395,3 @@ export class PurchaseService {
     });
   }
 }
-
-// async handleWebhook(external_id: string, newStatus: string, rawPayload: any) {
-//   const trx = await this.prisma.purchaseTransaction.findUnique({
-//     where: { externalId: external_id },
-//   });
-//   if (!trx) throw new NotFoundException('Transaction not found'); // TODO
-
-//   if (['SUCCESS', 'FAILED', 'CANCELLED', 'EXPIRED'].includes(trx.status)) {
-//     return { message: 'Transaction already finalized' };
-//   }
-
-//   const updated = await this.prisma.purchaseTransaction.update({
-//     where: { externalId: external_id },
-//     data: {
-//       status: newStatus as any,
-//       updatedAt: DateHelper.nowDate(),
-//     },
-//   });
-
-//   await this.prisma.purchaseTransactionAudit.create({
-//     data: {
-//       transactionId: updated.id,
-//       oldStatus: trx.status,
-//       newStatus: newStatus as any,
-//       source: 'webhook',
-//       createdAt: DateHelper.nowDate(),
-//     },
-//   });
-
-//   await this.prisma.webhookLog.create({
-//     data: {
-//       transactionId: updated.id,
-//       source: 'provider',
-//       payload: rawPayload,
-//       receivedAt: DateHelper.nowDate(),
-//     },
-//   });
-
-//   return { message: 'Webhook processed', status: updated.status };
-// }

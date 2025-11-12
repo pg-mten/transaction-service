@@ -1,5 +1,13 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { Prisma, TransactionTypeEnum } from '@prisma/client';
+import {
+  BadGatewayException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import {
+  Prisma,
+  TransactionStatusEnum,
+  TransactionTypeEnum,
+} from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { ResponseException } from 'src/exception/response.exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
@@ -16,6 +24,8 @@ import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
+import { TransactionHelper } from 'src/shared/helper/transaction.helper';
+import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
 
 @Injectable()
 export class WithdrawService {
@@ -45,7 +55,10 @@ export class WithdrawService {
 
         const clientData = clientRes.data!;
         return clientData;
-      } else throw new Error('Not calling any Provider');
+      } else
+        throw ResponseException.fromHttpExecption(
+          new BadGatewayException('Provider Name Not Found'),
+        );
     } catch (error) {
       console.log(error);
       throw error;
@@ -59,7 +72,12 @@ export class WithdrawService {
     const providerName = 'INACASH';
     const paymentMethodName = 'TRANSFERBANK';
 
-    const code = `${DateHelper.now().toUnixInteger()}#${dto.merchantId}#${this.transactionType}#${providerName}#${paymentMethodName}`;
+    const code = TransactionHelper.createCode({
+      transactionType: this.transactionType,
+      merchantId: dto.merchantId,
+      providerName: providerName,
+      paymentMethodName: paymentMethodName,
+    });
 
     const clientData = await this.callProvider({
       code,
@@ -77,27 +95,7 @@ export class WithdrawService {
           nominal: dto.nominal,
         });
 
-      const agentIds: number[] = feeDto.agentFee.agents.map(
-        (agent) => agent.id,
-      );
-
-      const lastBalanceMerchant =
-        await this.balanceService.checkBalanceMerchant(merchantId);
-      const lastBalanceInternal =
-        await this.balanceService.checkBalanceInternal();
-      const lastBalanceAgents =
-        await this.balanceService.checkBalanceAgents(agentIds);
-
-      // if (lastBalanceMerchant.balanceActive <= dto.netNominal) {
-      //   throw new Error('Balance Tidak Mencukupi');
-      // }
-
-      /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
-      if (lastBalanceMerchant.balanceActive <= dto.nominal) {
-        throw new Error('Balance Tidak Mencukupi');
-      }
-
-      const withdrawTransaction = await trx.withdrawTransaction.create({
+      const withdraw = await trx.withdrawTransaction.create({
         data: {
           code: code,
           externalId: clientData.externalId,
@@ -108,71 +106,109 @@ export class WithdrawService {
           nominal: dto.nominal,
           metadata: clientData.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: 'SUCCESS',
-          MerchantBalanceLog: {
-            create: {
-              merchantId: merchantId,
-              changeAmount: dto.nominal,
-              balanceActive: lastBalanceMerchant.balanceActive?.minus(
-                feeDto.merchantFee.netNominal,
-              ),
-              balancePending: lastBalanceMerchant.balancePending,
-              transactionType: this.transactionType,
-            },
-          },
-          InternalBalanceLog: {
-            create: {
-              changeAmount: feeDto.internalFee.nominal,
-              balancePending: lastBalanceInternal.balancePending,
-              merchantId: merchantId,
-              balanceActive: lastBalanceInternal.balanceActive?.plus(
-                feeDto.internalFee.nominal,
-              ),
-              providerName,
-              paymentMethodName,
-              transactionType: this.transactionType,
-            },
-          },
-          AgentBalanceLog: {
-            createMany: {
-              skipDuplicates: true,
-              data: feeDto.agentFee.agents.map((item) => {
-                return {
-                  agentId: item.id,
-                  changeAmount: item.nominal,
-                  balancePending:
-                    lastBalanceAgents.find((a) => a.agentId == item.id)
-                      ?.balancePending || new Decimal(0),
-                  balanceActive:
-                    lastBalanceAgents
-                      .find((a) => a.agentId == item.id)
-                      ?.balanceActive.plus(item.nominal) || new Decimal(0),
-                  transactionType: this.transactionType,
-                };
-              }),
-            },
-          },
+          status: clientData.status as TransactionStatusEnum,
         },
       });
 
-      const withdrawFeeDetailCreateManyInput: Prisma.WithdrawFeeDetailCreateManyInput[] =
-        this.feeDetailMapper({
-          withdrawId: withdrawTransaction.id,
+      if (clientData.status === TransactionStatusEnum.SUCCESS) {
+        const withdrawFeeDetails =
+          await trx.withdrawFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              withdrawId: withdraw.id,
+              feeDto,
+            }),
+          });
+        console.log({ withdrawFeeDetails });
+
+        await this.createBalanceLog({
+          withdrawId: withdraw.id,
+          merchantId,
+          providerName,
+          paymentMethodName,
+          nominal: dto.nominal,
           feeDto,
         });
-      const withdrawFeeDetails =
-        await trx.withdrawFeeDetail.createManyAndReturn({
-          data: withdrawFeeDetailCreateManyInput,
-        });
+      }
 
-      console.log({
-        withdrawTransaction,
-        feeDto,
-        withdrawFeeDetails,
-      });
+      console.log({ withdraw, feeDto });
 
       return;
     });
+  }
+
+  private async createBalanceLog(dto: {
+    withdrawId: number;
+    merchantId: number;
+    providerName: string;
+    paymentMethodName: string;
+    nominal: Decimal;
+    feeDto: WithdrawFeeSystemDto;
+  }) {
+    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
+      (agent) => agent.id,
+    );
+    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
+      dto.merchantId,
+    );
+    const lastBalanceInternal =
+      await this.balanceService.checkBalanceInternal();
+    const lastBalanceAgents =
+      await this.balanceService.checkBalanceAgents(agentIds);
+
+    /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
+    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+      throw new Error('Balance Tidak Mencukupi');
+    }
+
+    return Promise.all([
+      this.prisma.merchantBalanceLog.create({
+        data: {
+          transactionType: this.transactionType,
+          withdrawId: dto.withdrawId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.nominal,
+          balanceActive: lastBalanceMerchant.balanceActive?.minus(
+            dto.feeDto.merchantFee.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
+        },
+      }),
+
+      this.prisma.internalBalanceLog.create({
+        data: {
+          transactionType: this.transactionType,
+          withdrawId: dto.withdrawId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.feeDto.internalFee.nominal,
+          balanceActive: lastBalanceInternal.balanceActive?.plus(
+            dto.feeDto.internalFee.nominal,
+          ),
+          balancePending: lastBalanceInternal.balancePending,
+          providerName: dto.providerName,
+          paymentMethodName: dto.paymentMethodName,
+        },
+      }),
+
+      this.prisma.agentBalanceLog.createMany({
+        skipDuplicates: true,
+        // data: [{}]
+        data: dto.feeDto.agentFee.agents.map((item) => {
+          return {
+            transactionType: this.transactionType,
+            withdrawId: dto.withdrawId,
+            agentId: item.id,
+            changeAmount: item.nominal,
+            balancePending:
+              lastBalanceAgents.find((a) => a.agentId == item.id)
+                ?.balancePending || new Decimal(0),
+            balanceActive:
+              lastBalanceAgents
+                .find((a) => a.agentId == item.id)
+                ?.balanceActive.plus(item.nominal) || new Decimal(0),
+          } as Prisma.AgentBalanceLogCreateManyInput;
+        }),
+      }),
+    ]);
   }
 
   private feeDetailMapper({
@@ -316,6 +352,51 @@ export class WithdrawService {
       pageable,
       total,
       data: withdrawDtos,
+    });
+  }
+
+  async callback(dto: UpdateWithdrawCallbackSystemDto) {
+    const codeExtract = TransactionHelper.extractCode(dto.code);
+
+    await this.prisma.$transaction(async (trx) => {
+      const withdraw = await trx.withdrawTransaction.update({
+        where: {
+          code: dto.code,
+          merchantId: codeExtract.merchantId,
+          externalId: dto.externalId,
+        },
+        data: {
+          status: dto.status as TransactionStatusEnum,
+        },
+      });
+
+      if (withdraw.status === TransactionStatusEnum.SUCCESS) {
+        const feeDto =
+          await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
+            merchantId: withdraw.merchantId,
+            providerName: withdraw.providerName,
+            paymentMethodName: withdraw.paymentMethodName,
+            nominal: withdraw.nominal,
+          });
+
+        const withdrawFeeDetails =
+          await trx.withdrawFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              withdrawId: withdraw.id,
+              feeDto,
+            }),
+          });
+        console.log({ withdrawFeeDetails });
+
+        await this.createBalanceLog({
+          withdrawId: withdraw.id,
+          merchantId: withdraw.id,
+          providerName: withdraw.providerName,
+          paymentMethodName: withdraw.paymentMethodName,
+          nominal: withdraw.nominal,
+          feeDto,
+        });
+      }
     });
   }
 }

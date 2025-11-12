@@ -26,7 +26,7 @@ import { SERVICES } from 'src/microservice/client.constant';
 import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
 import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
-import { CreatePurchaseRequestDto } from './dto/create-purchase.request.dto';
+import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -35,12 +35,12 @@ export class PurchaseController {
 
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
-  @ApiBody({ type: CreatePurchaseRequestDto })
-  async create(@Body() body: CreatePurchaseRequestDto) {
+  @ApiBody({ type: CreatePurchaseTransactionDto })
+  async create(@Body() body: CreatePurchaseTransactionDto) {
     console.log({ body });
     return new ResponseDto({
       status: ResponseStatus.CREATED,
-      data: await this.purchaseService.createPurchase(body),
+      data: await this.purchaseService.create(body),
     });
   }
 
@@ -67,28 +67,15 @@ export class PurchaseController {
   @ApiTags('Internal')
   @ApiOperation({ summary: 'untuk update status dari provider services' })
   @ApiBody({ type: CreatePurchaseCallbackSystemDto })
-  async createCallbackProvider(@Body() body: CreatePurchaseCallbackSystemDto) {
-    return this.purchaseService.createCallbackProvider(body);
+  async callback(@Body() body: CreatePurchaseCallbackSystemDto) {
+    return this.purchaseService.callback(body);
   }
 
   @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.purchase_callback })
   @UseInterceptors(ResponseInterceptor)
-  async createCallbackProviderTCP(
+  async callbackTCP(
     @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
   ) {
-    return this.purchaseService.createCallbackProvider(payload);
+    return this.purchaseService.callback(payload);
   }
-
-  /// TODO: Transaction dan Settlement masih dijadikan satu
-  // @Get('internal/settlement')
-  // @ApiOperation({ summary: 'Settlement process hourly' })
-  // async settlement(@Query() filter: FilterTransactionSettlementDto) {
-  //   console.log({ filter });
-  //   return this.transactionsService.internalTransactionSettlement(filter);
-  // }
-  // @Post('webhook')
-  // webhook(@Body() body: any) {
-  //   const { external_id, status } = body;
-  //   return this.purchaseService.handleWebhook(external_id, status, body);
-  // }
 }
