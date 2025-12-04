@@ -26,6 +26,7 @@ import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/pu
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
+import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
 
 @Injectable()
 export class PurchaseService {
@@ -34,6 +35,7 @@ export class PurchaseService {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,
+    private readonly pdnProviderClient: PdnProviderClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
@@ -45,7 +47,12 @@ export class PurchaseService {
     nominal: Decimal;
   }) {
     try {
-      if (dto.providerName === 'INACASH') {
+      if (dto.providerName === 'PDN') {
+        const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
+          ...dto,
+        });
+        return clientRes.data!;
+      } else if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
           ...dto,
         });
@@ -189,7 +196,7 @@ export class PurchaseService {
           transactionType: this.transactionType,
           purchaseId: dto.purchaseId,
           merchantId: dto.merchantId,
-          changeAmount: dto.nominal,
+          changeAmount: dto.nominal, // TODO Bukannya harusnya netNominal ?
           balanceActive: lastBalanceMerchant.balanceActive?.minus(
             dto.feeDto.merchantFee.netNominal,
           ),
