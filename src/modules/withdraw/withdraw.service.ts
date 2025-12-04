@@ -26,6 +26,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
+import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
 
 @Injectable()
 export class WithdrawService {
@@ -34,6 +35,7 @@ export class WithdrawService {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,
+    private readonly pdnProviderClient: PdnProviderClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.WITHDRAW;
@@ -48,13 +50,16 @@ export class WithdrawService {
     nominal: Decimal;
   }): Promise<ProviderWithdrawSystemDto> {
     try {
-      if (dto.providerName === 'INACASH') {
+      if (dto.providerName === 'PDN') {
         const clientRes = await this.inacashProviderClient.withdrawTCP({
           ...dto,
         });
-
-        const clientData = clientRes.data!;
-        return clientData;
+        return clientRes.data!;
+      } else if (dto.providerName === 'INACASH') {
+        const clientRes = await this.inacashProviderClient.withdrawTCP({
+          ...dto,
+        });
+        return clientRes.data!;
       } else
         throw ResponseException.fromHttpExecption(
           new BadGatewayException('Provider Name Not Found'),
