@@ -38,15 +38,17 @@ async function bootstrap() {
   });
 
   // if (IS_DEVELOPMENT) {
-    const options = new DocumentBuilder()
-      .setTitle(`${APP_NAME} Service`)
-      .setDescription(`${APP_NAME} Service API Description`)
-      .setVersion(VERSION)
-      .addBearerAuth()
-      .build();
+  const options = new DocumentBuilder()
+    .setTitle(`${APP_NAME} Service`)
+    .setDescription(`${APP_NAME} Service API Description`)
+    .setVersion(VERSION)
+    .addServer('http://localhost:3002', 'Local')
+    .addServer(`https://api.manapay.id/transaction`, 'Production') // Adjust with Server Proxy
+    .addBearerAuth()
+    .build();
 
-    const document = SwaggerModule.createDocument(app, options);
-    SwaggerModule.setup(API_PREFIX, app, document);
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup(API_PREFIX, app, document);
   // }
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
