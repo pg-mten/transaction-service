@@ -85,7 +85,7 @@ export class PurchaseService {
       providerName: dto.providerName,
     });
 
-    this.prisma.purchaseTransaction.create({
+    const purchase = await this.prisma.purchaseTransaction.create({
       data: {
         code: code,
         merchantId: dto.merchantId,
@@ -97,6 +97,8 @@ export class PurchaseService {
       },
     });
 
+    console.log('sudah sampai sini');
+    console.log({ purchase });
     return new CreatePurchaseResponseDto({
       code,
       content: clientData.content,
