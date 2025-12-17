@@ -17,7 +17,7 @@ export class TransactionHelper {
     providerName,
     paymentMethodName,
   }: Omit<CodeTransaction, 'date'>): string {
-    const code = `${DateHelper.now().toUnixInteger()}#${merchantId}#${transactionType}#${providerName}#${paymentMethodName}`;
+    const code = `${DateHelper.now().toUnixInteger()}-${merchantId}-${transactionType}-${providerName}-${paymentMethodName}`;
     return code;
   }
 

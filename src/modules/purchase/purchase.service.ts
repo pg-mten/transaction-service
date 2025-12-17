@@ -76,6 +76,8 @@ export class PurchaseService {
       paymentMethodName: dto.paymentMethodName,
     });
 
+    console.log({ code });
+
     const clientData = await this.callProvider({
       code,
       merchantId: dto.merchantId,

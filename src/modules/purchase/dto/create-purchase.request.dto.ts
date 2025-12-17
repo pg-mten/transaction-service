@@ -25,7 +25,7 @@ export class CreatePurchaseTransactionDto {
   @IsInt()
   merchantId: number;
 
-  @ApiProperty({ example: 'NETZME' })
+  @ApiProperty({ example: 'PDN' })
   @IsString()
   providerName: string;
 
