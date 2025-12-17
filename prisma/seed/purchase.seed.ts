@@ -1,4 +1,5 @@
 import { INestApplicationContext } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { PurchaseService } from 'src/modules/purchase/purchase.service';
 import { DateHelper } from 'src/shared/helper/date.helper';

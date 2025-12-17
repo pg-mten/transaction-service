@@ -27,6 +27,7 @@ import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash
 import { ProviderDisbursementSystemDto } from 'src/microservice/provider/provider-disbursement.system.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
+import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
 
 @Injectable()
 export class DisbursementService {
@@ -35,6 +36,7 @@ export class DisbursementService {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,
+    private readonly pdnProviderClient: PdnProviderClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
@@ -49,7 +51,12 @@ export class DisbursementService {
     nominal: Decimal;
   }): Promise<ProviderDisbursementSystemDto> {
     try {
-      if (dto.providerName === 'INACASH') {
+      if (dto.providerName === 'PDN') {
+        const clientRes = await this.inacashProviderClient.disbursementTCP({
+          ...dto,
+        });
+        return clientRes.data!;
+      } else if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.disbursementTCP({
           ...dto,
         });

@@ -59,6 +59,9 @@ export const SERVICES = {
       inacash_purchase_qris: 'inacash_purchase_qris',
       inacash_withdraw: 'inacash_withdraw',
       inacash_disbursement: 'inacash_disbursement',
+      pdn_purchase_qris: 'pdn_purchase_qris',
+      pdn_withdraw: 'pdn_withdraw',
+      pdn_disbursement: 'pdn_disbursement',
     },
   },
 };
