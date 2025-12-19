@@ -33,20 +33,6 @@ import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto'
 export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
-  // {
-  //   "statusCode": 201,
-  //   "status": "CREATED",
-  //   "message": "Created",
-  //   "data": {
-  //     "code": "1766123489-4-PURCHASE-PDN-QRIS",
-  //     "nominal": "10000.00",
-  //     "content": "00020101021226670016COM.NOBUBANK.WWW01189360050300000902920214859141829037280303UBE51440014ID.CO.QRIS.WWW0215ID20243100479390303UBE5204801153033605405100005802ID5913Stifin Expert6013JAKARTA BARAT6105116106262011491251298694845062582636888_d050579e-a965-400703A010804POSP63041A32",
-  //     "productCode": "QRIS",
-  //     "paymentMethodName": "QRIS",
-  //     "providerName": "PDN"
-  //   }
-  // }
-
   @Post()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
