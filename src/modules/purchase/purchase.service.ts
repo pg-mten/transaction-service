@@ -124,24 +124,27 @@ export class PurchaseService {
       const purchase = await tx.purchaseTransaction.upsert({
         where: {
           code: dto.code,
-          externalId: dto.externalId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
         },
         create: {
           code: dto.code,
+          externalId: dto.externalId,
           // referenceId: dto.referenceId,
           merchantId: dto.merchantId,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
           nominal: dto.nominal,
           netNominal: feeDto.merchantFee.netNominal,
-          status: TransactionStatusEnum.PENDING,
+          status: dto.status as TransactionStatusEnum,
           metadata: dto.metadata as Prisma.InputJsonValue,
         },
         update: {
+          externalId: dto.externalId,
+          netNominal: feeDto.merchantFee.netNominal,
           status: dto.status as TransactionStatusEnum,
+          metadata: dto.metadata as Prisma.InputJsonValue,
         },
       });
 
@@ -190,9 +193,9 @@ export class PurchaseService {
       await this.balanceService.checkBalanceAgents(agentIds);
 
     /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
-    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
-      throw new Error('Balance Tidak Mencukupi');
-    }
+    // if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+    //   throw new Error('Balance Tidak Mencukupi');
+    // }
 
     return Promise.all([
       this.prisma.merchantBalanceLog.create({
