@@ -23,7 +23,7 @@ export class TransactionHelper {
 
   static extractCode(code: string): CodeTransaction {
     const [date, merchantId, transactionType, providerName, paymentMethodName] =
-      code;
+      code.split('-');
     return {
       transactionType: transactionType as TransactionTypeEnum,
       merchantId: Number(merchantId),

@@ -21,7 +21,7 @@ export class CreatePurchaseTransactionDto {
   // @IsOptional()
   // code: string;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({ example: 4 })
   @IsInt()
   merchantId: number;
 
