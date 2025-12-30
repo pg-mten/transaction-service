@@ -9,6 +9,9 @@ export class ProviderDisbursementSystemDto {
   }
 
   @ApiProperty()
+  code: string;
+
+  @ApiProperty()
   status: string;
 
   @ToDecimalFixed()

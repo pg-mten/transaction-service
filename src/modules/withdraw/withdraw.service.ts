@@ -51,7 +51,7 @@ export class WithdrawService {
   }): Promise<ProviderWithdrawSystemDto> {
     try {
       if (dto.providerName === 'PDN') {
-        const clientRes = await this.inacashProviderClient.withdrawTCP({
+        const clientRes = await this.pdnProviderClient.withdrawTCP({
           ...dto,
         });
         return clientRes.data!;

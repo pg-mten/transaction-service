@@ -52,7 +52,7 @@ export class DisbursementService {
   }): Promise<ProviderDisbursementSystemDto> {
     try {
       if (dto.providerName === 'PDN') {
-        const clientRes = await this.inacashProviderClient.disbursementTCP({
+        const clientRes = await this.pdnProviderClient.disbursementTCP({
           ...dto,
         });
         return clientRes.data!;
@@ -76,8 +76,8 @@ export class DisbursementService {
   async create(dto: CreateDisbursementTransactionDto) {
     const merchantId = dto.merchantId;
 
-    // TODO Masih Hardcoded
-    const providerName = 'INACASH';
+    // TODO Ambil dari config service, untuk menentukan secara otomatis. Dia memakai provider dan payment method apa
+    const providerName = 'PDN';
     const paymentMethodName = 'TRANSFERBANK';
 
     const code = TransactionHelper.createCode({
@@ -89,10 +89,14 @@ export class DisbursementService {
 
     const clientData = await this.callProvider({
       code,
-      providerName,
       paymentMethodName,
+      providerName,
       ...dto,
     });
+
+    const clientDataStatus = clientData.status as TransactionStatusEnum;
+    if (clientDataStatus === TransactionStatusEnum.FAILED)
+      return this.transactionFailed(clientData, dto);
 
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
@@ -105,7 +109,8 @@ export class DisbursementService {
 
       const disbursement = await trx.disbursementTransaction.create({
         data: {
-          externalId: code,
+          code: code,
+          externalId: clientData.externalId,
           merchantId: merchantId,
           providerName: providerName,
           paymentMethodName: paymentMethodName,
@@ -114,13 +119,42 @@ export class DisbursementService {
           recipientName: dto.recipientName,
           recipientAccount: dto.recipientName,
           nominal: dto.nominal,
-          metadata: clientData.metadata as Prisma.InputJsonValue,
           netNominal: feeDto.merchantFee.netNominal,
-          status: clientData.status as TransactionStatusEnum,
+          metadata: clientData.metadata as Prisma.InputJsonValue,
+          status: TransactionStatusEnum.PENDING, // SUCCESS hanya dari webhook
         },
       });
 
-      if (clientData.status === TransactionStatusEnum.SUCCESS) {
+      console.log({ disbursement, feeDto });
+
+      return;
+    });
+  }
+
+  async callback(dto: UpdateDisbursementCallbackSystemDto) {
+    const codeExtract = TransactionHelper.extractCode(dto.code);
+
+    await this.prisma.$transaction(async (trx) => {
+      const disbursement = await trx.disbursementTransaction.update({
+        where: {
+          code: dto.code,
+          merchantId: codeExtract.merchantId,
+          externalId: dto.externalId,
+        },
+        data: {
+          status: dto.status as TransactionStatusEnum,
+        },
+      });
+
+      if (disbursement.status === TransactionStatusEnum.SUCCESS) {
+        const feeDto =
+          await this.feeCalculateClient.calculateDisbursementFeeConfig({
+            merchantId: disbursement.merchantId,
+            providerName: disbursement.providerName,
+            paymentMethodName: disbursement.paymentMethodName,
+            nominal: disbursement.nominal,
+          });
+
         const disbursementFeeDetails =
           await trx.disbursementFeeDetail.createManyAndReturn({
             data: this.feeDetailMapper({
@@ -132,18 +166,42 @@ export class DisbursementService {
 
         await this.createBalanceLog({
           disbursementId: disbursement.id,
-          merchantId,
-          providerName,
-          paymentMethodName,
-          nominal: dto.nominal,
+          merchantId: disbursement.id,
+          providerName: disbursement.providerName,
+          paymentMethodName: disbursement.paymentMethodName,
+          nominal: disbursement.nominal,
           feeDto,
         });
       }
-
-      console.log({ disbursement, feeDto });
-
-      return;
     });
+  }
+
+  private async transactionFailed(
+    clientData: ProviderDisbursementSystemDto,
+    dto: CreateDisbursementTransactionDto,
+  ) {
+    const { merchantId, providerName, paymentMethodName } =
+      TransactionHelper.extractCode(clientData.code);
+
+    const disbursement = await this.prisma.disbursementTransaction.create({
+      data: {
+        code: clientData.code,
+        externalId: clientData.externalId,
+        merchantId: merchantId,
+        providerName: providerName,
+        paymentMethodName: paymentMethodName,
+        recipientBankCode: dto.recipientBankCode,
+        recipientBankName: dto.recipientBankName,
+        recipientName: dto.recipientName,
+        recipientAccount: dto.recipientName,
+        nominal: dto.nominal,
+        netNominal: new Decimal(0),
+        metadata: clientData.metadata as Prisma.InputJsonValue,
+        status: TransactionStatusEnum.FAILED, ///
+      },
+    });
+
+    return disbursement;
   }
 
   private async createBalanceLog(dto: {
@@ -361,51 +419,6 @@ export class DisbursementService {
       pageable,
       total,
       data: disbursementDtos,
-    });
-  }
-
-  async callback(dto: UpdateDisbursementCallbackSystemDto) {
-    const codeExtract = TransactionHelper.extractCode(dto.code);
-
-    await this.prisma.$transaction(async (trx) => {
-      const disbursement = await trx.disbursementTransaction.update({
-        where: {
-          code: dto.code,
-          merchantId: codeExtract.merchantId,
-          externalId: dto.externalId,
-        },
-        data: {
-          status: dto.status as TransactionStatusEnum,
-        },
-      });
-
-      if (disbursement.status === TransactionStatusEnum.SUCCESS) {
-        const feeDto =
-          await this.feeCalculateClient.calculateDisbursementFeeConfig({
-            merchantId: disbursement.merchantId,
-            providerName: disbursement.providerName,
-            paymentMethodName: disbursement.paymentMethodName,
-            nominal: disbursement.nominal,
-          });
-
-        const disbursementFeeDetails =
-          await trx.disbursementFeeDetail.createManyAndReturn({
-            data: this.feeDetailMapper({
-              disbursementId: disbursement.id,
-              feeDto,
-            }),
-          });
-        console.log({ disbursementFeeDetails });
-
-        await this.createBalanceLog({
-          disbursementId: disbursement.id,
-          merchantId: disbursement.id,
-          providerName: disbursement.providerName,
-          paymentMethodName: disbursement.paymentMethodName,
-          nominal: disbursement.nominal,
-          feeDto,
-        });
-      }
     });
   }
 }
