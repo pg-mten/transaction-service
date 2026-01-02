@@ -76,6 +76,8 @@ export class DisbursementService {
   async create(dto: CreateDisbursementTransactionDto) {
     const merchantId = dto.merchantId;
 
+    // TODO Melakukan pengecekan terhadap balance yang dia punya
+
     // TODO Ambil dari config service, untuk menentukan secara otomatis. Dia memakai provider dan payment method apa
     const providerName = 'PDN';
     const paymentMethodName = 'TRANSFERBANK';
@@ -96,7 +98,7 @@ export class DisbursementService {
 
     const clientDataStatus = clientData.status as TransactionStatusEnum;
     if (clientDataStatus === TransactionStatusEnum.FAILED)
-      return this.transactionFailed(clientData, dto);
+      return this.createFailed(clientData, dto);
 
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
@@ -176,7 +178,7 @@ export class DisbursementService {
     });
   }
 
-  private async transactionFailed(
+  private async createFailed(
     clientData: ProviderDisbursementSystemDto,
     dto: CreateDisbursementTransactionDto,
   ) {

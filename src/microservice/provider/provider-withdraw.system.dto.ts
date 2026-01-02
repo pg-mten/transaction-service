@@ -9,6 +9,9 @@ export class ProviderWithdrawSystemDto {
   }
 
   @ApiProperty()
+  code: string;
+
+  @ApiProperty()
   status: string;
 
   @ToDecimalFixed()
