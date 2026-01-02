@@ -204,7 +204,7 @@ export class WithdrawService {
         merchantId: merchantId,
         providerName: providerName,
         paymentMethodName: paymentMethodName,
-
+        referenceId: '',
         nominal: dto.nominal,
         netNominal: new Decimal(0),
         metadata: clientData.metadata as Prisma.InputJsonValue,
