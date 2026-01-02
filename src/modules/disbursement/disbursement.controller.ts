@@ -36,8 +36,11 @@ export class DisbursementTransactionsController {
   @ApiOperation({ summary: 'Buat Disbursement baru' })
   @ApiBody({ type: CreateDisbursementTransactionDto })
   async create(@Body() body: CreateDisbursementTransactionDto) {
-    await this.service.create(body);
-    return new ResponseDto({ status: ResponseStatus.CREATED });
+    const data = await this.service.create(body);
+    return new ResponseDto({
+      status: ResponseStatus.CREATED,
+      data: data,
+    });
   }
 
   @Get(':id/detail')

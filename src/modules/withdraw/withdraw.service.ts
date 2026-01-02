@@ -51,7 +51,7 @@ export class WithdrawService {
   }): Promise<ProviderWithdrawSystemDto> {
     try {
       if (dto.providerName === 'PDN') {
-        const clientRes = await this.inacashProviderClient.withdrawTCP({
+        const clientRes = await this.pdnProviderClient.withdrawTCP({
           ...dto,
         });
         return clientRes.data!;
@@ -73,8 +73,8 @@ export class WithdrawService {
   async create(dto: CreateWithdrawTransactionDto) {
     const merchantId = dto.merchantId;
 
-    // TODO Masih Hardcoded
-    const providerName = 'INACASH';
+    // TODO Ambil dari config service, untuk menentukan secara otomatis. Dia memakai provider dan payment method apa
+    const providerName = 'PDN';
     const paymentMethodName = 'TRANSFERBANK';
 
     const code = TransactionHelper.createCode({
@@ -90,6 +90,10 @@ export class WithdrawService {
       paymentMethodName,
       ...dto,
     });
+
+    const clientDataStatus = clientData.status as TransactionStatusEnum;
+    if (clientDataStatus === TransactionStatusEnum.FAILED)
+      return this.createFailed(clientData, dto);
 
     await this.prisma.$transaction(async (trx) => {
       const feeDto =
@@ -139,6 +143,76 @@ export class WithdrawService {
 
       return;
     });
+  }
+
+  async callback(dto: UpdateWithdrawCallbackSystemDto) {
+    const codeExtract = TransactionHelper.extractCode(dto.code);
+
+    await this.prisma.$transaction(async (trx) => {
+      const withdraw = await trx.withdrawTransaction.update({
+        where: {
+          code: dto.code,
+          merchantId: codeExtract.merchantId,
+          externalId: dto.externalId,
+        },
+        data: {
+          status: dto.status as TransactionStatusEnum,
+        },
+      });
+
+      if (withdraw.status === TransactionStatusEnum.SUCCESS) {
+        const feeDto =
+          await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
+            merchantId: withdraw.merchantId,
+            providerName: withdraw.providerName,
+            paymentMethodName: withdraw.paymentMethodName,
+            nominal: withdraw.nominal,
+          });
+
+        const withdrawFeeDetails =
+          await trx.withdrawFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              withdrawId: withdraw.id,
+              feeDto,
+            }),
+          });
+        console.log({ withdrawFeeDetails });
+
+        await this.createBalanceLog({
+          withdrawId: withdraw.id,
+          merchantId: withdraw.id,
+          providerName: withdraw.providerName,
+          paymentMethodName: withdraw.paymentMethodName,
+          nominal: withdraw.nominal,
+          feeDto,
+        });
+      }
+    });
+  }
+
+  private async createFailed(
+    clientData: ProviderWithdrawSystemDto,
+    dto: CreateWithdrawTransactionDto,
+  ) {
+    const { merchantId, providerName, paymentMethodName } =
+      TransactionHelper.extractCode(clientData.code);
+
+    const withdraw = await this.prisma.withdrawTransaction.create({
+      data: {
+        code: clientData.code,
+        externalId: clientData.externalId,
+        merchantId: merchantId,
+        providerName: providerName,
+        paymentMethodName: paymentMethodName,
+
+        nominal: dto.nominal,
+        netNominal: new Decimal(0),
+        metadata: clientData.metadata as Prisma.InputJsonValue,
+        status: TransactionStatusEnum.FAILED, ///
+      },
+    });
+
+    return withdraw;
   }
 
   private async createBalanceLog(dto: {
@@ -357,51 +431,6 @@ export class WithdrawService {
       pageable,
       total,
       data: withdrawDtos,
-    });
-  }
-
-  async callback(dto: UpdateWithdrawCallbackSystemDto) {
-    const codeExtract = TransactionHelper.extractCode(dto.code);
-
-    await this.prisma.$transaction(async (trx) => {
-      const withdraw = await trx.withdrawTransaction.update({
-        where: {
-          code: dto.code,
-          merchantId: codeExtract.merchantId,
-          externalId: dto.externalId,
-        },
-        data: {
-          status: dto.status as TransactionStatusEnum,
-        },
-      });
-
-      if (withdraw.status === TransactionStatusEnum.SUCCESS) {
-        const feeDto =
-          await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
-            merchantId: withdraw.merchantId,
-            providerName: withdraw.providerName,
-            paymentMethodName: withdraw.paymentMethodName,
-            nominal: withdraw.nominal,
-          });
-
-        const withdrawFeeDetails =
-          await trx.withdrawFeeDetail.createManyAndReturn({
-            data: this.feeDetailMapper({
-              withdrawId: withdraw.id,
-              feeDto,
-            }),
-          });
-        console.log({ withdrawFeeDetails });
-
-        await this.createBalanceLog({
-          withdrawId: withdraw.id,
-          merchantId: withdraw.id,
-          providerName: withdraw.providerName,
-          paymentMethodName: withdraw.paymentMethodName,
-          nominal: withdraw.nominal,
-          feeDto,
-        });
-      }
     });
   }
 }
