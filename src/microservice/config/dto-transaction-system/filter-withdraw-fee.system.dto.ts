@@ -8,7 +8,7 @@ export class FilterWithdrawFeeSystemDto {
   @IsNumber()
   @Type(() => Number)
   @ApiProperty({ example: 1 })
-  merchantId: number;
+  userId: number;
 
   @IsString()
   @ApiProperty({ example: 'NETZME' })

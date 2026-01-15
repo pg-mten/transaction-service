@@ -4,7 +4,7 @@ import { DateTime } from 'luxon';
 
 interface CodeTransaction {
   transactionType: TransactionTypeEnum;
-  merchantId: number;
+  userId: number;
   providerName: string;
   paymentMethodName: string;
   date: DateTime;
@@ -13,20 +13,20 @@ interface CodeTransaction {
 export class TransactionHelper {
   static createCode({
     transactionType,
-    merchantId,
+    userId,
     providerName,
     paymentMethodName,
   }: Omit<CodeTransaction, 'date'>): string {
-    const code = `${DateHelper.now().toUnixInteger()}-${merchantId}-${transactionType}-${providerName}-${paymentMethodName}`;
+    const code = `${DateHelper.now().toUnixInteger()}-${userId}-${transactionType}-${providerName}-${paymentMethodName}`;
     return code;
   }
 
   static extractCode(code: string): CodeTransaction {
-    const [date, merchantId, transactionType, providerName, paymentMethodName] =
+    const [date, userId, transactionType, providerName, paymentMethodName] =
       code.split('-');
     return {
       transactionType: transactionType as TransactionTypeEnum,
-      merchantId: Number(merchantId),
+      userId: Number(userId),
       providerName,
       paymentMethodName,
       date: DateHelper.fromUnixInteger(date),

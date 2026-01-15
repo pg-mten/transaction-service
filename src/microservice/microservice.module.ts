@@ -20,6 +20,7 @@ import { InacashProviderClient } from './provider/inacash/inacash.provider.clien
 import { WithdrawTransacionClient } from './transaction/withdraw/withdraw.transaction.client';
 import { DisbursementTransactionClient } from './transaction/disbursement/disbursement.transaction.client';
 import { PdnProviderClient } from './provider/pdn/pdn.provider.client';
+import { ProfileProviderConfigClient } from './config/profile-provider.config.client';
 
 @Global()
 @Module({
@@ -35,6 +36,7 @@ import { PdnProviderClient } from './provider/pdn/pdn.provider.client';
     DisbursementTransactionClient,
     InacashProviderClient,
     PdnProviderClient,
+    ProfileProviderConfigClient,
   ],
   providers: [
     /// Register Client
@@ -49,6 +51,7 @@ import { PdnProviderClient } from './provider/pdn/pdn.provider.client';
     DisbursementTransactionClient,
     InacashProviderClient,
     PdnProviderClient,
+    ProfileProviderConfigClient,
 
     /// TODO Non aktifkan dulu bolooo
     // JwtStrategy,

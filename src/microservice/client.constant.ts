@@ -25,6 +25,7 @@ export const SERVICES = {
       find_all_merchants_and_agents_by_ids:
         'find_all_merchants_and_agents_by_ids',
       merchant_validate_signature: 'merchant_validate_signature',
+      find_profile_bank: 'find_profile_bank',
     },
   },
   CONFIG: {
@@ -38,6 +39,7 @@ export const SERVICES = {
       calculate_fee_disbursement: 'calculate_fee_disbursement',
       create_merchant_config: 'create_merchant_config',
       create_agent_config: 'create_agent_config',
+      find_profile_provider: 'find_profile_provider',
     },
   },
   TRANSACTION: {

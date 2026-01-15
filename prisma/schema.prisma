@@ -70,7 +70,8 @@ model WithdrawTransaction {
   id                Int                   @id @default(autoincrement())
   code              String                @unique @default(uuid())
   externalId        String?
-  merchantId        Int
+  userId            Int
+  userRole          String
   referenceId       String                @unique //reff id from bank
   nominal           Decimal
   netNominal        Decimal // nominal setelah dikenakan fee
@@ -92,7 +93,7 @@ model WithdrawTransaction {
   AgentBalanceLog    AgentBalanceLog[]
   InternalBalanceLog InternalBalanceLog[]
 
-  @@index([merchantId])
+  @@index([userId])
   @@index([status])
   @@schema("transaction")
 }
@@ -339,7 +340,7 @@ model InternalBalanceLog {
   purchaseId        Int?
   withdrawId        Int?
   disbursementId    Int?
-  merchantId        Int
+  merchantId        Int?
   changeAmount      Decimal // nominal perubahan (positif / negatif)
   balanceActive     Decimal // saldo akhir merchant setelah perubahan
   balancePending    Decimal
