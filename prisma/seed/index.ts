@@ -24,7 +24,7 @@ async function main() {
 
     const codePurchase = TransactionHelper.createCode({
       transactionType: 'PURCHASE',
-      merchantId: 1,
+      userId: 1,
       paymentMethodName: 'QRIS',
       providerName: 'INACASH',
     });
@@ -104,7 +104,7 @@ async function main() {
 
     const codeTopup = TransactionHelper.createCode({
       transactionType: 'TOPUP',
-      merchantId: 1,
+      userId: 1,
       paymentMethodName: 'TRANSFERBANK',
       providerName: 'INTERNAL',
     });

@@ -20,7 +20,10 @@ export class WithdrawTransactionDto {
   referenceId: string | null;
 
   @ApiProperty({ type: Number })
-  merchantId: number;
+  userId: number;
+
+  @ApiProperty({ type: String })
+  userRole: string;
 
   @ApiProperty({ type: String })
   providerName: string;

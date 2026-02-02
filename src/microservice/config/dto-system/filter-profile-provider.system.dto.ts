@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionTypeEnum } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber } from 'class-validator';
+import { IsEnum, IsNumber, IsString } from 'class-validator';
 import { TransactionUserRole } from 'src/microservice/transaction.constant';
 
 export class FilterProfileProviderSystemDto {
@@ -19,7 +18,7 @@ export class FilterProfileProviderSystemDto {
   @IsEnum(TransactionUserRole)
   userRole: TransactionUserRole;
 
-  @ApiProperty({ enum: TransactionTypeEnum })
-  @IsEnum(TransactionTypeEnum)
-  transactionType: TransactionTypeEnum;
+  @ApiProperty()
+  @IsString()
+  transactionType: string;
 }

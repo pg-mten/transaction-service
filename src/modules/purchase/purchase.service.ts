@@ -27,6 +27,7 @@ import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash
 import { CreatePurchaseResponseDto } from './dto/create-purchase.response.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
+import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
 
 @Injectable()
 export class PurchaseService {
@@ -36,6 +37,7 @@ export class PurchaseService {
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,
     private readonly pdnProviderClient: PdnProviderClient,
+    private readonly profileProviderClient: ProfileProviderConfigClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
@@ -71,7 +73,7 @@ export class PurchaseService {
   async create(dto: CreatePurchaseTransactionDto) {
     const code = TransactionHelper.createCode({
       transactionType: this.transactionType,
-      merchantId: dto.merchantId,
+      userId: dto.merchantId,
       providerName: dto.providerName,
       paymentMethodName: dto.paymentMethodName,
     });

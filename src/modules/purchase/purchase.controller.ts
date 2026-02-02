@@ -27,6 +27,7 @@ import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
 import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto';
+import { MerchantApi } from 'src/microservice/auth/decorator/merchant.decorator';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -34,6 +35,7 @@ export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
   @Post()
+  @MerchantApi()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
   async create(@Body() body: CreatePurchaseTransactionDto) {

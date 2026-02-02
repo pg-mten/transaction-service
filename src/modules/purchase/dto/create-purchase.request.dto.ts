@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsString, ValidateIf } from 'class-validator';
+import { IsInt, ValidateIf } from 'class-validator';
 import { Decimal } from 'decimal.js';
 import { ToDecimal } from 'src/decorator/decimal.decorator';
 
@@ -25,13 +25,13 @@ export class CreatePurchaseTransactionDto {
   @IsInt()
   merchantId: number;
 
-  @ApiProperty({ example: 'PDN' })
-  @IsString()
-  providerName: string;
+  // @ApiProperty({ example: 'PDN' })
+  // @IsString()
+  // providerName: string;
 
-  @ApiProperty({ example: 'QRIS' })
-  @IsString()
-  paymentMethodName: string;
+  // @ApiProperty({ example: 'QRIS' })
+  // @IsString()
+  // paymentMethodName: string;
 
   // @ApiProperty({ example: 'PENDING', default: 'PENDING' })
   // @IsEnum(TransactionStatusEnum)

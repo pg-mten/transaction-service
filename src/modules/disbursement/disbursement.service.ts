@@ -84,7 +84,7 @@ export class DisbursementService {
 
     const code = TransactionHelper.createCode({
       transactionType: this.transactionType,
-      merchantId: dto.merchantId,
+      userId: dto.merchantId,
       providerName: providerName,
       paymentMethodName: paymentMethodName,
     });
@@ -140,7 +140,7 @@ export class DisbursementService {
       const disbursement = await trx.disbursementTransaction.update({
         where: {
           code: dto.code,
-          merchantId: codeExtract.merchantId,
+          merchantId: codeExtract.userId,
           externalId: dto.externalId,
         },
         data: {
@@ -182,14 +182,14 @@ export class DisbursementService {
     clientData: ProviderDisbursementSystemDto,
     dto: CreateDisbursementTransactionDto,
   ) {
-    const { merchantId, providerName, paymentMethodName } =
+    const { userId, providerName, paymentMethodName } =
       TransactionHelper.extractCode(clientData.code);
 
     const disbursement = await this.prisma.disbursementTransaction.create({
       data: {
         code: clientData.code,
         externalId: clientData.externalId,
-        merchantId: merchantId,
+        merchantId: userId,
         providerName: providerName,
         paymentMethodName: paymentMethodName,
         recipientBankCode: dto.recipientBankCode,
