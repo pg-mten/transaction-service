@@ -12,6 +12,8 @@ export const Pagination = createParamDecorator(
     const pageParam = request.query.page as string;
     const sizeParam = request.query.size as string;
 
+    console.log({ pageParam, sizeParam });
+
     let { page, size } = pageable;
 
     const pageNumber = parseInt(pageParam?.toString(), 10);

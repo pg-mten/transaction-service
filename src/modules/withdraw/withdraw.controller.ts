@@ -24,8 +24,8 @@ import { WithdrawService } from './withdraw.service';
 import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SERVICES } from 'src/microservice/client.constant';
-import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
-import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
+import { ResponseInterceptor } from 'src/shared/interceptor';
+import { CustomValidationPipe } from 'src/shared/pipe';
 
 @ApiTags('Transactions', 'Withdraw')
 @Controller('transactions/withdraw')

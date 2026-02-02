@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-import { InvalidRequestException } from '../exception/invalid-request.exception';
+import { InvalidRequestException } from 'src/shared/exception';
 
 @Catch(InvalidRequestException)
 export class InvalidRequestExceptionFilter implements ExceptionFilter {

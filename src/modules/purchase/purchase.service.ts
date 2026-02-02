@@ -12,7 +12,7 @@ import {
 } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception';
 import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';

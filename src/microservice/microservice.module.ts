@@ -14,7 +14,7 @@ import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { MerchantSignatureAuthClient } from './auth/merchant-signature.auth.client';
 import { HealthModule } from './health/health.module';
 // import { ClsModule, ClsService } from 'nestjs-cls';
-import { AuthInfoInterceptor } from 'src/interceptor/auth-info.interceptor';
+import { AuthInfoInterceptor } from 'src/shared/interceptor';
 import { PurchaseTransactionClient } from './transaction/purchase/purchase.transaction.client';
 import { InacashProviderClient } from './provider/inacash/inacash.provider.client';
 import { WithdrawTransacionClient } from './transaction/withdraw/withdraw.transaction.client';

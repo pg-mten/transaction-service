@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
-import { InvalidRequestException } from 'src/exception/invalid-request.exception';
+import { InvalidRequestException } from 'src/shared/exception/invalid-request.exception';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 
 @Injectable()

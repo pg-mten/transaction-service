@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsInt, Min, IsEnum } from 'class-validator';
 import { DateTime } from 'luxon';
-import { ToDateTimeNullable } from 'src/decorator/date.decorator';
+import { ToDateTimeNullable } from 'src/shared/decorator';
 import { TransactionStatusEnum } from '@prisma/client';
 
 export class FilterWithdrawDto {

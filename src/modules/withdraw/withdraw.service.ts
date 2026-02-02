@@ -9,7 +9,7 @@ import {
   TransactionTypeEnum,
 } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';

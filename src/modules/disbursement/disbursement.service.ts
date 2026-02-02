@@ -11,7 +11,7 @@ import {
 } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateDisbursementTransactionDto } from './dto/create-disbursement-transaction.dto';

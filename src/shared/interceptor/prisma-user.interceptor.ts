@@ -1,18 +1,15 @@
-// src/common/interceptors/prisma-user.interceptor.ts
 import {
   CallHandler,
   ExecutionContext,
-  Inject,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { Observable } from 'rxjs';
-import { PRISMA_SERVICE } from 'src/modules/prisma/prisma.provider';
+import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 @Injectable()
 export class PrismaUserInterceptor implements NestInterceptor {
-  constructor(@Inject(PRISMA_SERVICE) private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     // const request = context.switchToHttp().getRequest();

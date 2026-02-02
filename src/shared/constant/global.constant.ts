@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 export const APP_NAME = process.env.APP_NAME || 'PG';
 
 export const VERSION = process.env.VERSION || 'v1';

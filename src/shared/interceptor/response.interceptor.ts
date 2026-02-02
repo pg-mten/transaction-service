@@ -15,7 +15,6 @@ export class ResponseInterceptor<T>
     if (request.path === '/metrics') {
       return next.handle() as Observable<ResponseDto<T>>;
     }
-
     return next.handle().pipe(
       map((response) => {
         if (response instanceof ResponseDto) {

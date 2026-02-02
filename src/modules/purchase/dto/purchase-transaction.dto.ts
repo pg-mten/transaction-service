@@ -2,12 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TransactionStatusEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
 import { DateTime } from 'luxon';
-import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
+import { ToDecimalFixed } from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 import {
   ToDateTimeJsDate,
   ToDateTimeJsDateNullable,
-} from 'src/decorator/date.decorator';
+} from 'src/shared/decorator';
 import { PurchaseFeeDetailDto } from './purchase-fee-detail.dto';
 
 export class PurchaseTransactionDto {

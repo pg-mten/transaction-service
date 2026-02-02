@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsString, ValidateIf } from 'class-validator';
 import { DateTime } from 'luxon';
-import { ToDateTime } from 'src/decorator/date.decorator';
+import { ToDateTime } from 'src/shared/decorator';
 
 export class CreateSettlementScheduleSystemDto {
   @ApiProperty()
