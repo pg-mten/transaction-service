@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNumber, IsString } from 'class-validator';
-import { TransactionUserRole } from 'src/microservice/transaction.constant';
+import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
 
 export class FilterProfileProviderSystemDto {
   @ApiProperty({ type: Number })

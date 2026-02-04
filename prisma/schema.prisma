@@ -177,7 +177,8 @@ model DisbursementFeeDetail {
 
 model PurchaseTransaction {
   id                Int                   @id @default(autoincrement())
-  code              String                @unique @default(uuid())
+  code              String                @unique
+  orderId           String                @unique
   referenceId       String?
   externalId        String?
   merchantId        Int

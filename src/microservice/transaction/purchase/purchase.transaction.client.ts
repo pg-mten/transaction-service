@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_TRANSACTION } from 'src/microservice/client.constant';
+import { SERVICES, URL_TRANSACTION } from 'src/shared/constant/client.constant';
 import { CreatePurchaseCallbackSystemDto } from './dto-system/create-purchase-callback.system.dto';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';

@@ -22,7 +22,7 @@ import { DisbursementService } from './disbursement.service';
 import { CreateDisbursementTransactionDto } from './dto/create-disbursement-transaction.dto';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { SERVICES } from 'src/microservice/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseInterceptor } from 'src/shared/interceptor';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';

@@ -10,6 +10,10 @@ export class DateHelper {
     return DateTime.now().setZone(TIMEZONE);
   }
 
+  static nowMs(): number {
+    return DateTime.now().toMillis();
+  }
+
   static nowDate(): Date {
     return this.now().toJSDate();
   }
@@ -23,13 +27,9 @@ export class DateHelper {
     return DateTime.fromJSDate(date).setZone(TIMEZONE);
   }
 
-  static nowUnixInteger(): number {
-    return this.now().toUnixInteger();
-  }
-
-  static fromUnixInteger(date: string | number): DateTime {
-    const dateUnix: number = typeof date === 'string' ? Number(date) : date;
-    return DateTime.fromSeconds(dateUnix).setZone(TIMEZONE);
+  static fromMs(date: number | string): DateTime {
+    const dateNumber: number = typeof date === 'string' ? Number(date) : date;
+    return DateTime.fromMillis(dateNumber, { zone: TIMEZONE });
   }
 
   /**

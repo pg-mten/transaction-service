@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SERVICES, URL_CONFIG } from '../client.constant';
+import { SERVICES, URL_CONFIG } from '../../shared/constant/client.constant';
 import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';

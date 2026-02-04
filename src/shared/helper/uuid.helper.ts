@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, v7 as uuidv7 } from 'uuid';
 
 /**
  * Utility for generating unique random identifiers.
@@ -30,5 +30,20 @@ export class UuidHelper {
    */
   static requestId(prefix = 'REQ'): string {
     return `${prefix}-${randomBytes(8).toString('hex')}`;
+  }
+
+  /**
+   * Cryptographic Random for Code Transaction
+   */
+  static generateRandomCode(): string {
+    return randomBytes(6).toString('hex');
+  }
+
+  /**
+   * UUID v7 for Order ID (time-ordered)
+   * @returns
+   */
+  static generateOrderId(): string {
+    return uuidv7();
   }
 }

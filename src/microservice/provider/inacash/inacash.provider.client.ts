@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_SETTLERECON } from 'src/microservice/client.constant';
+import { SERVICES, URL_SETTLERECON } from 'src/shared/constant/client.constant';
 import { InacashCreatePurchaseQrisRequestSystemDto } from './dto-system/inacash-create-purchase-qris.request.system.dto';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';

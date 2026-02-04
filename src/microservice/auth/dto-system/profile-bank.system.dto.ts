@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionUserRole } from 'src/microservice/transaction.constant';
+import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
 export class ProfileBankByIdSystemDto {

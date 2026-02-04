@@ -1,6 +1,7 @@
-import { TransactionTypeEnum } from '@prisma/client';
 import { DateHelper } from './date.helper';
 import { DateTime } from 'luxon';
+import { UuidHelper } from './uuid.helper';
+import { TransactionTypeEnum } from '../constant/transaction.constant';
 
 interface CodeTransaction {
   transactionType: TransactionTypeEnum;
@@ -17,7 +18,8 @@ export class TransactionHelper {
     providerName,
     paymentMethodName,
   }: Omit<CodeTransaction, 'date'>): string {
-    const code = `${DateHelper.now().toUnixInteger()}-${userId}-${transactionType}-${providerName}-${paymentMethodName}`;
+    const random = UuidHelper.generateRandomCode();
+    const code = `${DateHelper.nowMs()}-${userId}-${transactionType}-${providerName}-${paymentMethodName}-${random}`;
     return code;
   }
 
@@ -25,11 +27,11 @@ export class TransactionHelper {
     const [date, userId, transactionType, providerName, paymentMethodName] =
       code.split('-');
     return {
-      transactionType: transactionType as TransactionTypeEnum,
+      transactionType: transactionType,
       userId: Number(userId),
       providerName,
       paymentMethodName,
-      date: DateHelper.fromUnixInteger(date),
+      date: DateHelper.fromMs(date),
     };
   }
 }

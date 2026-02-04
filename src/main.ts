@@ -15,7 +15,7 @@ import { logger } from './shared/constant/logger.constant';
 import { useContainer } from 'class-validator';
 import { MyLogger } from './modules/logger/logger.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { SERVICES } from './microservice/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { MetricsMiddleware } from './middlewares/metrics.middleware';
 
 async function bootstrap() {

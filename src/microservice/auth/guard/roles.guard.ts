@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLE } from 'src/microservice/auth.constant';
+import { ROLE } from 'src/shared/constant/auth.constant';
 import { ROLES_KEY } from '../decorator/roles.decorator';
 import { Request } from 'express';
 import { PUBLIC_API_KEY } from '../decorator/public.decorator';

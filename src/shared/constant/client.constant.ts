@@ -24,7 +24,7 @@ export const SERVICES = {
     cmd: {
       find_all_merchants_and_agents_by_ids:
         'find_all_merchants_and_agents_by_ids',
-      merchant_validate_signature: 'merchant_validate_signature',
+      merchant_signature_validation: 'merchant_signature_validation',
       find_profile_bank: 'find_profile_bank',
     },
   },

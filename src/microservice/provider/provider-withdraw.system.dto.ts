@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import Decimal from 'decimal.js';
-import { ToDecimalFixed } from 'src/shared/decorator';
+import { ToDecimalFixed } from 'src/shared/decorator/decimal.decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
 export class ProviderWithdrawSystemDto {

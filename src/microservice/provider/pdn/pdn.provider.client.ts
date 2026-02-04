@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_SETTLERECON } from 'src/microservice/client.constant';
+import { SERVICES, URL_SETTLERECON } from 'src/shared/constant/client.constant';
 import {
   PdnCreatePurchaseQrisRequestSystemDto,
   PdnDisbursementRequestSystemDto,

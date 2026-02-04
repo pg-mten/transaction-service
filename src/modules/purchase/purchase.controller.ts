@@ -22,12 +22,16 @@ import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { SERVICES } from 'src/microservice/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseInterceptor } from 'src/shared/interceptor';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto';
 import { MerchantApi } from 'src/microservice/auth/decorator/merchant.decorator';
+import {
+  MerchantSignatureHeader,
+  MerchantSignatureHeaderDto,
+} from 'src/microservice/merchant-signature/merchant-signature.header.decorator';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -36,10 +40,14 @@ export class PurchaseController {
 
   @Post()
   @MerchantApi()
+  @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreatePurchaseTransactionDto })
-  async create(@Body() body: CreatePurchaseTransactionDto) {
-    console.log({ body });
+  async create(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Body() body: CreatePurchaseTransactionDto,
+  ) {
+    console.log({ headers, body });
     return new ResponseDto({
       status: ResponseStatus.CREATED,
       data: await this.purchaseService.create(body),
