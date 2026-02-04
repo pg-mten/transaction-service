@@ -1,82 +1,116 @@
-// utils/crypto.helper.ts
 import * as crypto from 'crypto';
-
-const ALGORITHM = 'aes-256-gcm';
-const ENCRYPTION_KEY = Buffer.from(
-  process.env.ENCRYPTION_KEY || '25167358022485872541250266442180',
-  'utf-8',
-); // must be 32 bytes
+import canonicalize from 'canonicalize';
 
 export class CryptoHelper {
   /**
-   * Generate random private key for merchant
+   * Constant
    */
-  static generatePrivateKey(length = 32): string {
-    return crypto.randomBytes(length).toString('base64');
+  static SIGN_ALGORITHM = 'HMAC-SHA256';
+  static HASH_ALGORITHM = 'sha256';
+
+  static generateClientId(userId: number): string {
+    const uuidv4 = crypto.randomUUID();
+    return `${userId}-${uuidv4}`;
   }
 
   /**
-   * Encrypt text using AES-256-GCM
+   * Shared Secret Key Generation
    */
-  static encrypt(text: string): string {
-    const iv = crypto.randomBytes(16); // Initialization vector
-    const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-
-    const authTag = cipher.getAuthTag().toString('hex');
-
-    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+  static generatedSharedSecretKey(bytes = 32): string {
+    return crypto.randomBytes(bytes).toString('base64');
   }
 
   /**
-   * Decrypt text using AES-256-GCM
+   * Create canonical JSON string (stable order)
+   * RFC8785 Standart
    */
-  static decrypt(encryptedData: string): string {
-    const [ivHex, authTagHex, encrypted] = encryptedData.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-
-    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
-    decipher.setAuthTag(authTag);
-
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-
-    return decrypted;
+  static canonicalizeBody(body: unknown): string {
+    if (!body || Object.keys(body as object).length === 0) {
+      return '';
+    }
+    return canonicalize(body) || '';
   }
 
   /**
-   * Create HMAC SHA-256 signature
-   * @param privateKey raw private key
-   * @param payload object or string to sign
+   * Hash request body using SHA-256
    */
-  static sign(privateKey: string, payload: object | string): string {
-    const payloadString =
-      typeof payload === 'string' ? payload : JSON.stringify(payload);
-
+  static hashBody(body: unknown): string {
+    const canonical = this.canonicalizeBody(body);
     return crypto
-      .createHmac('sha256', privateKey)
-      .update(payloadString, 'utf8')
+      .createHash(this.HASH_ALGORITHM)
+      .update(canonical)
+      .digest('hex')
+      .toLowerCase();
+  }
+
+  /**
+   * String to Sign for Merchant Signature
+   */
+  static buildStringToSign(params: {
+    method: string;
+    path: string;
+    timestamp: string;
+    nonce: string;
+    body: unknown;
+  }): string {
+    const bodyHash = this.hashBody(params.body);
+    return [
+      params.method.toUpperCase(),
+      params.path,
+      params.timestamp,
+      params.nonce,
+      bodyHash,
+    ].join('\n');
+  }
+
+  /**
+   * Sign Canonical String using Merchant Secret Key
+   */
+  static sign(secretKeyBase64: string, stringToSign: string): string {
+    return crypto
+      .createHmac(this.HASH_ALGORITHM, Buffer.from(secretKeyBase64, 'base64'))
+      .update(stringToSign, 'utf-8')
       .digest('hex');
   }
 
   /**
-   * Verify HMAC SHA-256 signature
-   * @param privateKey raw private key
-   * @param payload object or string that was signed
-   * @param signature signature from merchant
+   * Verify HMAC signature (timing safe)
    */
-  static verify(
-    privateKey: string,
-    payload: object | string,
-    signature: string,
+  static verifySignature(
+    secretKeyBase64: string,
+    stringToSign: string,
+    receivedSignature: string,
   ): boolean {
-    const expectedSignature = this.sign(privateKey, payload);
+    if (!/^[0-9a-f]+$/i.test(receivedSignature)) {
+      return false;
+    }
+
+    const expected = this.sign(secretKeyBase64, stringToSign);
+
     return crypto.timingSafeEqual(
-      Buffer.from(expectedSignature, 'hex'),
-      Buffer.from(signature, 'hex'),
+      Buffer.from(expected, 'hex'),
+      Buffer.from(receivedSignature, 'hex'),
     );
+  }
+
+  /**
+   * Validate request timestamp (anti-replay)
+   * Default tolerance: 10 minutes
+   */
+  static isTimestampValid(timestamp: string, toleranceSeconds = 7200): boolean {
+    const requestTime = new Date(timestamp).getTime();
+    if (isNaN(requestTime)) return false;
+
+    const now = Date.now();
+    const diffSeconds = Math.abs(now - requestTime) / 1000;
+
+    return diffSeconds <= toleranceSeconds;
+  }
+
+  /**
+   * Generate nonce (UUID vs style)
+   */
+  static generateNonce(): string {
+    return crypto.randomUUID();
   }
 }

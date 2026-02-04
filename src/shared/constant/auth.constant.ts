@@ -17,3 +17,9 @@ export enum ROLE {
   AGENT = 'AGENT',
   MERCHANT = 'MERCHANT',
 }
+
+export enum MerchantSignatureStatusEnum {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  SUSPENDED = 'SUSPENDED',
+}
