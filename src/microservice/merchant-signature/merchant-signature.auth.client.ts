@@ -6,6 +6,8 @@ import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
 import { MerchantSignatureValidationSystemDto } from './merchant-signature-validation.system.dto';
 import { firstValueFrom } from 'rxjs';
+import { FilterMerchantUrlSystemDto } from './filter-merchant-url.system.dto';
+import { MerchantUrlSystemDto } from './merchant-url.system.dto';
 
 @Injectable()
 export class MerchantSignatureAuthClient {
@@ -44,6 +46,37 @@ export class MerchantSignatureAuthClient {
     } catch (error) {
       console.log(error);
       return this.signatureValidation(filter);
+      throw error;
+    }
+  }
+
+  async findMerchantUrl(filter: FilterMerchantUrlSystemDto) {
+    try {
+      const res = await axios.get<ResponseDto<MerchantUrlSystemDto>>(
+        `${URL_AUTH}/merchant-signature/internal/merchant-url`,
+        {
+          params: filter,
+        },
+      );
+      return res.data.data!;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async findMerchantUrlTCP(filter: FilterMerchantUrlSystemDto) {
+    try {
+      const res = await firstValueFrom(
+        this.authClient.send<ResponseDto<MerchantUrlSystemDto>>(
+          { cmd: this.cmd.merchant_signature_url },
+          filter,
+        ),
+      );
+      return res.data!;
+    } catch (error) {
+      console.log(error);
+      return this.findMerchantUrl(filter);
       throw error;
     }
   }

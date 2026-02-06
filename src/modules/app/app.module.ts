@@ -24,6 +24,7 @@ import { MicroserviceModule } from 'src/microservice/microservice.module';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApiModule } from '../api/api.module';
 
 @Module({
   imports: [
@@ -41,6 +42,9 @@ import { PrismaService } from '../prisma/prisma.service';
     WithdrawTransactionModule,
     DisbursementTransactionModule,
     BalanceModule,
+
+    // Merchant API
+    ApiModule,
 
     /// Web Client
     MicroserviceModule,

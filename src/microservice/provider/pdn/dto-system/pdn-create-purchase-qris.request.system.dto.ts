@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsString, ValidateIf } from 'class-validator';
+import { IsNumber, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimal } from 'src/shared/decorator/decimal.decorator';
 
@@ -20,7 +20,8 @@ export class PdnCreatePurchaseQrisRequestSystemDto {
   @ApiProperty()
   code: string;
 
+  @IsNumber()
+  @Type(() => Number)
   @ApiProperty()
-  @IsInt()
   expireSecond: number;
 }

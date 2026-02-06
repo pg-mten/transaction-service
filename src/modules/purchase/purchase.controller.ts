@@ -1,58 +1,21 @@
 // src/transactions/transactions.controller.ts
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Body,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiOkResponse,
-  ApiBody,
 } from '@nestjs/swagger';
 import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
-import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
 import { PurchaseService } from './purchase.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { SERVICES } from 'src/shared/constant/client.constant';
-import { ResponseInterceptor } from 'src/shared/interceptor';
-import { CustomValidationPipe } from 'src/shared/pipe';
-import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
-import { CreatePurchaseTransactionDto } from './dto/create-purchase.request.dto';
-import { MerchantApi } from 'src/microservice/auth/decorator/merchant.decorator';
-import {
-  MerchantSignatureHeader,
-  MerchantSignatureHeaderDto,
-} from 'src/microservice/merchant-signature/merchant-signature.header.decorator';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
 export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
-
-  @Post()
-  @MerchantApi()
-  @ApiTags('Merchant API')
-  @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
-  @ApiBody({ type: CreatePurchaseTransactionDto })
-  async create(
-    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
-    @Body() body: CreatePurchaseTransactionDto,
-  ) {
-    console.log({ headers, body });
-    return new ResponseDto({
-      status: ResponseStatus.CREATED,
-      data: await this.purchaseService.create(body),
-    });
-  }
 
   @Get(':id/detail')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
@@ -71,21 +34,5 @@ export class PurchaseController {
   ) {
     console.log({ filter, pageable });
     return this.purchaseService.findAll(pageable, filter);
-  }
-
-  @Post('/internal/callback')
-  @ApiTags('Internal')
-  @ApiOperation({ summary: 'untuk update status dari provider services' })
-  @ApiBody({ type: CreatePurchaseCallbackSystemDto })
-  async callback(@Body() body: CreatePurchaseCallbackSystemDto) {
-    return this.purchaseService.callback(body);
-  }
-
-  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.purchase_callback })
-  @UseInterceptors(ResponseInterceptor)
-  async callbackTCP(
-    @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
-  ) {
-    return this.purchaseService.callback(payload);
   }
 }
