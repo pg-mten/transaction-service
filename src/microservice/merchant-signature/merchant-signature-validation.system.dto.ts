@@ -9,6 +9,9 @@ export class MerchantSignatureValidationSystemDto {
   @ApiProperty({ type: Boolean })
   isValid: boolean;
 
+  @ApiProperty({ type: Number })
+  userId: number;
+
   @ApiProperty({ type: String })
   message: string;
 }

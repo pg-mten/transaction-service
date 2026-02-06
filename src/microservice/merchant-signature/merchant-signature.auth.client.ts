@@ -23,7 +23,7 @@ export class MerchantSignatureAuthClient {
       const res = await axios.get<
         ResponseDto<MerchantSignatureValidationSystemDto>
       >(`${URL_AUTH}/merchant-signature/validation`, { params: filter });
-      return res.data;
+      return res.data.data!;
     } catch (error) {
       console.log(error);
       throw error;
@@ -40,7 +40,7 @@ export class MerchantSignatureAuthClient {
           filter,
         ),
       );
-      return res;
+      return res.data!;
     } catch (error) {
       console.log(error);
       return this.signatureValidation(filter);

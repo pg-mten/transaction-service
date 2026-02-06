@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsString } from 'class-validator';
-import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
+import { IsEnum, IsNumber } from 'class-validator';
+import {
+  TransactionTypeEnum,
+  TransactionUserRole,
+} from 'src/shared/constant/transaction.constant';
 
 export class FilterProfileProviderSystemDto {
   @ApiProperty({ type: Number })
@@ -9,16 +12,14 @@ export class FilterProfileProviderSystemDto {
   @Type(() => Number)
   userId: number;
 
-  @ApiProperty({ type: Number })
-  @IsNumber()
-  @Type(() => Number)
-  profileId: number;
-
   @ApiProperty({ enum: TransactionUserRole })
   @IsEnum(TransactionUserRole)
   userRole: TransactionUserRole;
 
-  @ApiProperty()
-  @IsString()
+  @ApiProperty({
+    enum: Object.values(TransactionTypeEnum),
+    // example: TransactionTypeEnum.PURCHASE,
+  })
+  @IsEnum(TransactionTypeEnum)
   transactionType: string;
 }

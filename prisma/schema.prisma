@@ -180,16 +180,19 @@ model PurchaseTransaction {
   code              String                @unique
   orderId           String                @unique
   referenceId       String?
-  externalId        String?
+  externalId        String
   merchantId        Int
   providerName      String
   paymentMethodName String
   nominal           Decimal
   netNominal        Decimal
   status            TransactionStatusEnum @default(PENDING)
-  metadata          Json?
-  settlementAt      DateTime?
-  reconciliationAt  DateTime?
+
+  paidAt           DateTime?
+  expiresAt        DateTime
+  metadata         Json?
+  settlementAt     DateTime?
+  reconciliationAt DateTime?
 
   // Audit fields
   createdAt DateTime  @default(now())

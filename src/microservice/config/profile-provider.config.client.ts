@@ -23,7 +23,7 @@ export class ProfileProviderConfigClient {
         { data: filter },
       );
 
-      return res.data;
+      return res.data.data!;
     } catch (error) {
       console.log(error);
       throw error;
@@ -38,7 +38,7 @@ export class ProfileProviderConfigClient {
           filter,
         ),
       );
-      return res;
+      return res.data!;
     } catch (error) {
       console.log(error);
       return this.findProfileProvider(filter);

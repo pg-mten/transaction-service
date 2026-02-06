@@ -23,3 +23,11 @@ export enum MerchantSignatureStatusEnum {
   INACTIVE = 'INACTIVE',
   SUSPENDED = 'SUSPENDED',
 }
+
+export enum HttpMethodEnum {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
+}
