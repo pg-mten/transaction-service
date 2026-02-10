@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
@@ -9,10 +9,7 @@ import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api'
 import { Purchase1Api } from './purchase.1.api';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { SERVICES } from 'src/shared/constant/client.constant';
-import {
-  ResponseInterceptor,
-  SkipReponseInterceptor,
-} from 'src/shared/interceptor';
+import { SkipReponseInterceptor } from 'src/shared/interceptor';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { Balance1Api } from './balance.1.api';
@@ -47,7 +44,6 @@ export class Api1Controller {
   }
 
   @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.purchase_callback })
-  @UseInterceptors(ResponseInterceptor)
   async callbackTCP(
     @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
   ) {

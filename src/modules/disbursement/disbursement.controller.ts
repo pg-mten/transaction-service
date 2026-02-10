@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Body,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -23,7 +15,6 @@ import { CreateDisbursementTransactionDto } from './dto/create-disbursement-tran
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SERVICES } from 'src/shared/constant/client.constant';
-import { ResponseInterceptor } from 'src/shared/interceptor';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 import { SystemApi } from 'src/microservice/auth/decorator';
@@ -75,7 +66,6 @@ export class DisbursementTransactionsController {
   }
 
   @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
-  @UseInterceptors(ResponseInterceptor)
   async callbackTCP(
     @Payload(CustomValidationPipe) payload: UpdateDisbursementCallbackSystemDto,
   ) {

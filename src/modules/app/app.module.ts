@@ -93,7 +93,13 @@ import { ApiModule } from '../api/api.module';
       },
       inject: [Reflector],
     },
-    { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
+    {
+      provide: APP_INTERCEPTOR,
+      useFactory: (reflector: Reflector) => {
+        return new ResponseInterceptor(reflector);
+      },
+      inject: [Reflector],
+    },
     {
       provide: APP_INTERCEPTOR,
       useFactory: (prisma: PrismaService) => new PrismaUserInterceptor(prisma),
