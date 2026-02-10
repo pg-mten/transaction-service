@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
@@ -12,14 +12,20 @@ import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseInterceptor } from 'src/shared/interceptor';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomValidationPipe } from 'src/shared/pipe';
+import { SkipReponseInterceptor } from 'src/shared/interceptor/skip-response.interceptor';
+import { Balance1Api } from './balance.1.api';
 
 @Controller()
 @MerchantApi()
+@SkipReponseInterceptor()
 export class Api1Controller {
-  constructor(private readonly purchaseApi: Purchase1Api) {}
+  constructor(
+    private readonly purchaseApi: Purchase1Api,
+    private readonly balanceApi: Balance1Api,
+  ) {}
 
   @Post('/open/v1/payin/purchase')
-  @ApiTags('Mercant API')
+  @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Create a new purchase transaction (API)' })
   createQRIS(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
@@ -43,5 +49,15 @@ export class Api1Controller {
     @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
   ) {
     return this.purchaseApi.callback(payload);
+  }
+
+  @Get('/open/v1/payout/balance')
+  @ApiTags('Merchant API')
+  @ApiOperation({ summary: 'Check current wallet balance' })
+  async balance(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+  ) {
+    console.log({ headers });
+    return this.balanceApi.checkBalance(headers);
   }
 }

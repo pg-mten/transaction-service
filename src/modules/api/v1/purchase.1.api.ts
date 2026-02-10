@@ -30,6 +30,7 @@ import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-sy
 import { BalanceService } from 'src/modules/balance/balance.service';
 import axios from 'axios';
 import { WebhookPayinApi } from './dto-api/webhook-payin.api';
+import { MerchantSignatureValidationSystemDto } from 'src/microservice/merchant-signature/merchant-signature-validation.system.dto';
 
 @Injectable()
 export class Purchase1Api {
@@ -77,8 +78,8 @@ export class Purchase1Api {
   async create(
     headers: MerchantSignatureHeaderDto,
     body: CreatePurchaseRequestApi,
-  ) {
-    const merchantSignature =
+  ): Promise<CreatePurchaseResponseApi> {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
         body: body,
@@ -142,7 +143,9 @@ export class Purchase1Api {
     });
   }
 
-  async callback(body: CreatePurchaseCallbackSystemDto) {
+  async callback(
+    body: CreatePurchaseCallbackSystemDto,
+  ): Promise<WebhookPayinApi> {
     const { paymentMethodName, providerName, userId } =
       TransactionHelper.extractCode(body.code);
     const weebhookApi = await this.prisma.$transaction(async (tx) => {
