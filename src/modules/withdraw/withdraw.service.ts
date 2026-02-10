@@ -84,11 +84,10 @@ export class WithdrawService {
     const resProfileProvider =
       await this.profileProviderClient.findProfileProviderTCP({
         userId: profileBank.userId,
-        profileId: profileBank.profileId,
         userRole: profileBank.userRole,
         transactionType: this.transactionType,
       });
-    const profileProvider = resProfileProvider.data!;
+    const profileProvider = resProfileProvider;
 
     // TODO Ambil dari config service, untuk menentukan secara otomatis. Dia memakai provider dan payment method apa
     // const providerName = 'PDN';
