@@ -4,7 +4,7 @@ import {
   MerchantSignatureHeader,
   MerchantSignatureHeaderDto,
 } from 'src/microservice/merchant-signature/merchant-signature.header.decorator';
-import { MerchantApi } from 'src/microservice/auth/decorator/merchant.decorator';
+import { MerchantApi, SystemApi } from 'src/microservice/auth/decorator';
 import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api';
 import { Purchase1Api } from './purchase.1.api';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
@@ -16,7 +16,6 @@ import {
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { Balance1Api } from './balance.1.api';
-import { SystemApi } from 'src/microservice/auth/decorator';
 
 @Controller()
 @MerchantApi()
