@@ -26,6 +26,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseInterceptor } from 'src/shared/interceptor';
 import { CustomValidationPipe } from 'src/shared/pipe';
+import { SystemApi } from 'src/microservice/auth/decorator';
 
 @ApiTags('Transactions', 'Withdraw')
 @Controller('transactions/withdraw')
@@ -59,6 +60,7 @@ export class WithdrawTransactionsController {
     return this.service.findAll(pageable, filter);
   }
 
+  @SystemApi()
   @Post('/internal/callback')
   @ApiTags('Internal')
   @ApiOperation({

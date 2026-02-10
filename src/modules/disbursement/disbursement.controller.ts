@@ -26,6 +26,7 @@ import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseInterceptor } from 'src/shared/interceptor';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
+import { SystemApi } from 'src/microservice/auth/decorator';
 
 @ApiTags('Transactions', 'Disbursement')
 @Controller('transactions/disbursement')
@@ -61,6 +62,7 @@ export class DisbursementTransactionsController {
     return this.service.findAll(pageable, filter);
   }
 
+  @SystemApi()
   @Post('/internal/callback')
   @ApiTags('Internal')
   @ApiOperation({

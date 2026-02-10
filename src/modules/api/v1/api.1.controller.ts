@@ -9,11 +9,14 @@ import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api'
 import { Purchase1Api } from './purchase.1.api';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { SERVICES } from 'src/shared/constant/client.constant';
-import { ResponseInterceptor } from 'src/shared/interceptor';
+import {
+  ResponseInterceptor,
+  SkipReponseInterceptor,
+} from 'src/shared/interceptor';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomValidationPipe } from 'src/shared/pipe';
-import { SkipReponseInterceptor } from 'src/shared/interceptor/skip-response.interceptor';
 import { Balance1Api } from './balance.1.api';
+import { SystemApi } from 'src/microservice/auth/decorator';
 
 @Controller()
 @MerchantApi()
@@ -35,6 +38,7 @@ export class Api1Controller {
     return this.purchaseApi.create(headers, body);
   }
 
+  @SystemApi()
   @Post('transactions/purchase/internal/callback')
   @ApiTags('Internal')
   @ApiOperation({ summary: 'untuk update status dari provider services' })
