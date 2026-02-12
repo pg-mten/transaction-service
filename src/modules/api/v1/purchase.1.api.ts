@@ -131,7 +131,7 @@ export class Purchase1Api {
     });
 
     return new CreatePurchaseResponseApi({
-      purchaseId: purchase.id,
+      transactionId: purchase.id,
       orderId: body.orderId,
       status: purchase.status,
       message: 'Purchase created successfully',

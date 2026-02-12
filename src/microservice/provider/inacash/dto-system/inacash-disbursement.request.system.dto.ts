@@ -21,7 +21,7 @@ export class InacashDisbursementRequestSystemDto {
 
   @IsString()
   @ApiProperty()
-  recipientBankName: string;
+  recipientBankName: string | null;
 
   @IsString()
   @ApiProperty()

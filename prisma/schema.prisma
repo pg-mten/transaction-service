@@ -122,13 +122,14 @@ model WithdrawFeeDetail {
 model DisbursementTransaction {
   id                Int                   @id @default(autoincrement())
   code              String                @unique @default(uuid())
+  orderId           String                @unique
   externalId        String?
   referenceId       String?
   merchantId        Int
   providerName      String
   recipientName     String // bisa merchant, agent, atau pihak ketiga
   recipientBankCode String
-  recipientBankName String
+  recipientBankName String?
   recipientAccount  String
   nominal           Decimal
   netNominal        Decimal

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
   MerchantSignatureHeaderDto,
@@ -13,6 +13,8 @@ import { SkipReponseInterceptor } from 'src/shared/interceptor';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { Balance1Api } from './balance.1.api';
+import { CreateTransferRequestApi } from './dto-api/create-transfer.request.api';
+import { Disbursement1Api } from './disbursement.1.api';
 
 @Controller()
 @MerchantApi()
@@ -21,6 +23,7 @@ export class Api1Controller {
   constructor(
     private readonly purchaseApi: Purchase1Api,
     private readonly balanceApi: Balance1Api,
+    private readonly disbursementApi: Disbursement1Api,
   ) {}
 
   @Post('/open/v1/payin/purchase')
@@ -58,5 +61,18 @@ export class Api1Controller {
   ) {
     console.log({ headers });
     return this.balanceApi.checkBalance(headers);
+  }
+
+  @Post('/open/v1/payout/transfer')
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Create a new Payout Transfer to bank/ewallet account',
+  })
+  async createTransfer(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Body() body: CreateTransferRequestApi,
+  ) {
+    console.log({ headers, body });
+    return this.disbursementApi.create(headers, body);
   }
 }

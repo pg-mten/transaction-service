@@ -8,20 +8,20 @@ export class BalanceResponseApi {
     DtoHelper.assign(this, data);
   }
 
-  @ApiProperty()
+  @ApiProperty({ type: Number })
   userId: number;
 
-  @ApiProperty()
+  @ApiProperty({ type: Decimal })
   @ToDecimalFixed()
   balanceActive: Decimal;
 
-  @ApiProperty()
+  @ApiProperty({ type: Decimal })
   @ToDecimalFixed()
   balancePending: Decimal;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   message: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   currency: string;
 }

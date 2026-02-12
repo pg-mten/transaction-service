@@ -29,7 +29,7 @@ export class CreatePurchaseResponseApi {
   }
 
   @ApiProperty({ type: Number })
-  purchaseId: number;
+  transactionId: number;
 
   @ApiProperty({ type: String })
   orderId: string;

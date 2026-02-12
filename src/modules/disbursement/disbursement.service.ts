@@ -112,6 +112,7 @@ export class DisbursementService {
       const disbursement = await trx.disbursementTransaction.create({
         data: {
           code: code,
+          orderId: '', // TODO Must be unique
           externalId: clientData.externalId,
           merchantId: merchantId,
           providerName: providerName,
@@ -188,6 +189,7 @@ export class DisbursementService {
     const disbursement = await this.prisma.disbursementTransaction.create({
       data: {
         code: clientData.code,
+        orderId: '', // TODO Must be unique
         externalId: clientData.externalId,
         merchantId: userId,
         providerName: providerName,
