@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_TRANSACTION } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { UpdateDisbursementCallbackSystemDto } from './dto-system/update-disbursement-callback.system.dto';
 import { ResponseDto } from 'src/shared/response.dto';
 import axios from 'axios';
@@ -13,7 +13,7 @@ export class DisbursementTransactionClient {
     private readonly transactionClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.TRANSACTION.cmd;
+  private readonly point = SERVICES.TRANSACTION.point;
 
   /**
    * Mainly for update status based on code and external id
@@ -21,7 +21,7 @@ export class DisbursementTransactionClient {
   async callback(body: UpdateDisbursementCallbackSystemDto) {
     try {
       const res = await axios.post<ResponseDto<null>>(
-        `${URL_TRANSACTION}/transaction/disbursement/internal/callback`,
+        this.point.disbursement_callback.url,
         body,
       );
       return res;
@@ -35,7 +35,7 @@ export class DisbursementTransactionClient {
     try {
       const res = await firstValueFrom(
         this.transactionClient.send<ResponseDto<null>>(
-          { cmd: this.cmd.disbursement_callback },
+          { cmd: this.point.disbursement_callback.cmd },
           body,
         ),
       );

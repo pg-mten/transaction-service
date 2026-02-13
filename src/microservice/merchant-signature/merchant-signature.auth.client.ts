@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_AUTH } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { FilterMerchantSignatureValidationSystemDto } from './filter-merchant-signature-validation.system.dto';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -16,7 +16,7 @@ export class MerchantSignatureAuthClient {
     private readonly authClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.AUTH.cmd;
+  private readonly point = SERVICES.AUTH.point;
 
   async signatureValidation(
     filter: FilterMerchantSignatureValidationSystemDto,
@@ -24,7 +24,7 @@ export class MerchantSignatureAuthClient {
     try {
       const res = await axios.get<
         ResponseDto<MerchantSignatureValidationSystemDto>
-      >(`${URL_AUTH}/merchant-signature/validation`, { params: filter });
+      >(this.point.merchant_signature_validation.url, { params: filter });
       return res.data.data!;
     } catch (error) {
       console.log(error);
@@ -38,7 +38,7 @@ export class MerchantSignatureAuthClient {
     try {
       const res = await firstValueFrom(
         this.authClient.send<ResponseDto<MerchantSignatureValidationSystemDto>>(
-          { cmd: this.cmd.merchant_signature_validation },
+          { cmd: this.point.merchant_signature_validation.cmd },
           filter,
         ),
       );
@@ -53,7 +53,7 @@ export class MerchantSignatureAuthClient {
   async findMerchantUrl(filter: FilterMerchantUrlSystemDto) {
     try {
       const res = await axios.get<ResponseDto<MerchantUrlSystemDto>>(
-        `${URL_AUTH}/merchant-signature/internal/merchant-url`,
+        this.point.merchant_signature_url.url,
         {
           params: filter,
         },
@@ -69,7 +69,7 @@ export class MerchantSignatureAuthClient {
     try {
       const res = await firstValueFrom(
         this.authClient.send<ResponseDto<MerchantUrlSystemDto>>(
-          { cmd: this.cmd.merchant_signature_url },
+          { cmd: this.point.merchant_signature_url.cmd },
           filter,
         ),
       );

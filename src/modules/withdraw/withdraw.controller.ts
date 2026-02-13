@@ -20,11 +20,11 @@ import { CustomValidationPipe } from 'src/shared/pipe';
 import { SystemApi } from 'src/microservice/auth/decorator';
 
 @ApiTags('Transactions', 'Withdraw')
-@Controller('transactions/withdraw')
+@Controller()
 export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawService) {}
 
-  @Post()
+  @Post('transactions/withdraw')
   @ApiOperation({ summary: 'Buat Withdraw baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
@@ -33,14 +33,14 @@ export class WithdrawTransactionsController {
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get(':id/detail')
+  @Get('transactions/withdraw/:id/detail')
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
     return await this.service.findOneThrow(id);
   }
 
-  @Get()
+  @Get('transactions/withdraw')
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: WithdrawTransactionDto, isArray: true })
   async findAll(
@@ -52,7 +52,7 @@ export class WithdrawTransactionsController {
   }
 
   @SystemApi()
-  @Post('/internal/callback')
+  @Post(SERVICES.TRANSACTION.point.withdraw_callback.path)
   @ApiTags('Internal')
   @ApiOperation({
     summary:
@@ -63,7 +63,7 @@ export class WithdrawTransactionsController {
     return this.service.callback(body);
   }
 
-  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.point.withdraw_callback.cmd })
   async callbackTCP(
     @Payload(CustomValidationPipe) payload: UpdateWithdrawCallbackSystemDto,
   ) {

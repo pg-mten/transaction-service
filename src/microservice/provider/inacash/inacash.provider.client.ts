@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_SETTLERECON } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { InacashCreatePurchaseQrisRequestSystemDto } from './dto-system/inacash-create-purchase-qris.request.system.dto';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -18,12 +18,12 @@ export class InacashProviderClient {
     private readonly inacashProviderClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.SETTLERECON.cmd;
+  private readonly point = SERVICES.SETTLERECON.point;
 
   async purchaseQRIS(body: InacashCreatePurchaseQrisRequestSystemDto) {
     try {
       const res = await axios.post<ResponseDto<ProviderPurchaseSystemDto>>(
-        `${URL_SETTLERECON}/provider/inacash/internal/qris`,
+        this.point.inacash_purchase_qris.url,
         body,
       );
       return res.data;
@@ -37,7 +37,7 @@ export class InacashProviderClient {
     try {
       const res = await firstValueFrom(
         this.inacashProviderClient.send<ResponseDto<ProviderPurchaseSystemDto>>(
-          { cmd: this.cmd.inacash_purchase_qris },
+          { cmd: this.point.inacash_purchase_qris.cmd },
           body,
         ),
       );
@@ -52,7 +52,7 @@ export class InacashProviderClient {
   async withdraw(body: InacashWithdrawRequestSystemDto) {
     try {
       const res = await axios.post<ResponseDto<ProviderWithdrawSystemDto>>(
-        `${URL_SETTLERECON}/provider/inacash/internal/withdraw`,
+        this.point.inacash_withdraw.url,
         body,
       );
       return res.data;
@@ -66,7 +66,7 @@ export class InacashProviderClient {
     try {
       const res = await firstValueFrom(
         this.inacashProviderClient.send<ResponseDto<ProviderWithdrawSystemDto>>(
-          { cmd: this.cmd.inacash_withdraw },
+          { cmd: this.point.inacash_withdraw.cmd },
           body,
         ),
       );
@@ -81,7 +81,7 @@ export class InacashProviderClient {
   async disbursement(body: InacashDisbursementRequestSystemDto) {
     try {
       const res = await axios.post<ResponseDto<ProviderDisbursementSystemDto>>(
-        `${URL_SETTLERECON}/provider/inacash/internal/disbursement`,
+        this.point.inacash_disbursement.url,
         body,
       );
       return res.data;
@@ -96,7 +96,7 @@ export class InacashProviderClient {
       const res = await firstValueFrom(
         this.inacashProviderClient.send<
           ResponseDto<ProviderDisbursementSystemDto>
-        >({ cmd: this.cmd.inacash_disbursement }, body),
+        >({ cmd: this.point.inacash_disbursement.cmd }, body),
       );
       return res;
     } catch (error) {

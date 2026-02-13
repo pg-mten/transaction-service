@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SERVICES, URL_CONFIG } from '../../shared/constant/client.constant';
+import { SERVICES } from '../../shared/constant/client.constant';
 import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -14,12 +14,12 @@ export class ProfileProviderConfigClient {
     private readonly configClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.CONFIG.cmd;
+  private readonly point = SERVICES.CONFIG.point;
 
   async findProfileProvider(filter: FilterProfileProviderSystemDto) {
     try {
       const res = await axios.get<ResponseDto<ProfileProviderSystemDto>>(
-        `${URL_CONFIG}/user-provider/internal/profile-provider`,
+        this.point.find_profile_provider.url,
         { data: filter },
       );
 
@@ -34,7 +34,7 @@ export class ProfileProviderConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<ProfileProviderSystemDto>>(
-          { cmd: this.cmd.find_profile_provider },
+          { cmd: this.point.find_profile_provider.cmd },
           filter,
         ),
       );

@@ -11,7 +11,7 @@ import { FilterTopupFeeSystemDto } from './dto-transaction-system/filter-topup-f
 import { TopupFeeSystemDto } from './dto-transaction-system/topup-fee.system.dto';
 import { FilterDisbursementFeeSystemDto } from './dto-transaction-system/filter-disbursement-fee.system.dto';
 import { DisbursementFeeSystemDto } from './dto-transaction-system/disbursement-fee.system.dto';
-import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 
 @Injectable()
 export class FeeCalculateConfigClient {
@@ -20,7 +20,7 @@ export class FeeCalculateConfigClient {
     private readonly configClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.CONFIG.cmd;
+  private readonly point = SERVICES.CONFIG.point;
 
   /**
    * Purchase
@@ -28,7 +28,7 @@ export class FeeCalculateConfigClient {
   async calculatePurchaseFeeConfig(filter: FilterPurchaseFeeSystemDto) {
     try {
       const res = await axios.get<ResponseDto<PurchaseFeeSystemDto>>(
-        `${URL_CONFIG}/fee/internal/purchase`,
+        this.point.calculate_fee_purchase.url,
         {
           params: filter,
         },
@@ -44,7 +44,7 @@ export class FeeCalculateConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<PurchaseFeeSystemDto>>(
-          { cmd: this.cmd.calculate_fee_purchase },
+          { cmd: this.point.calculate_fee_purchase.cmd },
           filter,
         ),
       );
@@ -62,7 +62,7 @@ export class FeeCalculateConfigClient {
   async calculateWithdrawFeeConfig(filter: FilterWithdrawFeeSystemDto) {
     try {
       const res = await axios.get<ResponseDto<WithdrawFeeSystemDto>>(
-        `${URL_CONFIG}/fee/internal/withdraw`,
+        this.point.calculate_fee_withdraw.url,
         {
           params: filter,
         },
@@ -78,7 +78,7 @@ export class FeeCalculateConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<WithdrawFeeSystemDto>>(
-          { cmd: this.cmd.calculate_fee_withdraw },
+          { cmd: this.point.calculate_fee_withdraw.cmd },
           filter,
         ),
       );
@@ -96,7 +96,7 @@ export class FeeCalculateConfigClient {
   async calculateTopupFeeConfig(filter: FilterTopupFeeSystemDto) {
     try {
       const res = await axios.get<ResponseDto<TopupFeeSystemDto>>(
-        `${URL_CONFIG}/fee/internal/topup`,
+        this.point.calculate_fee_topup.url,
         {
           params: filter,
         },
@@ -112,7 +112,7 @@ export class FeeCalculateConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<TopupFeeSystemDto>>(
-          { cmd: this.cmd.calculate_fee_topup },
+          { cmd: this.point.calculate_fee_topup.cmd },
           filter,
         ),
       );
@@ -131,7 +131,7 @@ export class FeeCalculateConfigClient {
   async calculateDisbursementFeeConfig(filter: FilterDisbursementFeeSystemDto) {
     try {
       const res = await axios.get<ResponseDto<DisbursementFeeSystemDto>>(
-        `${URL_CONFIG}/fee/internal/disbursement`,
+        this.point.calculate_fee_disbursement.url,
         {
           params: filter,
         },
@@ -149,7 +149,7 @@ export class FeeCalculateConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<DisbursementFeeSystemDto>>(
-          { cmd: this.cmd.calculate_fee_disbursement },
+          { cmd: this.point.calculate_fee_disbursement.cmd },
           filter,
         ),
       );

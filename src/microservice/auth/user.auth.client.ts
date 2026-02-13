@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { SERVICES, URL_AUTH } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { ResponseDto } from 'src/shared/response.dto';
 import { FilterMerchantsAndAgentsByIdsSystemDto } from './dto-system/filter-merchants-and-agents-by-ids.system.dto';
 import axios from 'axios';
@@ -16,7 +16,7 @@ export class UserAuthClient {
     private readonly authClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.AUTH.cmd;
+  private readonly point = SERVICES.AUTH.point;
 
   async findAllMerchantsAndAgentsByIds(
     filter: FilterMerchantsAndAgentsByIdsSystemDto,
@@ -24,7 +24,7 @@ export class UserAuthClient {
     try {
       const res = await axios.get<
         ResponseDto<MerchantsAndAgentsByIdsSystemDto>
-      >(`${URL_AUTH}/user/internal/merchants-and-agents-by-ids`, {
+      >(this.point.find_all_merchants_and_agents_by_ids.url, {
         params: filter,
       });
       return res.data;
@@ -40,7 +40,7 @@ export class UserAuthClient {
     try {
       const res = await firstValueFrom(
         this.authClient.send<ResponseDto<MerchantsAndAgentsByIdsSystemDto>>(
-          { cmd: this.cmd.find_all_merchants_and_agents_by_ids },
+          { cmd: this.point.find_all_merchants_and_agents_by_ids.cmd },
           filter,
         ),
       );
@@ -55,7 +55,7 @@ export class UserAuthClient {
   async findProfileBank(filter: FilterProfileBankSystemDto) {
     try {
       const res = await axios.get<ResponseDto<ProfileBankByIdSystemDto>>(
-        `${URL_AUTH}/user/internal/profile-bank`,
+        this.point.find_profile_bank.url,
         {
           params: filter,
         },
@@ -71,7 +71,7 @@ export class UserAuthClient {
     try {
       const res = await firstValueFrom(
         this.authClient.send<ResponseDto<ProfileBankByIdSystemDto>>(
-          { cmd: this.cmd.find_profile_bank },
+          { cmd: this.point.find_profile_bank.cmd },
           filter,
         ),
       );

@@ -39,7 +39,7 @@ export class Api1Controller {
   }
 
   @SystemApi()
-  @Post('transactions/purchase/internal/callback')
+  @Post(SERVICES.TRANSACTION.point.purchase_callback.path)
   @ApiTags('Merchant API', 'Internal')
   @ApiOperation({ summary: ' Callback Payin' })
   @ApiBody({ type: CreatePurchaseCallbackSystemDto })
@@ -47,7 +47,7 @@ export class Api1Controller {
     return this.purchaseApi.callback(body);
   }
 
-  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.purchase_callback })
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.point.purchase_callback.cmd })
   async callbackPayinTCP(
     @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
   ) {
@@ -78,7 +78,7 @@ export class Api1Controller {
   }
 
   @SystemApi()
-  @Post('transactions/disbursement/internal/callback')
+  @Post(SERVICES.TRANSACTION.point.disbursement_callback.path)
   @ApiTags('Merchant API', 'Internal')
   @ApiOperation({
     summary:
@@ -89,7 +89,7 @@ export class Api1Controller {
     return this.disbursementApi.callback(body);
   }
 
-  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.point.disbursement_callback.cmd })
   async callbackPayoutTCP(
     @Payload(CustomValidationPipe) payload: UpdateDisbursementCallbackSystemDto,
   ) {

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_TRANSACTION } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { UpdateWithdrawCallbackSystemDto } from './dto-system/update-withdraw-callback.system.dto';
 import axios from 'axios';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -13,7 +13,7 @@ export class WithdrawTransacionClient {
     private readonly transactionClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.TRANSACTION.cmd;
+  private readonly point = SERVICES.TRANSACTION.point;
 
   /**
    * Mainly for update status based on code and external id
@@ -21,7 +21,7 @@ export class WithdrawTransacionClient {
   async callback(body: UpdateWithdrawCallbackSystemDto) {
     try {
       const res = await axios.post<ResponseDto<null>>(
-        `${URL_TRANSACTION}/transaction/withdraw/internal/callback`,
+        this.point.withdraw_callback.url,
         body,
       );
       return res;
@@ -35,7 +35,7 @@ export class WithdrawTransacionClient {
     try {
       const res = await firstValueFrom(
         this.transactionClient.send<ResponseDto<null>>(
-          { cmd: this.cmd.withdraw_callback },
+          { cmd: this.point.withdraw_callback.cmd },
           body,
         ),
       );

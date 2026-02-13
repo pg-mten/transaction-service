@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { CreateMerchantSystemDto } from './dto-system/create-merchant.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -13,7 +13,7 @@ export class MerchantConfigClient {
     private readonly configClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.CONFIG.cmd;
+  private readonly point = SERVICES.CONFIG.point;
 
   /**
    * Create Merchant to Config Service
@@ -21,7 +21,7 @@ export class MerchantConfigClient {
   async create(body: CreateMerchantSystemDto) {
     try {
       const res = await axios.get<ResponseDto<null>>(
-        `${URL_CONFIG}/merchant/internal`,
+        this.point.create_merchant_config.url,
         { data: body },
       );
       return res.data;
@@ -34,7 +34,7 @@ export class MerchantConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<null>>(
-          { cmd: this.cmd.create_merchant_config },
+          { cmd: this.point.create_merchant_config.cmd },
           body,
         ),
       );

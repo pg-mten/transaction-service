@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_CONFIG } from 'src/shared/constant/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { CreateAgentSystemDto } from './dto-system/create-agent.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -13,7 +13,7 @@ export class AgentConfigClient {
     private readonly configClient: ClientProxy,
   ) {}
 
-  private readonly cmd = SERVICES.CONFIG.cmd;
+  private readonly point = SERVICES.CONFIG.point;
 
   /**
    * Create Agent to Config Service
@@ -21,7 +21,7 @@ export class AgentConfigClient {
   async create(body: CreateAgentSystemDto) {
     try {
       const res = await axios.get<ResponseDto<null>>(
-        `${URL_CONFIG}/agent/internal`,
+        this.point.create_agent_config.url,
         { data: body },
       );
       return res.data;
@@ -35,7 +35,7 @@ export class AgentConfigClient {
     try {
       const res = await firstValueFrom(
         this.configClient.send<ResponseDto<null>>(
-          { cmd: this.cmd.create_agent_config },
+          { cmd: this.point.create_agent_config.cmd },
           body,
         ),
       );
