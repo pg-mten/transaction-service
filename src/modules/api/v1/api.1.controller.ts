@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
   MerchantSignatureHeaderDto,
@@ -15,6 +15,7 @@ import { CustomValidationPipe } from 'src/shared/pipe';
 import { Balance1Api } from './balance.1.api';
 import { CreateTransferRequestApi } from './dto-api/create-transfer.request.api';
 import { Disbursement1Api } from './disbursement.1.api';
+import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 
 @Controller()
 @MerchantApi()
@@ -39,15 +40,15 @@ export class Api1Controller {
 
   @SystemApi()
   @Post('transactions/purchase/internal/callback')
-  @ApiTags('Internal')
-  @ApiOperation({ summary: 'untuk update status dari provider services' })
+  @ApiTags('Merchant API', 'Internal')
+  @ApiOperation({ summary: ' Callback Payin' })
   @ApiBody({ type: CreatePurchaseCallbackSystemDto })
-  async callback(@Body() body: CreatePurchaseCallbackSystemDto) {
+  async callbackPayin(@Body() body: CreatePurchaseCallbackSystemDto) {
     return this.purchaseApi.callback(body);
   }
 
   @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.purchase_callback })
-  async callbackTCP(
+  async callbackPayinTCP(
     @Payload(CustomValidationPipe) payload: CreatePurchaseCallbackSystemDto,
   ) {
     return this.purchaseApi.callback(payload);
@@ -55,7 +56,7 @@ export class Api1Controller {
 
   @Get('/open/v1/payout/balance')
   @ApiTags('Merchant API')
-  @ApiOperation({ summary: 'Check current wallet balance' })
+  @ApiOperation({ summary: 'Check current wallet balance (API)' })
   async balance(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
   ) {
@@ -66,7 +67,7 @@ export class Api1Controller {
   @Post('/open/v1/payout/transfer')
   @ApiTags('Merchant API')
   @ApiOperation({
-    summary: 'Create a new Payout Transfer to bank/ewallet account',
+    summary: 'Create a new Payout Transfer to bank/ewallet account (API)',
   })
   async createTransfer(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
@@ -74,5 +75,24 @@ export class Api1Controller {
   ) {
     console.log({ headers, body });
     return this.disbursementApi.create(headers, body);
+  }
+
+  @SystemApi()
+  @Post('transactions/disbursement/internal/callback')
+  @ApiTags('Merchant API', 'Internal')
+  @ApiOperation({
+    summary:
+      'Pengubahan status berdasarkan external id dan code dari provider services',
+  })
+  @ApiBody({ type: UpdateDisbursementCallbackSystemDto })
+  callbackPayout(@Body() body: UpdateDisbursementCallbackSystemDto) {
+    return this.disbursementApi.callback(body);
+  }
+
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
+  async callbackPayoutTCP(
+    @Payload(CustomValidationPipe) payload: UpdateDisbursementCallbackSystemDto,
+  ) {
+    return this.disbursementApi.callback(payload);
   }
 }

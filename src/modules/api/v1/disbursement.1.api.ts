@@ -1,4 +1,9 @@
-import { BadGatewayException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Inject,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   Prisma,
   PrismaClient,
@@ -24,6 +29,8 @@ import { CreateTransferRequestApi } from './dto-api/create-transfer.request.api'
 import { MerchantSignatureValidationSystemDto } from 'src/microservice/merchant-signature/merchant-signature-validation.system.dto';
 import { CreateTransferResponseApi } from './dto-api/create-transfer.response.api';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
+import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
+import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
 
 @Injectable()
 export class Disbursement1Api {
@@ -215,6 +222,195 @@ export class Disbursement1Api {
       accountNumber: body.accountNumber,
       createdAt: disbursement.createdAt.toISOString(),
     });
-    // return disbursement;
+  }
+
+  async callback(body: UpdateDisbursementCallbackSystemDto) {
+    const codeExtract = TransactionHelper.extractCode(body.code);
+
+    await this.prisma.$transaction(async (tx) => {
+      const disbursement = await tx.disbursementTransaction.update({
+        where: {
+          code: body.code,
+          merchantId: codeExtract.userId,
+        },
+        data: {
+          status: body.status as TransactionStatusEnum,
+        },
+      });
+
+      if (disbursement.status === TransactionStatusEnum.SUCCESS) {
+        const feeDto =
+          await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
+            merchantId: disbursement.merchantId,
+            providerName: disbursement.providerName,
+            paymentMethodName: disbursement.paymentMethodName,
+            nominal: disbursement.nominal,
+          });
+
+        const disbursementFeeDetails =
+          await tx.disbursementFeeDetail.createManyAndReturn({
+            data: this.feeDetailMapper({
+              disbursementId: disbursement.id,
+              feeDto,
+            }),
+          });
+
+        console.log({ disbursementFeeDetails });
+
+        await this.createBalanceLog({
+          disbursementId: disbursement.id,
+          merchantId: disbursement.merchantId,
+          providerName: disbursement.providerName,
+          paymentMethodName: disbursement.paymentMethodName,
+          nominal: disbursement.nominal,
+          feeDto,
+        });
+      }
+    });
+  }
+
+  private async createBalanceLog(dto: {
+    disbursementId: number;
+    merchantId: number;
+    providerName: string;
+    paymentMethodName: string;
+    nominal: Decimal;
+    feeDto: DisbursementFeeSystemDto;
+  }) {
+    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
+      (agent) => agent.id,
+    );
+    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
+      dto.merchantId,
+    );
+    const lastBalanceInternal =
+      await this.balanceService.checkBalanceInternal();
+    const lastBalanceAgents =
+      await this.balanceService.checkBalanceAgents(agentIds);
+
+    /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
+    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+      throw new Error('Balance Tidak Mencukupi');
+    }
+
+    return Promise.all([
+      this.prisma.merchantBalanceLog.create({
+        data: {
+          disbursementId: dto.disbursementId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.nominal,
+          balanceActive: lastBalanceMerchant.balanceActive?.minus(
+            dto.feeDto.merchantFee.netNominal,
+          ),
+          balancePending: lastBalanceMerchant.balancePending,
+          transactionType: this.transactionType,
+        },
+      }),
+
+      this.prisma.internalBalanceLog.create({
+        data: {
+          disbursementId: dto.disbursementId,
+          merchantId: dto.merchantId,
+          changeAmount: dto.feeDto.internalFee.nominal,
+          balanceActive: lastBalanceInternal.balanceActive?.plus(
+            dto.feeDto.internalFee.nominal,
+          ),
+          balancePending: lastBalanceInternal.balancePending,
+          providerName: dto.providerName,
+          paymentMethodName: dto.paymentMethodName,
+          transactionType: this.transactionType,
+        },
+      }),
+
+      this.prisma.agentBalanceLog.createMany({
+        skipDuplicates: true,
+        data: dto.feeDto.agentFee.agents.map((item) => {
+          return {
+            disbursementId: dto.disbursementId,
+            agentId: item.id,
+            changeAmount: item.nominal,
+            balancePending:
+              lastBalanceAgents.find((a) => a.agentId == item.id)
+                ?.balancePending || new Decimal(0),
+            balanceActive:
+              lastBalanceAgents
+                .find((a) => a.agentId == item.id)
+                ?.balanceActive.plus(item.nominal) || new Decimal(0),
+            transactionType: this.transactionType,
+          } as Prisma.AgentBalanceLogCreateManyInput;
+        }),
+      }),
+    ]);
+  }
+
+  private feeDetailMapper({
+    disbursementId,
+    feeDto,
+  }: {
+    disbursementId: number;
+    feeDto: DisbursementFeeSystemDto;
+  }): Prisma.DisbursementFeeDetailCreateManyInput[] {
+    const result: Prisma.DisbursementFeeDetailCreateManyInput[] = [];
+    const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
+    if (!merchantFee || !agentFee || !providerFee || !internalFee) {
+      throw ResponseException.fromHttpExecption(
+        new UnprocessableEntityException('Some of the response is null'),
+        {
+          merchantFee,
+          agentFee,
+          providerFee,
+          internalFee,
+        },
+      );
+    }
+
+    /**
+     * Merchant
+     */
+    result.push({
+      disbursementId,
+      type: 'MERCHANT',
+      feePercentage: merchantFee.feePercentage,
+      feeFixed: new Decimal(0),
+      nominal: merchantFee.netNominal,
+    });
+
+    /**
+     * Provider
+     */
+    result.push({
+      disbursementId,
+      type: 'PROVIDER',
+      feeFixed: providerFee.feeFixed,
+      feePercentage: providerFee.feePercentage,
+      nominal: providerFee.nominal,
+    });
+
+    /**
+     * Internal
+     */
+    result.push({
+      disbursementId,
+      type: 'INTERNAL',
+      feeFixed: internalFee.feeFixed,
+      feePercentage: internalFee.feePercentage,
+      nominal: internalFee.nominal,
+    });
+
+    /**
+     * Agent
+     */
+    for (const agentFeeEach of agentFee.agents) {
+      result.push({
+        disbursementId,
+        type: 'AGENT',
+        agentId: agentFeeEach.id,
+        feeFixed: agentFee.nominal,
+        feePercentage: agentFeeEach.feePercentage,
+        nominal: agentFeeEach.nominal,
+      });
+    }
+
+    return result;
   }
 }
