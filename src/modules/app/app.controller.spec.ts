@@ -14,9 +14,9 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
+    it('should return "TRANSACTION 01.5"', () => {
       const appController = _app.get<AppController>(AppController);
-      expect(appController.getHello()).toBe('Hello World!');
+      expect(appController.getHello()).toBe('TRANSACTION 01.5');
     });
   });
 });
