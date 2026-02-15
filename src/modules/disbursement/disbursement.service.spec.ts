@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DisbursementService } from './disbursement.service';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
 
 describe('DisbursementService', () => {

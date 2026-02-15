@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PurchaseService } from './purchase.service';
 import { PrismaService } from '../prisma/prisma.service';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
 
 describe('PurchaseService', () => {
@@ -275,8 +275,8 @@ describe('PurchaseService', () => {
         },
       };
 
-      mockPrismaService.$transaction.mockImplementation(async (cb: any) =>
-        cb(mockTx),
+      mockPrismaService.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(mockTx),
       );
 
       const dto = {

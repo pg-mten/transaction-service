@@ -7,7 +7,7 @@ import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash
 import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
 import { UserAuthClient } from 'src/microservice/auth/user.auth.client';
 import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
 import { ResponseException } from 'src/shared/exception';
 
@@ -203,8 +203,8 @@ describe('WithdrawService', () => {
       });
 
       mockFeeClient.calculateWithdrawFeeConfigTCP.mockResolvedValue(feeDto);
-      mockPrismaService.$transaction.mockImplementation(async (cb: any) =>
-        cb(mockPrismaService),
+      mockPrismaService.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(mockPrismaService),
       );
       mockPrismaService.withdrawTransaction.create.mockResolvedValue({ id: 1 });
       mockPrismaService.withdrawFeeDetail.createManyAndReturn.mockResolvedValue(
@@ -334,8 +334,8 @@ describe('WithdrawService', () => {
           createManyAndReturn: jest.fn().mockResolvedValue([]),
         },
       };
-      mockPrismaService.$transaction.mockImplementation(async (cb: any) =>
-        cb(trx),
+      mockPrismaService.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(trx),
       );
       mockFeeClient.calculateWithdrawFeeConfigTCP.mockResolvedValue(feeDto);
 
@@ -378,8 +378,8 @@ describe('WithdrawService', () => {
         },
         withdrawFeeDetail: { createManyAndReturn: jest.fn() },
       };
-      mockPrismaService.$transaction.mockImplementation(async (cb: any) =>
-        cb(trx),
+      mockPrismaService.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(trx),
       );
 
       await service.callback(callbackDto);
@@ -708,8 +708,8 @@ describe('WithdrawService', () => {
         },
       };
 
-      expect(() =>
-        (service as any).feeDetailMapper({ withdrawId: 1, feeDto }),
+      expect(
+        () => void (service as any).feeDetailMapper({ withdrawId: 1, feeDto }),
       ).toThrow(ResponseException);
     });
 
@@ -736,8 +736,8 @@ describe('WithdrawService', () => {
         internalFee: null,
       };
 
-      expect(() =>
-        (service as any).feeDetailMapper({ withdrawId: 1, feeDto }),
+      expect(
+        () => void (service as any).feeDetailMapper({ withdrawId: 1, feeDto }),
       ).toThrow(ResponseException);
     });
   });

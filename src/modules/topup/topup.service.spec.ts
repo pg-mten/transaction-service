@@ -3,7 +3,7 @@ import { TopupService } from './topup.service';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { BalanceService } from '../balance/balance.service';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
-import Decimal from 'decimal.js';
+import { Decimal } from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
 import { ResponseException } from 'src/shared/exception';
 
@@ -95,7 +95,9 @@ describe('TopupService', () => {
       };
 
       mockFeeClient.calculateTopupFeeConfigTCP.mockResolvedValue(baseFeeDto);
-      mockPrisma.$transaction.mockImplementation(async (cb) => cb(mockPrisma));
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(mockPrisma),
+      );
       mockPrisma.topUpTransaction.create.mockResolvedValue({ id: 1 });
       mockPrisma.topupFeeDetail.createManyAndReturn.mockResolvedValue([]);
 
@@ -131,7 +133,9 @@ describe('TopupService', () => {
       };
 
       mockFeeClient.calculateTopupFeeConfigTCP.mockResolvedValue(baseFeeDto);
-      mockPrisma.$transaction.mockImplementation(async (cb) => cb(mockPrisma));
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(mockPrisma),
+      );
       mockPrisma.topUpTransaction.create.mockResolvedValue({ id: 2 });
       mockPrisma.topupFeeDetail.createManyAndReturn.mockResolvedValue([]);
 
@@ -279,8 +283,8 @@ describe('TopupService', () => {
         },
       };
 
-      expect(() =>
-        (service as any).feeDetailMapper({ topupId: 1, feeDto }),
+      expect(
+        () => void (service as any).feeDetailMapper({ topupId: 1, feeDto }),
       ).toThrow(ResponseException);
     });
 
@@ -306,8 +310,8 @@ describe('TopupService', () => {
         },
       };
 
-      expect(() =>
-        (service as any).feeDetailMapper({ topupId: 1, feeDto }),
+      expect(
+        () => void (service as any).feeDetailMapper({ topupId: 1, feeDto }),
       ).toThrow(ResponseException);
     });
   });
@@ -560,7 +564,7 @@ describe('TopupService', () => {
       };
 
       // The outer $transaction wraps everything
-      mockPrisma.$transaction.mockImplementation(async (cb: any) => {
+      mockPrisma.$transaction.mockImplementation((cb: unknown) => {
         // Inner trx for approveTopUp
         const trx = {
           topUpTransaction: {
@@ -574,7 +578,7 @@ describe('TopupService', () => {
 
         // If callback, execute it
         if (typeof cb === 'function') {
-          return cb(trx);
+          return (cb as (trx: unknown) => unknown)(trx);
         }
         return cb;
       });
@@ -607,7 +611,9 @@ describe('TopupService', () => {
         internalBalanceLog: { create: jest.fn().mockResolvedValue({}) },
         agentBalanceLog: { create: jest.fn().mockResolvedValue({}) },
       };
-      mockPrisma.$transaction.mockImplementation(async (cb: any) => cb(trx));
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(trx),
+      );
 
       mockBalanceService.checkBalanceMerchant.mockResolvedValue({
         balanceActive: new Decimal(100000),
@@ -712,7 +718,9 @@ describe('TopupService', () => {
         internalBalanceLog: { create: jest.fn().mockResolvedValue({}) },
         agentBalanceLog: { create: jest.fn().mockResolvedValue({}) },
       };
-      mockPrisma.$transaction.mockImplementation(async (cb: any) => cb(trx));
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (trx: unknown) => unknown) => cb(trx),
+      );
 
       mockBalanceService.checkBalanceMerchant.mockResolvedValue({
         balanceActive: new Decimal(100000),
