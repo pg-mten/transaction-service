@@ -58,6 +58,7 @@ async function bootstrap() {
     },
   });
 
+  app.enableShutdownHooks();
   await app.startAllMicroservices();
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.listen(PORT, async () => {
