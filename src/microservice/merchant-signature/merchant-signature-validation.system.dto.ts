@@ -14,4 +14,7 @@ export class MerchantSignatureValidationSystemDto {
 
   @ApiProperty({ type: String })
   message: string;
+
+  @ApiProperty({ type: String })
+  nmid: string | null;
 }

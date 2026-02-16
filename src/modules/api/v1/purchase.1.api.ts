@@ -87,6 +87,9 @@ export class Purchase1Api {
         path: '/open/v1/payin/purchase/qris',
       });
 
+    /// TODO Ketika Upstream menggunakan model NMID (National Merchant ID)
+    // merchantSignature.nmid
+
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
         new BadGatewayException('Merchant Signature Not Valid'),
