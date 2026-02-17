@@ -42,7 +42,7 @@ export class Purchase1Api {
     private readonly profileProviderClient: ProfileProviderConfigClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
@@ -58,12 +58,12 @@ export class Purchase1Api {
         const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
           ...dto,
         });
-        return clientRes.data!;
+        return clientRes;
       } else if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
           ...dto,
         });
-        const clientData = clientRes.data!;
+        const clientData = clientRes;
         return clientData;
       } else
         throw ResponseException.fromHttpExecption(
@@ -218,7 +218,8 @@ export class Purchase1Api {
       );
     }
 
-    return axios.post(merchantSignatureUrl.payinUrl, weebhookApi);
+    await axios.post(merchantSignatureUrl.payinUrl, weebhookApi);
+    return weebhookApi;
   }
 
   private async createBalanceLog(dto: {

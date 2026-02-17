@@ -12,7 +12,7 @@ export class ProfileProviderConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.CONFIG.point;
 
@@ -33,12 +33,12 @@ export class ProfileProviderConfigClient {
   async findProfileProviderTCP(filter: FilterProfileProviderSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<ProfileProviderSystemDto>>(
+        this.configClient.send<ProfileProviderSystemDto>(
           { cmd: this.point.find_profile_provider.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.log(error);
       return this.findProfileProvider(filter);

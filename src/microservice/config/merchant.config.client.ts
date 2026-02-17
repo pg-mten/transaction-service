@@ -11,7 +11,7 @@ export class MerchantConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.CONFIG.point;
 
@@ -33,7 +33,7 @@ export class MerchantConfigClient {
   async createTCP(body: CreateMerchantSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<null>>(
+        this.configClient.send<null>(
           { cmd: this.point.create_merchant_config.cmd },
           body,
         ),
@@ -41,8 +41,7 @@ export class MerchantConfigClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.create(body);
-      throw error;
+      return this.create(body).then((r) => r.data!);
     }
   }
 }

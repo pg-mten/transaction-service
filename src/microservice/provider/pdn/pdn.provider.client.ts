@@ -18,7 +18,7 @@ export class PdnProviderClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly pdnProviderClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.SETTLERECON.point;
 
@@ -38,7 +38,7 @@ export class PdnProviderClient {
   async purchaseQRISTCP(body: PdnCreatePurchaseQrisRequestSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.pdnProviderClient.send<ResponseDto<ProviderPurchaseSystemDto>>(
+        this.pdnProviderClient.send<ProviderPurchaseSystemDto>(
           { cmd: this.point.pdn_purchase_qris.cmd },
           body,
         ),
@@ -46,8 +46,7 @@ export class PdnProviderClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.purchaseQRIS(body);
-      throw error;
+      return this.purchaseQRIS(body).then((r) => r.data!);
     }
   }
 
@@ -67,7 +66,7 @@ export class PdnProviderClient {
   async withdrawTCP(body: PdnWithdrawRequestSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.pdnProviderClient.send<ResponseDto<ProviderWithdrawSystemDto>>(
+        this.pdnProviderClient.send<ProviderWithdrawSystemDto>(
           { cmd: this.point.pdn_withdraw.cmd },
           body,
         ),
@@ -75,8 +74,7 @@ export class PdnProviderClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.withdraw(body);
-      throw error;
+      return this.withdraw(body).then((r) => r.data!);
     }
   }
 
@@ -96,7 +94,7 @@ export class PdnProviderClient {
   async disbursementTCP(body: PdnDisbursementRequestSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.pdnProviderClient.send<ResponseDto<ProviderDisbursementSystemDto>>(
+        this.pdnProviderClient.send<ProviderDisbursementSystemDto>(
           { cmd: this.point.pdn_disbursement.cmd },
           body,
         ),
@@ -104,8 +102,7 @@ export class PdnProviderClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.disbursement(body);
-      throw error;
+      return this.disbursement(body).then((r) => r.data!);
     }
   }
 }

@@ -41,7 +41,7 @@ export class WithdrawService {
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly userAuthClient: UserAuthClient,
     private readonly profileProviderClient: ProfileProviderConfigClient,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.WITHDRAW;
 
@@ -59,12 +59,12 @@ export class WithdrawService {
         const clientRes = await this.pdnProviderClient.withdrawTCP({
           ...dto,
         });
-        return clientRes.data!;
+        return clientRes;
       } else if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.withdrawTCP({
           ...dto,
         });
-        return clientRes.data!;
+        return clientRes;
       } else
         throw ResponseException.fromHttpExecption(
           new BadGatewayException('Provider Name Not Found'),
@@ -79,7 +79,7 @@ export class WithdrawService {
     const resProfileBank = await this.userAuthClient.findProfileBankTCP({
       userId: dto.userId,
     });
-    const profileBank = resProfileBank.data!;
+    const profileBank = resProfileBank;
 
     const resProfileProvider =
       await this.profileProviderClient.findProfileProviderTCP({

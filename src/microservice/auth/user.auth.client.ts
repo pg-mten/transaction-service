@@ -14,7 +14,7 @@ export class UserAuthClient {
   constructor(
     @Inject(SERVICES.AUTH.name)
     private readonly authClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.AUTH.point;
 
@@ -39,7 +39,7 @@ export class UserAuthClient {
   ) {
     try {
       const res = await firstValueFrom(
-        this.authClient.send<ResponseDto<MerchantsAndAgentsByIdsSystemDto>>(
+        this.authClient.send<MerchantsAndAgentsByIdsSystemDto>(
           { cmd: this.point.find_all_merchants_and_agents_by_ids.cmd },
           filter,
         ),
@@ -47,8 +47,7 @@ export class UserAuthClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.findAllMerchantsAndAgentsByIds(filter);
-      throw error;
+      return this.findAllMerchantsAndAgentsByIds(filter).then((r) => r.data!);
     }
   }
 
@@ -70,7 +69,7 @@ export class UserAuthClient {
   async findProfileBankTCP(filter: FilterProfileBankSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.authClient.send<ResponseDto<ProfileBankByIdSystemDto>>(
+        this.authClient.send<ProfileBankByIdSystemDto>(
           { cmd: this.point.find_profile_bank.cmd },
           filter,
         ),
@@ -78,8 +77,7 @@ export class UserAuthClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.findProfileBank(filter);
-      throw error;
+      return this.findProfileBank(filter).then((r) => r.data!);
     }
   }
 }

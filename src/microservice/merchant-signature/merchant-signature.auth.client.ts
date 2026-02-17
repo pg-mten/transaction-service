@@ -14,7 +14,7 @@ export class MerchantSignatureAuthClient {
   constructor(
     @Inject(SERVICES.AUTH.name)
     private readonly authClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.AUTH.point;
 
@@ -37,12 +37,12 @@ export class MerchantSignatureAuthClient {
   ) {
     try {
       const res = await firstValueFrom(
-        this.authClient.send<ResponseDto<MerchantSignatureValidationSystemDto>>(
+        this.authClient.send<MerchantSignatureValidationSystemDto>(
           { cmd: this.point.merchant_signature_validation.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.log(error);
       return this.signatureValidation(filter);
@@ -68,12 +68,12 @@ export class MerchantSignatureAuthClient {
   async findMerchantUrlTCP(filter: FilterMerchantUrlSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.authClient.send<ResponseDto<MerchantUrlSystemDto>>(
+        this.authClient.send<MerchantUrlSystemDto>(
           { cmd: this.point.merchant_signature_url.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.log(error);
       return this.findMerchantUrl(filter);

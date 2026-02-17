@@ -11,7 +11,7 @@ export class AgentConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.CONFIG.point;
 
@@ -34,7 +34,7 @@ export class AgentConfigClient {
   async createTCP(body: CreateAgentSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<null>>(
+        this.configClient.send<null>(
           { cmd: this.point.create_agent_config.cmd },
           body,
         ),
@@ -42,8 +42,7 @@ export class AgentConfigClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.create(body);
-      throw error;
+      return this.create(body).then((r) => r.data!);
     }
   }
 }
