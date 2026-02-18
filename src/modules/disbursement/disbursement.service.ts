@@ -9,6 +9,9 @@ import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
 import Decimal from 'decimal.js';
 import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
+import { ReadTransferDateRequestApi } from '../api/v1/dto-api/read-transfer-date.request.api';
+import { ReadTransferDateResponseApi } from '../api/v1/dto-api/read-transfer-date.response.api';
+
 @Injectable()
 export class DisbursementService {
   constructor(
@@ -27,6 +30,57 @@ export class DisbursementService {
       include: {
         feeDetails: true,
       },
+    });
+  }
+
+  async findOneUniqueThrow(
+    whereClause: Prisma.DisbursementTransactionWhereInput,
+  ) {
+    return this.prisma.disbursementTransaction.findFirstOrThrow({
+      where: whereClause,
+    });
+  }
+
+  async findByPaidDate(
+    pageable: Pageable,
+    merchantId: number,
+    filter: ReadTransferDateRequestApi,
+  ) {
+    const whereClause: Prisma.DisbursementTransactionWhereInput = {
+      merchantId: merchantId,
+      paidAt: {
+        gte: filter.from.toJSDate(),
+        lte: filter.to.toJSDate(),
+      },
+    };
+    const { skip, take } = paging(pageable);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.disbursementTransaction.count({ where: whereClause }),
+      this.prisma.disbursementTransaction.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+    ]);
+
+    const disbursementDtos = items.map((disbursement) => {
+      return new ReadTransferDateResponseApi({
+        transactionId: disbursement.id,
+        orderId: disbursement.orderId,
+        amount: disbursement.nominal,
+        netAmount: disbursement.netNominal,
+        fee: disbursement.nominal.minus(disbursement.netNominal),
+        status: disbursement.status,
+        paidAt: disbursement.paidAt?.toISOString() ?? null,
+        paymentMethod: disbursement.paymentMethodName,
+      });
+    });
+
+    return new Page<ReadTransferDateResponseApi>({
+      pageable,
+      total,
+      data: disbursementDtos,
     });
   }
 

@@ -35,7 +35,7 @@ export class PurchaseService {
     });
   }
 
-  async findByDate(
+  async findByPaidDate(
     pageable: Pageable,
     merchantId: number,
     filter: ReadPurchaseDateRequestApi,

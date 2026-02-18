@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDefined, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsOptional, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { DateTime } from 'luxon';
 import { ToDateTime } from 'src/shared/decorator';
@@ -19,7 +19,6 @@ export class CreatePurchaseCallbackSystemDto {
   @ApiProperty()
   status: string;
 
-  @IsDefined()
   @ApiProperty()
   @ToDateTime()
   paidAt: DateTime;

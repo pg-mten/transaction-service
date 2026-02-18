@@ -71,40 +71,40 @@ export class Api1Controller {
   @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({
-    summary: 'Get Purchase Transaction Detail by Transaction ID',
+    summary: 'Get Payin Transaction Detail by Transaction ID',
   })
   findPurchaseByTransactionId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('transactionId', ParseIntPipe) transactionId: number,
   ) {
-    return this.purchaseApi.findPurchaseByTransactionId(headers, transactionId);
+    return this.purchaseApi.findByTransactionId(headers, transactionId);
   }
 
   @Get('/open/v1/payin/order/:orderId')
   @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({
-    summary: 'Get Purchase Transaction Detail by Order ID',
+    summary: 'Get Payin Transaction Detail by Order ID',
   })
   findPurchaseByOrderId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('orderId') orderId: string,
   ) {
-    return this.purchaseApi.findPurchaseByOrderId(headers, orderId);
+    return this.purchaseApi.findByOrderId(headers, orderId);
   }
 
   @Get('/open/v1/payin/date')
   @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({
-    summary: 'Get Purchase Transaction Detail by Order ID',
+    summary: 'Get Payin Transaction Detail by Paid Date',
   })
   findPurchaseByDate(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Pagination() pageable: Pageable,
     @Query() filter: ReadPurchaseDateRequestApi,
   ) {
-    return this.purchaseApi.findPurchaseByDate(headers, pageable, filter);
+    return this.purchaseApi.findByPaidDate(headers, pageable, filter);
   }
 
   /**
@@ -155,5 +155,45 @@ export class Api1Controller {
     @Payload(CustomValidationPipe) payload: UpdateDisbursementCallbackSystemDto,
   ) {
     return this.disbursementApi.callback(payload);
+  }
+
+  @Get('/open/v1/payout/transfer/:transactionId')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Transfer Transaction Detail by Transaction ID',
+  })
+  findTransferByTransactionId(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Param('transactionId', ParseIntPipe) transactionId: number,
+  ) {
+    return this.disbursementApi.findByTransactionId(headers, transactionId);
+  }
+
+  @Get('/open/v1/payout/order/:orderId')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Transfer Transaction Detail by Order ID',
+  })
+  findTransferByOrderId(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Param('orderId') orderId: string,
+  ) {
+    return this.disbursementApi.findByOrderId(headers, orderId);
+  }
+
+  @Get('/open/v1/payout/date')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Transfer Transaction Detail by Paid Date',
+  })
+  findTransferByDate(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Pagination() pageable: Pageable,
+    @Query() filter: ReadPurchaseDateRequestApi,
+  ) {
+    return this.disbursementApi.findByPaidDate(headers, pageable, filter);
   }
 }

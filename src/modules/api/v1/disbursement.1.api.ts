@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   Inject,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
@@ -31,6 +32,11 @@ import { CreateTransferResponseApi } from './dto-api/create-transfer.response.ap
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 import { DisbursementFeeSystemDto } from 'src/microservice/config/dto-transaction-system/disbursement-fee.system.dto';
+import { Pageable } from 'src/shared/pagination';
+import { ReadTransferDateRequestApi } from './dto-api/read-transfer-date.request.api';
+import { DisbursementService } from 'src/modules/disbursement/disbursement.service';
+import { ReadTransferDateResponseApi } from './dto-api/read-transfer-date.response.api';
+import { WebhookPayoutApi } from './dto-api/webhook-payout.api';
 
 @Injectable()
 export class Disbursement1Api {
@@ -42,9 +48,123 @@ export class Disbursement1Api {
     private readonly inacashProviderClient: InacashProviderClient,
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-  ) { }
+    private readonly disbursementService: DisbursementService,
+  ) {}
 
   private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
+
+  async findByTransactionId(
+    headers: MerchantSignatureHeaderDto,
+    transactionId: number,
+  ) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: '',
+        method: HttpMethodEnum.GET,
+        path: `/open/v1/payout/transfer/${transactionId}`,
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Merchant Signature Not Valid'),
+      );
+    }
+
+    try {
+      const disbursement = await this.disbursementService.findOneUniqueThrow({
+        id: transactionId,
+      });
+
+      return new ReadTransferDateResponseApi({
+        transactionId: disbursement.id,
+        orderId: disbursement.orderId,
+        amount: disbursement.nominal,
+        netAmount: disbursement.netNominal,
+        fee: disbursement.nominal.minus(disbursement.netNominal),
+        status: disbursement.status,
+        paidAt: disbursement.paidAt?.toISOString() ?? null,
+        paymentMethod: disbursement.paymentMethodName,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError)
+        if (error.code === 'P2025')
+          throw ResponseException.fromHttpExecption(
+            new NotFoundException(
+              `Transfer with transaction id ${transactionId} not found`,
+            ),
+          );
+    }
+  }
+
+  async findByOrderId(headers: MerchantSignatureHeaderDto, orderId: string) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: '',
+        method: HttpMethodEnum.GET,
+        path: `/open/v1/payout/order/${orderId}`,
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Merchant Signature Not Valid'),
+      );
+    }
+
+    try {
+      const disbursement = await this.disbursementService.findOneUniqueThrow({
+        orderId: orderId,
+      });
+
+      return new ReadTransferDateResponseApi({
+        transactionId: disbursement.id,
+        orderId: disbursement.orderId,
+        amount: disbursement.nominal,
+        netAmount: disbursement.netNominal,
+        fee: disbursement.nominal.minus(disbursement.netNominal),
+        status: disbursement.status,
+        paidAt: disbursement.paidAt?.toISOString() ?? null,
+        paymentMethod: disbursement.paymentMethodName,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError)
+        if (error.code === 'P2025')
+          throw ResponseException.fromHttpExecption(
+            new NotFoundException(
+              `Transfer with order id ${orderId} not found`,
+            ),
+          );
+    }
+  }
+
+  async findByPaidDate(
+    headers: MerchantSignatureHeaderDto,
+    pageable: Pageable,
+    filter: ReadTransferDateRequestApi,
+  ) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: '',
+        method: HttpMethodEnum.GET,
+        path: `/open/v1/payout/date`,
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Merchant Signature Not Valid'),
+      );
+    }
+
+    const merchantId = merchantSignature.userId;
+
+    return this.disbursementService.findByPaidDate(
+      pageable,
+      merchantId,
+      filter,
+    );
+  }
 
   private async callProvider(body: {
     code: string;
@@ -235,6 +355,7 @@ export class Disbursement1Api {
         },
         data: {
           status: body.status as TransactionStatusEnum,
+          paidAt: body.paidAt.toJSDate(),
         },
       });
 
@@ -264,6 +385,17 @@ export class Disbursement1Api {
           paymentMethodName: disbursement.paymentMethodName,
           nominal: disbursement.nominal,
           feeDto,
+        });
+
+        return new WebhookPayoutApi({
+          transactionId: disbursement.id,
+          orderId: disbursement.orderId,
+          amount: disbursement.nominal,
+          netAmount: disbursement.netNominal,
+          fee: disbursement.nominal.minus(disbursement.netNominal),
+          status: disbursement.status,
+          paidAt: disbursement.paidAt?.toISOString() ?? null,
+          paymentMethod: disbursement.paymentMethodName,
         });
       }
     });

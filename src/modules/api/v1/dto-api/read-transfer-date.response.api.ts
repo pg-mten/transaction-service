@@ -1,10 +1,10 @@
+import { DtoHelper } from 'src/shared/helper';
 import { ApiProperty } from '@nestjs/swagger';
 import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/shared/decorator';
-import { DtoHelper } from 'src/shared/helper';
 
-export class WebhookPayinApi {
-  constructor(data: WebhookPayinApi) {
+export class ReadTransferDateResponseApi {
+  constructor(data: ReadTransferDateResponseApi) {
     DtoHelper.assign(this, data);
   }
 

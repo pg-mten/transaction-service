@@ -17,7 +17,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
-import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
+import { DisbursementModule } from '../disbursement/disbursement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
@@ -40,7 +40,7 @@ import { ApiModule } from '../api/api.module';
     PurchaseModule,
     TopupTransactionModule,
     WithdrawTransactionModule,
-    DisbursementTransactionModule,
+    DisbursementModule,
     BalanceModule,
 
     // Merchant API

@@ -52,7 +52,7 @@ export class Purchase1Api {
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
-  async findPurchaseByTransactionId(
+  async findByTransactionId(
     headers: MerchantSignatureHeaderDto,
     transactionId: number,
   ) {
@@ -96,10 +96,7 @@ export class Purchase1Api {
     }
   }
 
-  async findPurchaseByOrderId(
-    headers: MerchantSignatureHeaderDto,
-    orderId: string,
-  ) {
+  async findByOrderId(headers: MerchantSignatureHeaderDto, orderId: string) {
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
@@ -140,7 +137,7 @@ export class Purchase1Api {
     }
   }
 
-  async findPurchaseByDate(
+  async findByPaidDate(
     headers: MerchantSignatureHeaderDto,
     pageable: Pageable,
     filter: ReadPurchaseDateRequestApi,
@@ -160,7 +157,7 @@ export class Purchase1Api {
     }
     const merchantId = merchantSignature.userId;
 
-    return this.purchaseService.findByDate(pageable, merchantId, filter);
+    return this.purchaseService.findByPaidDate(pageable, merchantId, filter);
   }
 
   private async callProvider(dto: {
@@ -314,7 +311,7 @@ export class Purchase1Api {
       }
 
       return new WebhookPayinApi({
-        purchaseId: purchase.id,
+        transactionId: purchase.id,
         orderId: purchase.orderId,
         amount: purchase.nominal,
         netAmount: purchase.netNominal,

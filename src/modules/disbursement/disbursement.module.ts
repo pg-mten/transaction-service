@@ -8,5 +8,6 @@ import { BalanceModule } from '../balance/balance.module';
   controllers: [DisbursementTransactionsController],
   providers: [DisbursementService],
   imports: [BalanceModule],
+  exports: [DisbursementService],
 })
-export class DisbursementTransactionModule {}
+export class DisbursementModule {}

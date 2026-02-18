@@ -67,15 +67,18 @@ model TopupFeeDetail {
 }
 
 model WithdrawTransaction {
-  id                Int                   @id @default(autoincrement())
-  code              String                @unique @default(uuid())
-  externalId        String?
-  userId            Int
-  userRole          String
-  referenceId       String                @unique //reff id from bank
-  nominal           Decimal
-  netNominal        Decimal // nominal setelah dikenakan fee
-  status            TransactionStatusEnum @default(PENDING)
+  id          Int     @id @default(autoincrement())
+  code        String  @unique @default(uuid())
+  externalId  String?
+  userId      Int
+  userRole    String
+  referenceId String  @unique //reff id from bank
+
+  nominal    Decimal
+  netNominal Decimal // nominal setelah dikenakan fee
+  status     TransactionStatusEnum @default(PENDING)
+
+  paidAt            DateTime?
   providerName      String
   paymentMethodName String // transfer_bank, virtual_account, dll
   metadata          Json?
@@ -120,12 +123,13 @@ model WithdrawFeeDetail {
 }
 
 model DisbursementTransaction {
-  id                Int                   @id @default(autoincrement())
-  code              String                @unique @default(uuid())
-  orderId           String                @unique
-  externalId        String?
-  referenceId       String?
-  merchantId        Int
+  id          Int     @id @default(autoincrement())
+  code        String  @unique @default(uuid())
+  orderId     String  @unique
+  externalId  String?
+  referenceId String?
+  merchantId  Int
+
   providerName      String
   recipientName     String // bisa merchant, agent, atau pihak ketiga
   recipientBankCode String
@@ -134,6 +138,8 @@ model DisbursementTransaction {
   nominal           Decimal
   netNominal        Decimal
   status            TransactionStatusEnum @default(PENDING)
+
+  paidAt            DateTime?
   paymentMethodName String
   metadata          Json?
 
