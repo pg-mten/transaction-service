@@ -49,7 +49,7 @@ export class Disbursement1Api {
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly disbursementService: DisbursementService,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
 
@@ -421,7 +421,7 @@ export class Disbursement1Api {
       await this.balanceService.checkBalanceAgents(agentIds);
 
     /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
-    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+    if (lastBalanceMerchant.balanceActive.lte(dto.nominal)) {
       throw new Error('Balance Tidak Mencukupi');
     }
 
