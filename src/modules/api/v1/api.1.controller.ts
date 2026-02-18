@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
@@ -18,7 +25,6 @@ import { Disbursement1Api } from './disbursement.1.api';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 
 @Controller()
-@MerchantApi()
 @SkipReponseInterceptor()
 export class Api1Controller {
   constructor(
@@ -27,7 +33,11 @@ export class Api1Controller {
     private readonly disbursementApi: Disbursement1Api,
   ) {}
 
+  /**
+   * PayIn
+   */
   @Post('/open/v1/payin/purchase')
+  @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Create a new purchase transaction (API)' })
   createQRIS(
@@ -54,7 +64,37 @@ export class Api1Controller {
     return this.purchaseApi.callback(payload);
   }
 
+  @Get('/open/v1/payin/purchase/:transactionId')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Purchase Transaction Detail by Transaction ID',
+  })
+  findPurchaseByTransactionId(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Param('transactionId', ParseIntPipe) transactionId: number,
+  ) {
+    return this.purchaseApi.findPurchaseByTransactionId(headers, transactionId);
+  }
+
+  @Get('/open/v1/payin/order/:transactionId')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Purchase Transaction Detail by Order ID',
+  })
+  findPurchaseByOrderId(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Param('orderId') orderId: string,
+  ) {
+    return this.purchaseApi.findPurchaseByOrderId(headers, orderId);
+  }
+
+  /**
+   * Balance
+   */
   @Get('/open/v1/payout/balance')
+  @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Check current wallet balance (API)' })
   async balance(
@@ -64,7 +104,11 @@ export class Api1Controller {
     return this.balanceApi.checkBalance(headers);
   }
 
+  /**
+   * PayOut
+   */
   @Post('/open/v1/payout/transfer')
+  @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Create a new Payout Transfer to bank/ewallet account (API)',

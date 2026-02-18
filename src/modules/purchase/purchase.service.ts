@@ -9,6 +9,7 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import Decimal from 'decimal.js';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
+
 @Injectable()
 export class PurchaseService {
   constructor(private readonly prisma: PrismaService) {}
@@ -21,6 +22,22 @@ export class PurchaseService {
       include: {
         feeDetails: true,
       },
+    });
+  }
+
+  async findOneByTransactionId(transactionId: number) {
+    return this.prisma.purchaseTransaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        feeDetails: true,
+      },
+    });
+  }
+
+  async findOneByOrderId(orderId: string) {
+    return this.prisma.purchaseTransaction.findUnique({
+      where: { orderId: orderId },
+      include: { feeDetails: true },
     });
   }
 

@@ -3,13 +3,13 @@ import Decimal from 'decimal.js';
 import { ToDecimalFixed } from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper';
 
-export class WebhookPayinApi {
-  constructor(data: WebhookPayinApi) {
+export class ReadPurchaseResponseApi {
+  constructor(data: ReadPurchaseResponseApi) {
     DtoHelper.assign(this, data);
   }
 
   @ApiProperty({ type: Number })
-  purchaseId: number;
+  transactionId: number;
 
   @ApiProperty({ type: String })
   orderId: string;
@@ -27,11 +27,11 @@ export class WebhookPayinApi {
   fee: Decimal;
 
   @ApiProperty({ type: String })
-  status: string;
+  status: string; // REQUEST, SUCCESS, EXPIRED, FAILED
 
   @ApiProperty({ type: String, required: false })
   paidAt: string | null;
 
   @ApiProperty({ type: String })
-  paymentMethod: string; // QRIS, VIRTUALACCOUNT, DIRRECTEWALLET, TRANSFERBANK, TRANSFEREWALLET
+  paymentMethod: string;
 }

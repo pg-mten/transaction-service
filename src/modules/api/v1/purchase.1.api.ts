@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
@@ -31,6 +32,8 @@ import { BalanceService } from 'src/modules/balance/balance.service';
 import axios from 'axios';
 import { WebhookPayinApi } from './dto-api/webhook-payin.api';
 import { MerchantSignatureValidationSystemDto } from 'src/microservice/merchant-signature/merchant-signature-validation.system.dto';
+import { PurchaseService } from 'src/modules/purchase/purchase.service';
+import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
 
 @Injectable()
 export class Purchase1Api {
@@ -42,9 +45,87 @@ export class Purchase1Api {
     private readonly profileProviderClient: ProfileProviderConfigClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
+    private readonly purchaseService: PurchaseService,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
+
+  async findPurchaseByTransactionId(
+    headers: MerchantSignatureHeaderDto,
+    transactionId: number,
+  ) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: '',
+        method: HttpMethodEnum.POST,
+        path: `/open/v1/payin/purchase/${transactionId}`,
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Merchant Signature Not Valid'),
+      );
+    }
+
+    const purchase =
+      await this.purchaseService.findOneByTransactionId(transactionId);
+
+    if (!purchase)
+      throw ResponseException.fromHttpExecption(
+        new NotFoundException(
+          `Purchase with transaction id ${transactionId} not found`,
+        ),
+      );
+
+    return new ReadPurchaseResponseApi({
+      transactionId: purchase.id,
+      orderId: purchase.orderId,
+      amount: purchase.nominal,
+      netAmount: purchase.netNominal,
+      fee: purchase.nominal.minus(purchase.netNominal),
+      paidAt: purchase.paidAt?.toISOString() ?? null,
+      paymentMethod: purchase.paymentMethodName,
+      status: purchase.status,
+    });
+  }
+
+  async findPurchaseByOrderId(
+    headers: MerchantSignatureHeaderDto,
+    orderId: string,
+  ) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: '',
+        method: HttpMethodEnum.POST,
+        path: `/open/v1/payin/order/${orderId}`,
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Merchant Signature Not Valid'),
+      );
+    }
+
+    const purchase = await this.purchaseService.findOneByOrderId(orderId);
+
+    if (!purchase)
+      throw ResponseException.fromHttpExecption(
+        new NotFoundException(`Purchase with order id ${orderId} not found`),
+      );
+
+    return new ReadPurchaseResponseApi({
+      transactionId: purchase.id,
+      orderId: purchase.orderId,
+      amount: purchase.nominal,
+      netAmount: purchase.netNominal,
+      fee: purchase.nominal.minus(purchase.netNominal),
+      paidAt: purchase.paidAt?.toISOString() ?? null,
+      paymentMethod: purchase.paymentMethodName,
+      status: purchase.status,
+    });
+  }
 
   private async callProvider(dto: {
     code: string;
@@ -84,7 +165,7 @@ export class Purchase1Api {
         headers: headers,
         body: body,
         method: HttpMethodEnum.POST,
-        path: '/open/v1/payin/purchase/qris',
+        path: '/open/v1/payin/purchase',
       });
 
     /// TODO Ketika Upstream menggunakan model NMID (National Merchant ID)
@@ -199,9 +280,11 @@ export class Purchase1Api {
       return new WebhookPayinApi({
         purchaseId: purchase.id,
         orderId: purchase.orderId,
-        amount: purchase.nominal.toFixed(2),
+        amount: purchase.nominal,
+        netAmount: purchase.netNominal,
+        fee: purchase.nominal.minus(purchase.netNominal),
         status: purchase.status,
-        paidAt: purchase.paidAt!.toISOString(),
+        paidAt: purchase.paidAt?.toISOString() ?? null,
         paymentMethod: purchase.paymentMethodName,
       });
     });

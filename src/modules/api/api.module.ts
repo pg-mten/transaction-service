@@ -4,11 +4,12 @@ import { Purchase1Api } from './v1/purchase.1.api';
 import { BalanceModule } from '../balance/balance.module';
 import { Balance1Api } from './v1/balance.1.api';
 import { Disbursement1Api } from './v1/disbursement.1.api';
+import { PurchaseModule } from '../purchase/purchase.module';
 
 @Module({
   controllers: [Api1Controller],
   providers: [Purchase1Api, Balance1Api, Disbursement1Api],
   exports: [Purchase1Api, Balance1Api, Disbursement1Api],
-  imports: [BalanceModule],
+  imports: [BalanceModule, PurchaseModule],
 })
 export class ApiModule {}
