@@ -18,7 +18,7 @@ export class FeeCalculateConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.CONFIG.point;
 
@@ -43,12 +43,12 @@ export class FeeCalculateConfigClient {
   async calculatePurchaseFeeConfigTCP(filter: FilterPurchaseFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<PurchaseFeeSystemDto>>(
+        this.configClient.send<PurchaseFeeSystemDto>(
           { cmd: this.point.calculate_fee_purchase.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.error(error);
       return this.calculatePurchaseFeeConfig(filter);
@@ -77,12 +77,12 @@ export class FeeCalculateConfigClient {
   async calculateWithdrawFeeConfigTCP(filter: FilterWithdrawFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<WithdrawFeeSystemDto>>(
+        this.configClient.send<WithdrawFeeSystemDto>(
           { cmd: this.point.calculate_fee_withdraw.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.error(error);
       return this.calculateWithdrawFeeConfig(filter);
@@ -111,13 +111,13 @@ export class FeeCalculateConfigClient {
   async calculateTopupFeeConfigTCP(filter: FilterTopupFeeSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<TopupFeeSystemDto>>(
+        this.configClient.send<TopupFeeSystemDto>(
           { cmd: this.point.calculate_fee_topup.cmd },
           filter,
         ),
       );
       console.log({ res });
-      return res.data!;
+      return res;
     } catch (error) {
       console.error(error);
       return this.calculateTopupFeeConfig(filter);
@@ -148,12 +148,12 @@ export class FeeCalculateConfigClient {
   ) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<ResponseDto<DisbursementFeeSystemDto>>(
+        this.configClient.send<DisbursementFeeSystemDto>(
           { cmd: this.point.calculate_fee_disbursement.cmd },
           filter,
         ),
       );
-      return res.data!;
+      return res;
     } catch (error) {
       console.error(error);
       return this.calculateDisbursementFeeConfig(filter);

@@ -90,7 +90,7 @@ describe('WithdrawService', () => {
         accountHolderName: 'John Doe',
       };
 
-      mockPdn.withdrawTCP.mockResolvedValue({ data: providerResult });
+      mockPdn.withdrawTCP.mockResolvedValue(providerResult);
 
       const result = await (service as any).callProvider({
         ...baseDto,
@@ -116,7 +116,7 @@ describe('WithdrawService', () => {
         accountHolderName: 'Jane Doe',
       };
 
-      mockInacash.withdrawTCP.mockResolvedValue({ data: providerResult });
+      mockInacash.withdrawTCP.mockResolvedValue(providerResult);
 
       const result = await (service as any).callProvider({
         ...baseDto,
@@ -181,25 +181,21 @@ describe('WithdrawService', () => {
     it('should create a successful withdraw transaction (PDN)', async () => {
       const dto = { userId: 1, nominal: new Decimal(50000) };
 
-      mockUserAuth.findProfileBankTCP.mockResolvedValue({
-        data: profileBankData,
-      });
+      mockUserAuth.findProfileBankTCP.mockResolvedValue(profileBankData);
       mockProfileProvider.findProfileProviderTCP.mockResolvedValue(
         profileProviderData,
       );
 
       mockPdn.withdrawTCP.mockResolvedValue({
-        data: {
-          code: 'mock-code',
-          status: TransactionStatusEnum.SUCCESS,
-          externalId: 'ext-1',
-          metadata: {},
-          nominal: new Decimal(50000),
-          feeProviderRealized: new Decimal(1000),
-          netNominal: new Decimal(49000),
-          accountNumber: '1234567890',
-          accountHolderName: 'John Doe',
-        },
+        code: 'mock-code',
+        status: TransactionStatusEnum.SUCCESS,
+        externalId: 'ext-1',
+        metadata: {},
+        nominal: new Decimal(50000),
+        feeProviderRealized: new Decimal(1000),
+        netNominal: new Decimal(49000),
+        accountNumber: '1234567890',
+        accountHolderName: 'John Doe',
       });
 
       mockFeeClient.calculateWithdrawFeeConfigTCP.mockResolvedValue(feeDto);
@@ -240,26 +236,22 @@ describe('WithdrawService', () => {
     it('should create a failed withdraw transaction when provider returns FAILED', async () => {
       const dto = { userId: 1, nominal: new Decimal(50000) };
 
-      mockUserAuth.findProfileBankTCP.mockResolvedValue({
-        data: profileBankData,
-      });
+      mockUserAuth.findProfileBankTCP.mockResolvedValue(profileBankData);
       mockProfileProvider.findProfileProviderTCP.mockResolvedValue(
         profileProviderData,
       );
 
       const failedCode = `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`;
       mockPdn.withdrawTCP.mockResolvedValue({
-        data: {
-          code: failedCode,
-          status: TransactionStatusEnum.FAILED,
-          externalId: 'ext-failed-1',
-          metadata: { error: 'insufficient funds' },
-          nominal: new Decimal(50000),
-          feeProviderRealized: new Decimal(0),
-          netNominal: new Decimal(0),
-          accountNumber: '1234567890',
-          accountHolderName: 'John Doe',
-        },
+        code: failedCode,
+        status: TransactionStatusEnum.FAILED,
+        externalId: 'ext-failed-1',
+        metadata: { error: 'insufficient funds' },
+        nominal: new Decimal(50000),
+        feeProviderRealized: new Decimal(0),
+        netNominal: new Decimal(0),
+        accountNumber: '1234567890',
+        accountHolderName: 'John Doe',
       });
 
       mockPrismaService.withdrawTransaction.create.mockResolvedValue({

@@ -11,7 +11,7 @@ export class PurchaseTransactionClient {
   constructor(
     @Inject(SERVICES.TRANSACTION.name)
     private readonly transactionClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.TRANSACTION.point;
 

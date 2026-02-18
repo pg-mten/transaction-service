@@ -16,7 +16,7 @@ export class InacashProviderClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly inacashProviderClient: ClientProxy,
-  ) {}
+  ) { }
 
   private readonly point = SERVICES.SETTLERECON.point;
 
@@ -36,7 +36,7 @@ export class InacashProviderClient {
   async purchaseQRISTCP(body: InacashCreatePurchaseQrisRequestSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.inacashProviderClient.send<ResponseDto<ProviderPurchaseSystemDto>>(
+        this.inacashProviderClient.send<ProviderPurchaseSystemDto>(
           { cmd: this.point.inacash_purchase_qris.cmd },
           body,
         ),
@@ -44,8 +44,7 @@ export class InacashProviderClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.purchaseQRIS(body);
-      throw error;
+      return this.purchaseQRIS(body).then((r) => r.data!);
     }
   }
 
@@ -65,7 +64,7 @@ export class InacashProviderClient {
   async withdrawTCP(body: InacashWithdrawRequestSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.inacashProviderClient.send<ResponseDto<ProviderWithdrawSystemDto>>(
+        this.inacashProviderClient.send<ProviderWithdrawSystemDto>(
           { cmd: this.point.inacash_withdraw.cmd },
           body,
         ),
@@ -73,8 +72,7 @@ export class InacashProviderClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.withdraw(body);
-      throw error;
+      return this.withdraw(body).then((r) => r.data!);
     }
   }
 
@@ -95,14 +93,13 @@ export class InacashProviderClient {
     try {
       const res = await firstValueFrom(
         this.inacashProviderClient.send<
-          ResponseDto<ProviderDisbursementSystemDto>
+          ProviderDisbursementSystemDto
         >({ cmd: this.point.inacash_disbursement.cmd }, body),
       );
       return res;
     } catch (error) {
       console.log(error);
-      return this.disbursement(body);
-      throw error;
+      return this.disbursement(body).then((r) => r.data!);
     }
   }
 }

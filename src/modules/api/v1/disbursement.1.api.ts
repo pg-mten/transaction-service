@@ -42,7 +42,7 @@ export class Disbursement1Api {
     private readonly inacashProviderClient: InacashProviderClient,
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
 
@@ -60,13 +60,13 @@ export class Disbursement1Api {
         const clientRes = await this.pdnProviderClient.disbursementTCP({
           ...body,
         });
-        return clientRes.data!;
+        return clientRes;
       } else if (body.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.disbursementTCP({
           ...body,
         });
 
-        const clientData = clientRes.data!;
+        const clientData = clientRes;
         return clientData;
       } else
         throw ResponseException.fromHttpExecption(
