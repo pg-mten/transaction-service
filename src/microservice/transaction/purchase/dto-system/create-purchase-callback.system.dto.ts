@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsOptional, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { DateTime } from 'luxon';
-import { ToDateTime } from 'src/shared/decorator';
+import { ToDateTimeNullable } from 'src/shared/decorator';
 import { ToDecimal } from 'src/shared/decorator/decimal.decorator';
 
 export class CreatePurchaseCallbackSystemDto {
@@ -19,9 +19,10 @@ export class CreatePurchaseCallbackSystemDto {
   @ApiProperty()
   status: string;
 
-  @ApiProperty()
-  @ToDateTime()
-  paidAt: DateTime;
+  @IsOptional()
+  @ApiProperty({ nullable: true })
+  @ToDateTimeNullable()
+  paidAt: DateTime | null;
 
   @ToDecimal()
   @Type(() => Decimal)

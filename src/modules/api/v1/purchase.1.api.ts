@@ -284,7 +284,7 @@ export class Purchase1Api {
         data: {
           externalId: body.externalId,
           netNominal: feeDto.merchantFee.netNominal,
-          paidAt: body.paidAt.toJSDate(),
+          paidAt: body.paidAt?.toJSDate() ?? null,
           status: body.status as TransactionStatusEnum,
           metadata: body.metadata as Prisma.InputJsonValue,
         },

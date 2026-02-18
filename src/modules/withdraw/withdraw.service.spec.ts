@@ -280,6 +280,7 @@ describe('WithdrawService', () => {
         code: `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`,
         externalId: 'ext-1',
         status: TransactionStatusEnum.SUCCESS,
+        paidAt: null,
       };
 
       const updatedWithdraw = {
@@ -353,6 +354,7 @@ describe('WithdrawService', () => {
         code: `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`,
         externalId: 'ext-1',
         status: TransactionStatusEnum.PENDING,
+        paidAt: null,
       };
 
       const updatedWithdraw = {

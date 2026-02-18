@@ -12,7 +12,7 @@ export class UpdateWithdrawCallbackSystemDto {
   @ApiProperty()
   status: string;
 
-  @ApiProperty()
+  @ApiProperty({ nullable: true })
   @ToDateTime()
-  paidAt: DateTime;
+  paidAt: DateTime | null;
 }
