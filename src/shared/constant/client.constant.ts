@@ -15,7 +15,7 @@ export const SERVICES = {
   APP: {
     name: process.env.APP_NAME || 'PG_SERVICE',
     host: process.env.APP_HOST || '127.0.0.1',
-    port: parseInt(process.env.APP_PORT || '4000'),
+    port: parseInt(process.env.PORT_TCP || '4000'),
   },
   AUTH: {
     name: process.env.CLIENT_AUTH_NAME || 'AUTH_SERVICE',
