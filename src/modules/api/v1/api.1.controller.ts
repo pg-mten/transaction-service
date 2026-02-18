@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
@@ -23,6 +24,8 @@ import { Balance1Api } from './balance.1.api';
 import { CreateTransferRequestApi } from './dto-api/create-transfer.request.api';
 import { Disbursement1Api } from './disbursement.1.api';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
+import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
+import { Pageable, Pagination } from 'src/shared/pagination';
 
 @Controller()
 @SkipReponseInterceptor()
@@ -77,7 +80,7 @@ export class Api1Controller {
     return this.purchaseApi.findPurchaseByTransactionId(headers, transactionId);
   }
 
-  @Get('/open/v1/payin/order/:transactionId')
+  @Get('/open/v1/payin/order/:orderId')
   @MerchantApi()
   @ApiTags('Merchant API')
   @ApiOperation({
@@ -88,6 +91,20 @@ export class Api1Controller {
     @Param('orderId') orderId: string,
   ) {
     return this.purchaseApi.findPurchaseByOrderId(headers, orderId);
+  }
+
+  @Get('/open/v1/payin/date')
+  @MerchantApi()
+  @ApiTags('Merchant API')
+  @ApiOperation({
+    summary: 'Get Purchase Transaction Detail by Order ID',
+  })
+  findPurchaseByDate(
+    @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
+    @Pagination() pageable: Pageable,
+    @Query() filter: ReadPurchaseDateRequestApi,
+  ) {
+    return this.purchaseApi.findPurchaseByDate(headers, pageable, filter);
   }
 
   /**

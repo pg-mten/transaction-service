@@ -9,6 +9,8 @@ import { DateHelper } from 'src/shared/helper/date.helper';
 import Decimal from 'decimal.js';
 import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
+import { ReadPurchaseDateRequestApi } from '../api/v1/dto-api/read-purchase-date.request.api';
+import { ReadPurchaseDateResponseApi } from '../api/v1/dto-api/read-purchase-date.response.api';
 
 @Injectable()
 export class PurchaseService {
@@ -25,19 +27,54 @@ export class PurchaseService {
     });
   }
 
-  async findOneByTransactionId(transactionId: number) {
-    return this.prisma.purchaseTransaction.findUnique({
-      where: { id: transactionId },
-      include: {
-        feeDetails: true,
-      },
+  async findOneUniqueThrow(
+    whereClause: Prisma.PurchaseTransactionWhereUniqueInput,
+  ) {
+    return this.prisma.purchaseTransaction.findUniqueOrThrow({
+      where: whereClause,
     });
   }
 
-  async findOneByOrderId(orderId: string) {
-    return this.prisma.purchaseTransaction.findUnique({
-      where: { orderId: orderId },
-      include: { feeDetails: true },
+  async findByDate(
+    pageable: Pageable,
+    merchantId: number,
+    filter: ReadPurchaseDateRequestApi,
+  ) {
+    const whereClause: Prisma.PurchaseTransactionWhereInput = {
+      merchantId: merchantId,
+      paidAt: {
+        gte: filter.from.toJSDate(),
+        lte: filter.to.toJSDate(),
+      },
+    };
+    const { skip, take } = paging(pageable);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.purchaseTransaction.count({ where: whereClause }),
+      this.prisma.purchaseTransaction.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+    ]);
+
+    const purchaseDtos = items.map((purchase) => {
+      return new ReadPurchaseDateResponseApi({
+        transactionId: purchase.id,
+        orderId: purchase.orderId,
+        amount: purchase.nominal,
+        netAmount: purchase.netNominal,
+        fee: purchase.nominal.minus(purchase.netNominal),
+        paidAt: purchase.paidAt?.toISOString() ?? null,
+        paymentMethod: purchase.paymentMethodName,
+        status: purchase.status,
+      });
+    });
+
+    return new Page<ReadPurchaseDateResponseApi>({
+      pageable,
+      total,
+      data: purchaseDtos,
     });
   }
 

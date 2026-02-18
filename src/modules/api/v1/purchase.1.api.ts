@@ -34,6 +34,8 @@ import { WebhookPayinApi } from './dto-api/webhook-payin.api';
 import { MerchantSignatureValidationSystemDto } from 'src/microservice/merchant-signature/merchant-signature-validation.system.dto';
 import { PurchaseService } from 'src/modules/purchase/purchase.service';
 import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
+import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
+import { Pageable } from 'src/shared/pagination';
 
 @Injectable()
 export class Purchase1Api {
@@ -58,7 +60,7 @@ export class Purchase1Api {
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
         body: '',
-        method: HttpMethodEnum.POST,
+        method: HttpMethodEnum.GET,
         path: `/open/v1/payin/purchase/${transactionId}`,
       });
 
@@ -68,26 +70,30 @@ export class Purchase1Api {
       );
     }
 
-    const purchase =
-      await this.purchaseService.findOneByTransactionId(transactionId);
+    try {
+      const purchase = await this.purchaseService.findOneUniqueThrow({
+        id: transactionId,
+      });
 
-    if (!purchase)
-      throw ResponseException.fromHttpExecption(
-        new NotFoundException(
-          `Purchase with transaction id ${transactionId} not found`,
-        ),
-      );
-
-    return new ReadPurchaseResponseApi({
-      transactionId: purchase.id,
-      orderId: purchase.orderId,
-      amount: purchase.nominal,
-      netAmount: purchase.netNominal,
-      fee: purchase.nominal.minus(purchase.netNominal),
-      paidAt: purchase.paidAt?.toISOString() ?? null,
-      paymentMethod: purchase.paymentMethodName,
-      status: purchase.status,
-    });
+      return new ReadPurchaseResponseApi({
+        transactionId: purchase.id,
+        orderId: purchase.orderId,
+        amount: purchase.nominal,
+        netAmount: purchase.netNominal,
+        fee: purchase.nominal.minus(purchase.netNominal),
+        paidAt: purchase.paidAt?.toISOString() ?? null,
+        paymentMethod: purchase.paymentMethodName,
+        status: purchase.status,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError)
+        if (error.code === 'P2025')
+          throw ResponseException.fromHttpExecption(
+            new NotFoundException(
+              `Purchase with transaction id ${transactionId} not found`,
+            ),
+          );
+    }
   }
 
   async findPurchaseByOrderId(
@@ -98,7 +104,7 @@ export class Purchase1Api {
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
         body: '',
-        method: HttpMethodEnum.POST,
+        method: HttpMethodEnum.GET,
         path: `/open/v1/payin/order/${orderId}`,
       });
 
@@ -108,23 +114,53 @@ export class Purchase1Api {
       );
     }
 
-    const purchase = await this.purchaseService.findOneByOrderId(orderId);
+    try {
+      const purchase = await this.purchaseService.findOneUniqueThrow({
+        orderId: orderId,
+      });
 
-    if (!purchase)
+      return new ReadPurchaseResponseApi({
+        transactionId: purchase.id,
+        orderId: purchase.orderId,
+        amount: purchase.nominal,
+        netAmount: purchase.netNominal,
+        fee: purchase.nominal.minus(purchase.netNominal),
+        paidAt: purchase.paidAt?.toISOString() ?? null,
+        paymentMethod: purchase.paymentMethodName,
+        status: purchase.status,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError)
+        if (error.code === 'P2025')
+          throw ResponseException.fromHttpExecption(
+            new NotFoundException(
+              `Purchase with order id ${orderId} not found`,
+            ),
+          );
+    }
+  }
+
+  async findPurchaseByDate(
+    headers: MerchantSignatureHeaderDto,
+    pageable: Pageable,
+    filter: ReadPurchaseDateRequestApi,
+  ) {
+    const merchantSignature: MerchantSignatureValidationSystemDto =
+      await this.merchantSignatureClient.signatureValidationTCP({
+        headers: headers,
+        body: filter,
+        method: HttpMethodEnum.GET,
+        path: '/open/v1/payin/date',
+      });
+
+    if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new NotFoundException(`Purchase with order id ${orderId} not found`),
+        new BadGatewayException('Merchant Signature Not Valid'),
       );
+    }
+    const merchantId = merchantSignature.userId;
 
-    return new ReadPurchaseResponseApi({
-      transactionId: purchase.id,
-      orderId: purchase.orderId,
-      amount: purchase.nominal,
-      netAmount: purchase.netNominal,
-      fee: purchase.nominal.minus(purchase.netNominal),
-      paidAt: purchase.paidAt?.toISOString() ?? null,
-      paymentMethod: purchase.paymentMethodName,
-      status: purchase.status,
-    });
+    return this.purchaseService.findByDate(pageable, merchantId, filter);
   }
 
   private async callProvider(dto: {
