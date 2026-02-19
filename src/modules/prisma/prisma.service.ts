@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { createPrismaAdapter } from './prisma.adapter';
 
 @Injectable()
 export class PrismaService
@@ -14,6 +15,8 @@ export class PrismaService
   }
 
   constructor() {
-    super();
+    super({
+      adapter: createPrismaAdapter(),
+    });
   }
 }

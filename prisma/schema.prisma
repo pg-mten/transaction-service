@@ -6,12 +6,11 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema", "typedSql"]
+  previewFeatures = ["typedSql"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
   schemas  = ["transaction"]
 }
 

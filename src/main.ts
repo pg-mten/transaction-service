@@ -16,7 +16,7 @@ import { useContainer } from 'class-validator';
 import { MyLogger } from './modules/logger/logger.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SERVICES } from 'src/shared/constant/client.constant';
-import { MetricsMiddleware } from './middlewares/metrics.middleware';
+import { MetricsMiddleware } from './shared/middlewares/metrics.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

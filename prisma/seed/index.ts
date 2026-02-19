@@ -8,8 +8,11 @@ import { withdrawSeed } from './withdraw.seed';
 import { disbursementSeed } from './disbursement.seed';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import Decimal from 'decimal.js';
+import { createPrismaAdapter } from 'src/modules/prisma/prisma.adapter';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: createPrismaAdapter(),
+});
 
 async function main() {
   console.log('Seeder selesai 🚀');
