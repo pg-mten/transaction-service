@@ -145,7 +145,7 @@ export class Purchase1Api {
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: filter,
+        body: '',
         method: HttpMethodEnum.GET,
         path: '/open/v1/payin/date',
       });
@@ -342,7 +342,14 @@ export class Purchase1Api {
       );
     }
 
-    await axios.post(merchantSignatureUrl.payinUrl, weebhookApi);
+    try {
+      await axios.post(merchantSignatureUrl.payinUrl, weebhookApi);
+    } catch (error) {
+      console.error(
+        `[Purchase1Api] Failed to deliver webhook to ${merchantSignatureUrl.payinUrl}:`,
+        error?.message ?? error,
+      );
+    }
     return weebhookApi;
   }
 
