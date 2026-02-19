@@ -116,7 +116,7 @@ export class WithdrawService {
     if (clientDataStatus === TransactionStatusEnum.FAILED)
       return this.createFailed(clientData, dto, profileBank);
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
           userId: dto.userId,
@@ -163,14 +163,14 @@ export class WithdrawService {
 
       console.log({ withdraw, feeDto });
 
-      return;
+      return withdraw;
     });
   }
 
   async callback(dto: UpdateWithdrawCallbackSystemDto) {
     const codeExtract = TransactionHelper.extractCode(dto.code);
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const withdraw = await trx.withdrawTransaction.update({
         where: {
           code: dto.code,
@@ -209,6 +209,8 @@ export class WithdrawService {
           feeDto,
         });
       }
+
+      return withdraw;
     });
   }
 

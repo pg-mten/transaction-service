@@ -37,7 +37,7 @@ export class TopupService {
     const receiptImage = dto.receiptImage ?? 'www.google.com';
     console.log({ dto });
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const feeDto = await this.feeCalculateClient.calculateTopupFeeConfigTCP({
         merchantId,
         providerName: 'INTERNAL',
@@ -72,7 +72,7 @@ export class TopupService {
 
       console.log({ topupTransaction, feeDto, topupFeeDetails });
 
-      return;
+      return topupTransaction;
     });
   }
 
