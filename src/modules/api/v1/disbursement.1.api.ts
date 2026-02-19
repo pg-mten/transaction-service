@@ -202,10 +202,18 @@ export class Disbursement1Api {
     headers: MerchantSignatureHeaderDto,
     body: CreateTransferRequestApi,
   ) {
+    // Convert Decimal instances to plain numbers before signature validation.
+    // JSON.stringify calls toJSON() before the replacer, converting Decimal to
+    // a string — which would produce a hash mismatch. We convert Decimal fields
+    // to numbers explicitly first.
+    const plainBody: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(body)) {
+      plainBody[k] = v instanceof Decimal ? v.toNumber() : v;
+    }
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: body,
+        body: plainBody,
         method: HttpMethodEnum.POST,
         path: '/open/v1/payout/transfer',
       });
@@ -255,7 +263,7 @@ export class Disbursement1Api {
       return this.createFailed(clientData, body);
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const feeDto =
         await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
           merchantId: merchantSignature.userId,
@@ -347,7 +355,7 @@ export class Disbursement1Api {
   async callback(body: UpdateDisbursementCallbackSystemDto) {
     const codeExtract = TransactionHelper.extractCode(body.code);
 
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const disbursement = await tx.disbursementTransaction.update({
         where: {
           code: body.code,

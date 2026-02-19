@@ -193,10 +193,18 @@ export class Purchase1Api {
     headers: MerchantSignatureHeaderDto,
     body: CreatePurchaseRequestApi,
   ): Promise<CreatePurchaseResponseApi> {
+    // Convert Decimal instances to plain numbers before signature validation.
+    // JSON.stringify calls toJSON() before the replacer, converting Decimal to
+    // a string — which would produce a hash mismatch. We convert Decimal fields
+    // to numbers explicitly first.
+    const plainBody: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(body)) {
+      plainBody[k] = v instanceof Decimal ? v.toNumber() : v;
+    }
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: body,
+        body: plainBody,
         method: HttpMethodEnum.POST,
         path: '/open/v1/payin/purchase',
       });
