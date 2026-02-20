@@ -9,11 +9,10 @@ import { MerchantConfigClient } from './config/merchant.config.client';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT } from 'src/shared/constant/auth.constant';
 import { JwtStrategy } from './auth/strategy/jwt.strategy';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guard/jwt-auth.guard';
 import { HealthModule } from './health/health.module';
-import { ClsModule, ClsService } from 'nestjs-cls';
-import { AuthInfoInterceptor } from 'src/shared/interceptor';
+import { ClsModule } from 'nestjs-cls';
 import { PurchaseTransactionClient } from './transaction/purchase/purchase.transaction.client';
 import { InacashProviderClient } from './provider/inacash/inacash.provider.client';
 import { WithdrawTransacionClient } from './transaction/withdraw/withdraw.transaction.client';
@@ -64,12 +63,6 @@ import { MerchantSignatureAuthClient } from './merchant-signature/merchant-signa
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useFactory: (clsService: ClsService) =>
-        new AuthInfoInterceptor(clsService),
-      inject: [ClsService],
     },
   ],
 

@@ -12,10 +12,14 @@ import { AuthInfoDto } from '../dto/auth-info.dto';
 import { SYSTEM_API_KEY } from '../decorator/system.decorator';
 import { MERCHANT_API_KEY } from '../decorator/merchant.decorator';
 import { Request } from 'express';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly reflector: Reflector) {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly cls: ClsService,
+  ) {
     super();
   }
 
@@ -56,7 +60,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (err || !user) {
       throw ResponseException.fromHttpExecption(new UnauthorizedException());
     }
-
+    this.cls.set('authInfo', user);
     return user;
   }
 }
