@@ -8,6 +8,7 @@ import {
   API_PREFIX,
   APP_NAME,
   IS_DEVELOPMENT,
+  NODE_ENV,
   PORT,
   VERSION,
 } from './shared/constant/global.constant';
@@ -63,8 +64,8 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.listen(PORT, async () => {
     const myLogger = await app.resolve(MyLogger);
-    myLogger.log(`${APP_NAME} started listening: ${PORT}`);
-    console.log(`${APP_NAME} started listening: ${PORT}`);
+    myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+    console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
   });
 }
 bootstrap();
