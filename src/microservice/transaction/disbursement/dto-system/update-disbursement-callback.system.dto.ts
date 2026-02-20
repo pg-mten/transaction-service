@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTime } from 'src/shared/decorator';
 
@@ -16,8 +16,8 @@ export class UpdateDisbursementCallbackSystemDto {
   @ApiProperty()
   status: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
+  @IsOptional()
+  @ApiProperty({ nullable: true })
   @ToDateTime()
-  paidAt: DateTime;
+  paidAt: DateTime | null;
 }

@@ -355,7 +355,7 @@ export class Disbursement1Api {
         },
         data: {
           status: body.status as TransactionStatusEnum,
-          paidAt: body.paidAt.toJSDate(),
+          paidAt: body.paidAt?.toJSDate() ?? null,
         },
       });
 
