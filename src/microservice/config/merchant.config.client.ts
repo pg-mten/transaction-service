@@ -33,7 +33,7 @@ export class MerchantConfigClient {
   async createTCP(body: CreateMerchantSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<null>(
+        this.configClient.send<ResponseDto<null>>(
           { cmd: this.point.create_merchant_config.cmd },
           body,
         ),

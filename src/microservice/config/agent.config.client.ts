@@ -34,7 +34,7 @@ export class AgentConfigClient {
   async createTCP(body: CreateAgentSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.configClient.send<null>(
+        this.configClient.send<ResponseDto<null>>(
           { cmd: this.point.create_agent_config.cmd },
           body,
         ),

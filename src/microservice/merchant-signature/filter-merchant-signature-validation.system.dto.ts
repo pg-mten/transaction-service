@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MerchantSignatureHeaderDto } from './merchant-signature.header.decorator';
 import { HttpMethodEnum } from 'src/shared/constant/auth.constant';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class FilterMerchantSignatureValidationSystemDto {
   @ApiProperty()
+  @IsObject()
   headers: MerchantSignatureHeaderDto;
 
   @ApiProperty({ enum: HttpMethodEnum })
@@ -14,8 +15,10 @@ export class FilterMerchantSignatureValidationSystemDto {
   method: HttpMethodEnum;
 
   @ApiProperty()
+  @IsString()
   path: string;
 
   @ApiProperty({ type: 'object', additionalProperties: true })
+  @IsOptional()
   body: unknown;
 }

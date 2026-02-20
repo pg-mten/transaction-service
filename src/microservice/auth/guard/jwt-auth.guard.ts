@@ -26,6 +26,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    console.log('JwtAuthGuard.canActive');
     const req: Request = context.switchToHttp().getRequest();
 
     /// TODO: Temporary, Prometheus, Buatkan MetricsController dan pasang Decorator @SystemApi()
@@ -54,7 +55,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     context: ExecutionContext,
     status?: any,
   ): TUser {
-    console.log('JwtAuthGuard');
+    console.log('JwtAuthGuard.handleRequest');
     console.log({ err, user, info, context, status });
     /// TODO Sampai semua backend apps sudah implement JWT, di uncomment dulu
     if (err || !user) {

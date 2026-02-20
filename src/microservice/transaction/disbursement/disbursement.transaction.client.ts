@@ -24,7 +24,7 @@ export class DisbursementTransactionClient {
         this.point.disbursement_callback.url,
         body,
       );
-      return res;
+      return res.data;
     } catch (error) {
       console.log(error);
       throw error;
@@ -43,7 +43,6 @@ export class DisbursementTransactionClient {
     } catch (error) {
       console.log(error);
       return this.callback(body);
-      throw error;
     }
   }
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsString, ValidateIf } from 'class-validator';
+import { IsInt, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { DateTime } from 'luxon';
 import { ToDateTime } from 'src/shared/decorator/date.decorator';
 
@@ -15,6 +15,8 @@ export class CreateSettlementScheduleSystemDto {
 
   @ApiProperty({ type: DateTime })
   @ToDateTime()
+  @IsObject()
+  @IsOptional()
   @ValidateIf((o) => o.date !== undefined)
   @Type(() => DateTime)
   date: DateTime;
