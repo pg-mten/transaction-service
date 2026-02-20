@@ -18,7 +18,7 @@ import { ResponseException } from 'src/shared/exception';
 import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api';
 import { MerchantSignatureAuthClient } from 'src/microservice/merchant-signature/merchant-signature.auth.client';
 import { HttpMethodEnum } from 'src/shared/constant/auth.constant';
-import { TransactionHelper } from 'src/shared/helper';
+import { DtoHelper, TransactionHelper } from 'src/shared/helper';
 import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
 import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
 import {
@@ -193,18 +193,10 @@ export class Purchase1Api {
     headers: MerchantSignatureHeaderDto,
     body: CreatePurchaseRequestApi,
   ): Promise<CreatePurchaseResponseApi> {
-    // Convert Decimal instances to plain numbers before signature validation.
-    // JSON.stringify calls toJSON() before the replacer, converting Decimal to
-    // a string — which would produce a hash mismatch. We convert Decimal fields
-    // to numbers explicitly first.
-    const plainBody: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(body)) {
-      plainBody[k] = v instanceof Decimal ? v.toNumber() : v;
-    }
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: plainBody,
+        body: DtoHelper.convertDecimalToNumber(body as unknown as Record<string, unknown>),
         method: HttpMethodEnum.POST,
         path: '/open/v1/payin/purchase',
       });
@@ -273,7 +265,7 @@ export class Purchase1Api {
   ): Promise<WebhookPayinApi> {
     const { paymentMethodName, providerName, userId } =
       TransactionHelper.extractCode(body.code);
-    const weebhookApi = await this.prisma.$transaction(async (tx) => {
+    const webhookApi = await this.prisma.$transaction(async (tx) => {
       const feeDto =
         await this.feeCalculateClient.calculatePurchaseFeeConfigTCP({
           merchantId: userId,
@@ -342,15 +334,17 @@ export class Purchase1Api {
       );
     }
 
+    // TODO: Implement proper webhook retry mechanism (e.g. exponential backoff / queue)
+    // instead of silently swallowing delivery failures
     try {
-      await axios.post(merchantSignatureUrl.payinUrl, weebhookApi);
+      await axios.post(merchantSignatureUrl.payinUrl, webhookApi);
     } catch (error) {
       console.error(
         `[Purchase1Api] Failed to deliver webhook to ${merchantSignatureUrl.payinUrl}:`,
         error?.message ?? error,
       );
     }
-    return weebhookApi;
+    return webhookApi;
   }
 
   private async createBalanceLog(dto: {
