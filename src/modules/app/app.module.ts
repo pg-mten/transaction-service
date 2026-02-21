@@ -11,7 +11,6 @@ import {
 } from 'src/shared/filter';
 import {
   ResponseInterceptor,
-  PrismaUserInterceptor,
 } from 'src/shared/interceptor';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
@@ -21,9 +20,7 @@ import { DisbursementModule } from '../disbursement/disbursement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
-import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
-import { PrismaService } from '../prisma/prisma.service';
 import { ApiModule } from '../api/api.module';
 
 @Module({
@@ -99,11 +96,6 @@ import { ApiModule } from '../api/api.module';
         return new ResponseInterceptor(reflector);
       },
       inject: [Reflector],
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useFactory: (prisma: PrismaService) => new PrismaUserInterceptor(prisma),
-      inject: [PRISMA_SERVICE],
     },
   ],
 })

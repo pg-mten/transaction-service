@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { Prisma, TransactionTypeEnum } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
@@ -14,7 +15,7 @@ import { ReadPurchaseDateResponseApi } from '../api/v1/dto-api/read-purchase-dat
 
 @Injectable()
 export class PurchaseService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 

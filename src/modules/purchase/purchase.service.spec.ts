@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PurchaseService } from './purchase.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { Decimal } from 'decimal.js';
 import { TransactionStatusEnum } from '@prisma/client';
 
@@ -21,7 +22,7 @@ describe('PurchaseService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PurchaseService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PRISMA_SERVICE, useValue: mockPrismaService },
       ],
     }).compile();
 

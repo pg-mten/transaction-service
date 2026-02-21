@@ -1,8 +1,4 @@
-import {
-  BadGatewayException,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Inject, BadGatewayException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -22,7 +18,8 @@ import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
@@ -34,7 +31,7 @@ import { ProfileProviderConfigClient } from 'src/microservice/config/profile-pro
 @Injectable()
 export class WithdrawService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,

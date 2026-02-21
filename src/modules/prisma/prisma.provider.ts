@@ -11,8 +11,7 @@ export const PrismaProvider: Provider = {
     const prisma = new PrismaClient({
       adapter: createPrismaAdapter(),
       log: ['query', 'info', 'warn', 'error'],
-    });
-    //.$extends(auditTrailExtension); // TODO
+    }).$extends(auditTrailExtension);
 
     return prisma;
   },

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WithdrawService } from './withdraw.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { BalanceService } from '../balance/balance.service';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
@@ -44,7 +45,7 @@ describe('WithdrawService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WithdrawService,
-        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: PRISMA_SERVICE, useValue: mockPrismaService },
         { provide: FeeCalculateConfigClient, useValue: mockFeeClient },
         { provide: BalanceService, useValue: mockBalanceService },
         { provide: InacashProviderClient, useValue: mockInacash },

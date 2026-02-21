@@ -1,9 +1,4 @@
-import {
-  BadGatewayException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Inject, BadGatewayException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -13,7 +8,8 @@ import Decimal from 'decimal.js';
 import { MerchantSignatureHeaderDto } from 'src/microservice/merchant-signature/merchant-signature.header.decorator';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
 import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
-import { PrismaService } from 'src/modules/prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from 'src/modules/prisma/prisma.provider';
 import { ResponseException } from 'src/shared/exception';
 import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api';
 import { MerchantSignatureAuthClient } from 'src/microservice/merchant-signature/merchant-signature.auth.client';
@@ -40,7 +36,7 @@ import { Pageable } from 'src/shared/pagination';
 @Injectable()
 export class Purchase1Api {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
     private readonly merchantSignatureClient: MerchantSignatureAuthClient,
     private readonly inacashProviderClient: InacashProviderClient,
     private readonly pdnProviderClient: PdnProviderClient,
