@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { Prisma } from '@prisma/client';
 import { ClsServiceManager } from 'nestjs-cls';
 
@@ -85,11 +83,16 @@ export const auditTrailExtension = Prisma.defineExtension({
             upsertArgs.create = withAuditFields(upsertArgs.create, {
               ...getUserAuditField(modelName, 'createdBy', userId),
             });
+            // upsertArgs.update = withAuditFields(upsertArgs.update, {
+            //   ...getUserAuditField(modelName, 'updatedBy', userId),
+            //   ...(isSoftDelete
+            //     ? getUserAuditField(modelName, 'deletedBy', userId)
+            //     : {}),
+            // });
             upsertArgs.update = withAuditFields(upsertArgs.update, {
-              ...getUserAuditField(modelName, 'updatedBy', userId),
               ...(isSoftDelete
                 ? getUserAuditField(modelName, 'deletedBy', userId)
-                : {}),
+                : getUserAuditField(modelName, 'updatedBy', userId)),
             });
           } else if (
             (operation === 'update' ||
@@ -104,11 +107,16 @@ export const auditTrailExtension = Prisma.defineExtension({
               'deletedAt' in (data as Record<string, unknown>) &&
               (data as Record<string, unknown>).deletedAt != null;
 
+            // mutableArgs.data = withAuditFields(data, {
+            //   ...getUserAuditField(modelName, 'updatedBy', userId),
+            //   ...(isSoftDelete
+            //     ? getUserAuditField(modelName, 'deletedBy', userId)
+            //     : {}),
+            // });
             mutableArgs.data = withAuditFields(data, {
-              ...getUserAuditField(modelName, 'updatedBy', userId),
               ...(isSoftDelete
                 ? getUserAuditField(modelName, 'deletedBy', userId)
-                : {}),
+                : getUserAuditField(modelName, 'updatedBy', userId)),
             });
           }
         }
