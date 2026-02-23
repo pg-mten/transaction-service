@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -8,6 +9,7 @@ import {
   API_PREFIX,
   APP_NAME,
   IS_DEVELOPMENT,
+  IS_PRODUCTION,
   NODE_ENV,
   PORT,
   VERSION,
@@ -61,11 +63,18 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
   await app.startAllMicroservices();
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.listen(PORT, async () => {
-    const myLogger = await app.resolve(MyLogger);
-    myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
-    console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
-  });
+
+  if (IS_PRODUCTION)
+    await app.listen(PORT, '0.0.0.0', async () => {
+      const myLogger = await app.resolve(MyLogger);
+      myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+      console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+    });
+  else
+    await app.listen(PORT, async () => {
+      const myLogger = await app.resolve(MyLogger);
+      myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+      console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+    });
 }
 bootstrap();
