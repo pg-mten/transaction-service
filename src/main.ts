@@ -46,7 +46,7 @@ async function bootstrap() {
     .setDescription(`${APP_NAME} Service API Description`)
     .setVersion(VERSION)
     .addServer('http://localhost:3002', 'Local')
-    .addServer(`http://103.94.238.214:3002/api/v1`, 'Production') // Adjust with Server Proxy
+    .addServer(`http://103.94.238.214:3002`, 'Production') // Adjust with Server Proxy
     .addBearerAuth()
     .build();
 
