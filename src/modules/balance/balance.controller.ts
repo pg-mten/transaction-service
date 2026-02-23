@@ -1,5 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -19,6 +20,7 @@ export class BalanceController {
   constructor(private readonly service: BalanceService) {}
 
   @Get('merchant/:merchantId')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil Balance Merchant' })
   @ApiParam({ name: 'merchantId', description: 'ID Merchant' })
   @ApiOkResponse({ type: BalanceMerchantDto })
@@ -29,6 +31,7 @@ export class BalanceController {
   }
 
   @Get('agent/:agentId')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil Balance Agent' })
   @ApiParam({ name: 'agentId', description: 'ID Agent' })
   @ApiOkResponse({ type: BalanceAgentDto })
@@ -38,6 +41,7 @@ export class BalanceController {
   }
 
   @Get('/aggregate/internal')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Aggregate Balance Internal' })
   @ApiOkResponse({ type: BalanceDto })
   async getInternalBalance(@Query() filter: FilterAggregateBalanceInternal) {
@@ -46,6 +50,7 @@ export class BalanceController {
   }
 
   @Get('/aggregate/merchant')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Aggregate Balance All Merchant' })
   @ApiOkResponse({ type: BalanceDto })
   async getAllMerchantBalance() {
@@ -53,6 +58,7 @@ export class BalanceController {
   }
 
   @Get('/aggregate/agent')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Aggregate Balance All Agent' })
   @ApiOkResponse({ type: BalanceDto })
   async getAllAgentBalance() {

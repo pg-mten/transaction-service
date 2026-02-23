@@ -5,6 +5,7 @@ import {
   ApiParam,
   ApiOkResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
@@ -25,6 +26,7 @@ export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawService) {}
 
   @Post('transactions/withdraw')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Buat Withdraw baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
@@ -34,6 +36,7 @@ export class WithdrawTransactionsController {
   }
 
   @Get('transactions/withdraw/:id/detail')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
@@ -41,6 +44,7 @@ export class WithdrawTransactionsController {
   }
 
   @Get('transactions/withdraw')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: WithdrawTransactionDto, isArray: true })
   async findAll(

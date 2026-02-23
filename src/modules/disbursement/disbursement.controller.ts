@@ -4,6 +4,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiOkResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
@@ -17,6 +18,7 @@ export class DisbursementTransactionsController {
   constructor(private readonly service: DisbursementService) {}
 
   @Get(':id/detail')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
@@ -24,6 +26,7 @@ export class DisbursementTransactionsController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: DisbursementTransactionDto, isArray: true })
   async findAll(
