@@ -1,4 +1,9 @@
-import { Inject, BadGatewayException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Inject,
+  BadGatewayException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -38,7 +43,7 @@ export class WithdrawService {
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly userAuthClient: UserAuthClient,
     private readonly profileProviderClient: ProfileProviderConfigClient,
-  ) { }
+  ) {}
 
   private readonly transactionType = TransactionTypeEnum.WITHDRAW;
 
@@ -399,10 +404,10 @@ export class WithdrawService {
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
-      : subDays(DateHelper.nowDate(), 7);
+      : subDays(DateHelper.nowJSDate(), 7);
     const toDate = to
       ? endOfDay(to.toJSDate())
-      : endOfDay(DateHelper.nowDate());
+      : endOfDay(DateHelper.nowJSDate());
 
     const whereClause: Prisma.WithdrawTransactionWhereInput = {
       createdAt: {

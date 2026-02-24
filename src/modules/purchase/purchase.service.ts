@@ -85,10 +85,10 @@ export class PurchaseService {
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
-      : subDays(DateHelper.nowDate(), 7);
+      : subDays(DateHelper.nowJSDate(), 7);
     const toDate = to
       ? endOfDay(to.toJSDate())
-      : endOfDay(DateHelper.nowDate());
+      : endOfDay(DateHelper.nowJSDate());
 
     const whereClause: Prisma.PurchaseTransactionWhereInput = {
       createdAt: {

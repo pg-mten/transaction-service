@@ -1,4 +1,10 @@
-import { Inject, BadGatewayException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Inject,
+  BadGatewayException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -192,7 +198,9 @@ export class Purchase1Api {
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: DtoHelper.convertDecimalToNumber(body as unknown as Record<string, unknown>),
+        body: DtoHelper.convertDecimalToNumber(
+          body as unknown as Record<string, unknown>,
+        ),
         method: HttpMethodEnum.POST,
         path: '/open/v1/payin/purchase',
       });

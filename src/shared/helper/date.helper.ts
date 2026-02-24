@@ -14,7 +14,7 @@ export class DateHelper {
     return DateTime.now().toMillis();
   }
 
-  static nowDate(): Date {
+  static nowJSDate(): Date {
     return this.now().toJSDate();
   }
 
