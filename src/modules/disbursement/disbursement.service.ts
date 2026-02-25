@@ -136,6 +136,9 @@ export class DisbursementService {
           ...item,
           totalFeeCut,
           metadata: item.metadata as Record<string, unknown>,
+          reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+          createdAt: DateHelper.fromJsDate(item.createdAt)!,
+          paidAt: DateHelper.fromJsDate(item.paidAt),
           feeDetails: feeDetailDtos,
         }),
       );

@@ -133,6 +133,7 @@ export class PurchaseService {
           settlementAt: DateHelper.fromJsDate(item.settlementAt),
           reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
           createdAt: DateHelper.fromJsDate(item.createdAt)!,
+          paidAt: DateHelper.fromJsDate(item.paidAt),
           feeDetails: feeDetailDtos,
         }),
       );

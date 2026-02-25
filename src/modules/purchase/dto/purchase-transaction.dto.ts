@@ -60,6 +60,10 @@ export class PurchaseTransactionDto {
   reconciliationAt: DateTime | null;
 
   @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDateNullable()
+  paidAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime })
   @ToDateTimeJsDate()
   createdAt: DateTime;
 

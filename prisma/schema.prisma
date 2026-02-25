@@ -26,7 +26,11 @@ model TopUpTransaction {
   providerName      String
   paymentMethodName String //transfer_bank, virtual_account
   receiptImage      String
+
+  paidAt            DateTime?
   metadata          Json?
+  settlementAt      DateTime?
+  reconciliationAt  DateTime?
 
   createdAt DateTime  @default(now())
   createdBy Int?      @db.Integer()
@@ -75,14 +79,15 @@ model WithdrawTransaction {
   userRole    String
   referenceId String  @unique //reff id from bank
 
+  providerName      String
+  paymentMethodName String // transfer_bank, virtual_account, dll
   nominal    Decimal
   netNominal Decimal // nominal setelah dikenakan fee
   status     TransactionStatusEnum @default(PENDING)
 
   paidAt            DateTime?
-  providerName      String
-  paymentMethodName String // transfer_bank, virtual_account, dll
   metadata          Json?
+  reconciliationAt DateTime?
 
   createdAt DateTime  @default(now())
   createdBy Int?      @db.Integer()
@@ -144,6 +149,7 @@ model DisbursementTransaction {
   paidAt            DateTime?
   paymentMethodName String
   metadata          Json?
+  reconciliationAt  DateTime?
 
   createdAt DateTime  @default(now())
   createdBy Int?      @db.Integer()

@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionStatusEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
-import { ToDecimalFixed } from 'src/shared/decorator';
+import {
+  ToDateTimeJsDate,
+  ToDateTimeJsDateNullable,
+  ToDecimalFixed,
+} from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 import { DisbursementFeeDetailDto } from './disbursement-fee-detail.dto';
+import { DateTime } from 'luxon';
 
 export class DisbursementTransactionDto {
   constructor(data: DisbursementTransactionDto) {
@@ -45,6 +50,18 @@ export class DisbursementTransactionDto {
 
   @ApiProperty({ type: Object })
   metadata: object | null;
+
+  @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDateNullable()
+  reconciliationAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDateNullable()
+  paidAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDate()
+  createdAt: DateTime;
 
   @ApiProperty({ type: DisbursementFeeDetailDto, isArray: true })
   feeDetails: DisbursementFeeDetailDto[];
