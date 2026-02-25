@@ -6,8 +6,15 @@ export enum TransactionUserRole {
 
 export enum ProviderName {
   INTERNAL = 'INTERNAL',
-  PDN = 'PDN',
-  INACASH = 'INACASH',
+  PDNT1 = 'PDNT1',
+}
+
+export enum PaymentMethodName {
+  QRIS = 'QRIS',
+  VIRTUALACCOUNT = 'VIRTUALACCOUNT',
+  DIRECTEWALLET = 'DIRECTEWALLET',
+  TRANSFERBANK = 'TRANSFERBANK',
+  TRANSFEREWALLET = 'TRANSFEREWALLET',
 }
 
 export const TransactionTypeEnum = {
