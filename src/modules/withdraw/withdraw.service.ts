@@ -57,7 +57,7 @@ export class WithdrawService {
     nominal: Decimal;
   }): Promise<ProviderWithdrawSystemDto> {
     try {
-      if (dto.providerName === 'PDN') {
+      if (dto.providerName === 'PDNT1') {
         const clientRes = await this.pdnProviderClient.withdrawTCP({
           ...dto,
         });

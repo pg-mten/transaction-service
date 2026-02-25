@@ -176,7 +176,7 @@ export class Disbursement1Api {
     nominal: Decimal;
   }): Promise<ProviderDisbursementSystemDto> {
     try {
-      if (body.providerName === 'PDN') {
+      if (body.providerName === 'PDNT1') {
         const clientRes = await this.pdnProviderClient.disbursementTCP({
           ...body,
         });

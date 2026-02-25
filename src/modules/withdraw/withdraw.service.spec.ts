@@ -95,12 +95,12 @@ describe('WithdrawService', () => {
 
       const result = await (service as any).callProvider({
         ...baseDto,
-        providerName: 'PDN',
+        providerName: 'PDNT1',
       });
 
       expect(result).toEqual(providerResult);
       expect(mockPdn.withdrawTCP).toHaveBeenCalledWith(
-        expect.objectContaining({ code: 'WD-001', providerName: 'PDN' }),
+        expect.objectContaining({ code: 'WD-001', providerName: 'PDNT1' }),
       );
     });
 
@@ -149,7 +149,7 @@ describe('WithdrawService', () => {
     };
 
     const profileProviderData = {
-      providerName: 'PDN',
+      providerName: 'PDNT1',
       paymentMethodName: 'TRANSFERBANK',
     };
 
