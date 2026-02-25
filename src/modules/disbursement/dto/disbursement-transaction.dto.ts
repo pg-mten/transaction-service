@@ -18,7 +18,7 @@ export class DisbursementTransactionDto {
   @ApiProperty({ type: Number })
   id: number;
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   externalId: string | null;
 
   @ApiProperty({ type: String, required: false })
@@ -48,14 +48,14 @@ export class DisbursementTransactionDto {
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 
-  @ApiProperty({ type: Object })
+  @ApiProperty({ type: Object, required: false })
   metadata: object | null;
 
-  @ApiProperty({ type: DateTime })
+  @ApiProperty({ type: DateTime, required: false })
   @ToDateTimeJsDateNullable()
   reconciliationAt: DateTime | null;
 
-  @ApiProperty({ type: DateTime })
+  @ApiProperty({ type: DateTime, required: false })
   @ToDateTimeJsDateNullable()
   paidAt: DateTime | null;
 

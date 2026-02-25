@@ -13,7 +13,7 @@ export class TopupTransactionDto {
   @ApiProperty({ type: Number })
   id: number;
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   externalId: string | null;
 
   @ApiProperty({ type: String, required: false })
@@ -43,7 +43,7 @@ export class TopupTransactionDto {
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 
-  @ApiProperty({ type: Object })
+  @ApiProperty({ type: Object, required: false })
   metadata: object | null;
 
   @ApiProperty({ type: TopupFeeDetailDto, isArray: true })
