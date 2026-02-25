@@ -51,7 +51,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup(API_PREFIX, app, document);
+  SwaggerModule.setup(API_PREFIX + '/swag-rwz', app, document);
   // }
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
