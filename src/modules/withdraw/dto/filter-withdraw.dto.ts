@@ -18,7 +18,7 @@ export class FilterWithdrawDto {
   @Transform(({ value }) => parseInt(value))
   @IsInt()
   @Min(1)
-  limit: number;
+  size: number;
 
   @ApiProperty({ type: String, required: false })
   @IsOptional()
