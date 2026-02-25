@@ -4,18 +4,23 @@ export enum TransactionUserRole {
   MERCHANT = 'MERCHANT',
 }
 
-export enum ProviderName {
-  INTERNAL = 'INTERNAL',
-  PDNT1 = 'PDNT1',
-}
+export const ProviderName = {
+  INTERNAL: 'INTERNAL',
+  PDNT1: 'PDNT1',
+};
 
-export enum PaymentMethodName {
-  QRIS = 'QRIS',
-  VIRTUALACCOUNT = 'VIRTUALACCOUNT',
-  DIRECTEWALLET = 'DIRECTEWALLET',
-  TRANSFERBANK = 'TRANSFERBANK',
-  TRANSFEREWALLET = 'TRANSFEREWALLET',
-}
+export type ProviderName = (typeof ProviderName)[keyof typeof ProviderName];
+
+export const PaymentMethodName = {
+  QRIS: 'QRIS',
+  VIRTUALACCOUNT: 'VIRTUALACCOUNT',
+  DIRECTEWALLET: 'DIRECTEWALLET',
+  TRANSFERBANK: 'TRANSFERBANK',
+  TRANSFEREWALLET: 'TRANSFEREWALLET',
+};
+
+export type PaymentMethodName =
+  (typeof PaymentMethodName)[keyof typeof PaymentMethodName];
 
 export const TransactionTypeEnum = {
   WITHDRAW: 'WITHDRAW',
