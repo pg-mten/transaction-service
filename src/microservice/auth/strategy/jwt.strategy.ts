@@ -13,7 +13,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: any): AuthInfoDto {
-    // return { userId: payload.sub, username: payload.username };
     return payload as AuthInfoDto;
   }
 }
