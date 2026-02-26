@@ -25,7 +25,7 @@ jobs:
           ${{ secrets.BIZNET_SSH_USER }}@${{ secrets.BIZNET_SSH_HOST }} << 'EOF'
             set -e
 
-            cd ${{ secrets.BIZNET_DEPLOY_PATH }}
+            cd ${{ secrets.BIZNET_SSH_DEPLOY_PATH }}
 
             echo "📦 Backup old image"
             docker tag backend-transaction:latest backend-transaction:rollback || true
