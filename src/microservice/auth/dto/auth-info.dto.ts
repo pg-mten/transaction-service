@@ -12,9 +12,9 @@ export class AuthInfoDto {
 
   @ApiProperty()
   // @Expose()
-  role: string;
+  profileId: number;
 
   @ApiProperty()
   // @Expose()
-  profileId: number;
+  role: string;
 }

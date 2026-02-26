@@ -1,4 +1,5 @@
 import {
+  Inject,
   BadGatewayException,
   Injectable,
   UnprocessableEntityException,
@@ -9,7 +10,7 @@ import {
   TransactionTypeEnum,
 } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
@@ -22,20 +23,26 @@ import { UuidHelper } from 'src/shared/helper/uuid.helper';
 import { WithdrawFeeSystemDto } from 'src/microservice/config/dto-transaction-system/withdraw-fee.system.dto';
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash.provider.client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { ProviderWithdrawSystemDto } from 'src/microservice/provider/provider-withdraw.system.dto';
 import { TransactionHelper } from 'src/shared/helper/transaction.helper';
 import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
 import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
+import { UserAuthClient } from 'src/microservice/auth/user.auth.client';
+import { ProfileBankByIdSystemDto } from 'src/microservice/auth/dto-system/profile-bank.system.dto';
+import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
 
 @Injectable()
 export class WithdrawService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(PRISMA_SERVICE) private readonly prisma: PrismaClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly inacashProviderClient: InacashProviderClient,
     private readonly pdnProviderClient: PdnProviderClient,
+    private readonly userAuthClient: UserAuthClient,
+    private readonly profileProviderClient: ProfileProviderConfigClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.WITHDRAW;
@@ -50,16 +57,16 @@ export class WithdrawService {
     nominal: Decimal;
   }): Promise<ProviderWithdrawSystemDto> {
     try {
-      if (dto.providerName === 'PDN') {
+      if (dto.providerName === 'PDNT1') {
         const clientRes = await this.pdnProviderClient.withdrawTCP({
           ...dto,
         });
-        return clientRes.data!;
+        return clientRes;
       } else if (dto.providerName === 'INACASH') {
         const clientRes = await this.inacashProviderClient.withdrawTCP({
           ...dto,
         });
-        return clientRes.data!;
+        return clientRes;
       } else
         throw ResponseException.fromHttpExecption(
           new BadGatewayException('Provider Name Not Found'),
@@ -71,15 +78,28 @@ export class WithdrawService {
   }
 
   async create(dto: CreateWithdrawTransactionDto) {
-    const merchantId = dto.merchantId;
+    const resProfileBank = await this.userAuthClient.findProfileBankTCP({
+      userId: dto.userId,
+    });
+    const profileBank = resProfileBank;
+
+    const resProfileProvider =
+      await this.profileProviderClient.findProfileProviderTCP({
+        userId: profileBank.userId,
+        userRole: profileBank.userRole,
+        transactionType: this.transactionType,
+      });
+    const profileProvider = resProfileProvider;
 
     // TODO Ambil dari config service, untuk menentukan secara otomatis. Dia memakai provider dan payment method apa
-    const providerName = 'PDN';
-    const paymentMethodName = 'TRANSFERBANK';
+    // const providerName = 'PDN';
+    // const paymentMethodName = 'TRANSFERBANK';
+
+    const { providerName, paymentMethodName } = profileProvider;
 
     const code = TransactionHelper.createCode({
       transactionType: this.transactionType,
-      merchantId: dto.merchantId,
+      userId: profileBank.userId,
       providerName: providerName,
       paymentMethodName: paymentMethodName,
     });
@@ -88,17 +108,20 @@ export class WithdrawService {
       code,
       providerName,
       paymentMethodName,
-      ...dto,
+      accountNumber: profileBank.accountNumber,
+      bankCode: profileBank.bankCode,
+      bankName: profileBank.bankName,
+      nominal: dto.nominal,
     });
 
     const clientDataStatus = clientData.status as TransactionStatusEnum;
     if (clientDataStatus === TransactionStatusEnum.FAILED)
-      return this.createFailed(clientData, dto);
+      return this.createFailed(clientData, dto, profileBank);
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const feeDto =
         await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
-          merchantId,
+          userId: dto.userId,
           providerName,
           paymentMethodName,
           nominal: dto.nominal,
@@ -109,7 +132,8 @@ export class WithdrawService {
           code: code,
           externalId: clientData.externalId,
           referenceId: UuidHelper.v4(),
-          merchantId,
+          userId: dto.userId,
+          userRole: profileBank.userRole,
           providerName,
           paymentMethodName,
           nominal: dto.nominal,
@@ -131,7 +155,7 @@ export class WithdrawService {
 
         await this.createBalanceLog({
           withdrawId: withdraw.id,
-          merchantId,
+          merchantId: profileBank.profileId,
           providerName,
           paymentMethodName,
           nominal: dto.nominal,
@@ -141,18 +165,18 @@ export class WithdrawService {
 
       console.log({ withdraw, feeDto });
 
-      return;
+      return withdraw;
     });
   }
 
   async callback(dto: UpdateWithdrawCallbackSystemDto) {
     const codeExtract = TransactionHelper.extractCode(dto.code);
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const withdraw = await trx.withdrawTransaction.update({
         where: {
           code: dto.code,
-          merchantId: codeExtract.merchantId,
+          userId: codeExtract.userId,
           externalId: dto.externalId,
         },
         data: {
@@ -163,7 +187,7 @@ export class WithdrawService {
       if (withdraw.status === TransactionStatusEnum.SUCCESS) {
         const feeDto =
           await this.feeCalculateClient.calculateWithdrawFeeConfigTCP({
-            merchantId: withdraw.merchantId,
+            userId: withdraw.userId,
             providerName: withdraw.providerName,
             paymentMethodName: withdraw.paymentMethodName,
             nominal: withdraw.nominal,
@@ -187,21 +211,25 @@ export class WithdrawService {
           feeDto,
         });
       }
+
+      return withdraw;
     });
   }
 
   private async createFailed(
     clientData: ProviderWithdrawSystemDto,
     dto: CreateWithdrawTransactionDto,
+    profileBank: ProfileBankByIdSystemDto,
   ) {
-    const { merchantId, providerName, paymentMethodName } =
+    const { userId, providerName, paymentMethodName } =
       TransactionHelper.extractCode(clientData.code);
 
     const withdraw = await this.prisma.withdrawTransaction.create({
       data: {
         code: clientData.code,
         externalId: clientData.externalId,
-        merchantId: merchantId,
+        userId: userId,
+        userRole: profileBank.userRole,
         providerName: providerName,
         paymentMethodName: paymentMethodName,
         referenceId: '',
@@ -235,7 +263,7 @@ export class WithdrawService {
       await this.balanceService.checkBalanceAgents(agentIds);
 
     /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
-    if (lastBalanceMerchant.balanceActive <= dto.nominal) {
+    if (lastBalanceMerchant.balanceActive.lessThan(dto.nominal)) {
       throw new Error('Balance Tidak Mencukupi');
     }
 
@@ -376,10 +404,10 @@ export class WithdrawService {
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
-      : subDays(DateHelper.nowDate(), 7);
+      : subDays(DateHelper.nowJSDate(), 7);
     const toDate = to
       ? endOfDay(to.toJSDate())
-      : endOfDay(DateHelper.nowDate());
+      : endOfDay(DateHelper.nowJSDate());
 
     const whereClause: Prisma.WithdrawTransactionWhereInput = {
       createdAt: {
@@ -388,7 +416,7 @@ export class WithdrawService {
       },
     };
 
-    if (merchantId) whereClause.merchantId = merchantId;
+    if (merchantId) whereClause.userId = merchantId;
     if (providerName) whereClause.providerName = providerName;
     if (status) whereClause.status = status;
     if (paymentMethodName) whereClause.paymentMethodName = paymentMethodName;
@@ -422,6 +450,9 @@ export class WithdrawService {
           ...item,
           totalFeeCut,
           metadata: item.metadata as Record<string, unknown>,
+          reconciliationAt: DateHelper.fromJsDate(item.reconciliationAt),
+          createdAt: DateHelper.fromJsDate(item.createdAt)!,
+          paidAt: DateHelper.fromJsDate(item.paidAt),
           feeDetails: feeDetailDtos,
         }),
       );

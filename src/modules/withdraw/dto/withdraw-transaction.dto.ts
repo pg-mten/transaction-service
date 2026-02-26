@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionStatusEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
-import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
+import {
+  ToDateTimeJsDate,
+  ToDateTimeJsDateNullable,
+  ToDecimalFixed,
+} from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 import { WithdrawFeeDetailDto } from './withdraw-fee-detail.dto';
+import { DateTime } from 'luxon';
 
 export class WithdrawTransactionDto {
   constructor(data: WithdrawTransactionDto) {
@@ -13,14 +18,17 @@ export class WithdrawTransactionDto {
   @ApiProperty({ type: Number })
   id: number;
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   externalId: string | null;
 
   @ApiProperty({ type: String, required: false })
   referenceId: string | null;
 
   @ApiProperty({ type: Number })
-  merchantId: number;
+  userId: number;
+
+  @ApiProperty({ type: String })
+  userRole: string;
 
   @ApiProperty({ type: String })
   providerName: string;
@@ -43,8 +51,20 @@ export class WithdrawTransactionDto {
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 
-  @ApiProperty({ type: Object })
+  @ApiProperty({ type: Object, required: false })
   metadata: object | null;
+
+  @ApiProperty({ type: DateTime, required: false })
+  @ToDateTimeJsDateNullable()
+  reconciliationAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime, required: false })
+  @ToDateTimeJsDateNullable()
+  paidAt: DateTime | null;
+
+  @ApiProperty({ type: DateTime })
+  @ToDateTimeJsDate()
+  createdAt: DateTime;
 
   @ApiProperty({ type: WithdrawFeeDetailDto, isArray: true })
   feeDetails: WithdrawFeeDetailDto[];

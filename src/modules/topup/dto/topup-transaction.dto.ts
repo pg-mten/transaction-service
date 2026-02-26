@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TransactionStatusEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
-import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
+import { ToDecimalFixed } from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 import { TopupFeeDetailDto } from './topup-fee-detail.dto';
 
@@ -13,7 +13,7 @@ export class TopupTransactionDto {
   @ApiProperty({ type: Number })
   id: number;
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, required: false })
   externalId: string | null;
 
   @ApiProperty({ type: String, required: false })
@@ -43,7 +43,7 @@ export class TopupTransactionDto {
   @ApiProperty({ enum: TransactionStatusEnum })
   status: TransactionStatusEnum;
 
-  @ApiProperty({ type: Object })
+  @ApiProperty({ type: Object, required: false })
   metadata: object | null;
 
   @ApiProperty({ type: TopupFeeDetailDto, isArray: true })

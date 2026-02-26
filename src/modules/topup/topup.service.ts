@@ -6,7 +6,7 @@ import {
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { Page, Pageable, paging } from 'src/shared/pagination/pagination';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { DateHelper } from 'src/shared/helper/date.helper';
 import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
@@ -37,7 +37,7 @@ export class TopupService {
     const receiptImage = dto.receiptImage ?? 'www.google.com';
     console.log({ dto });
 
-    await this.prisma.$transaction(async (trx) => {
+    return this.prisma.$transaction(async (trx) => {
       const feeDto = await this.feeCalculateClient.calculateTopupFeeConfigTCP({
         merchantId,
         providerName: 'INTERNAL',
@@ -72,7 +72,7 @@ export class TopupService {
 
       console.log({ topupTransaction, feeDto, topupFeeDetails });
 
-      return;
+      return topupTransaction;
     });
   }
 
@@ -162,10 +162,10 @@ export class TopupService {
 
     const fromDate = from
       ? startOfDay(from.toJSDate())
-      : subDays(DateHelper.nowDate(), 7);
+      : subDays(DateHelper.nowJSDate(), 7);
     const toDate = to
       ? endOfDay(to.toJSDate())
-      : endOfDay(DateHelper.nowDate());
+      : endOfDay(DateHelper.nowJSDate());
 
     const whereClause: Prisma.TopUpTransactionWhereInput = {
       createdAt: {

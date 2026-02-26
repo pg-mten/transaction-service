@@ -7,5 +7,6 @@ import { BalanceModule } from '../balance/balance.module';
   controllers: [PurchaseController],
   providers: [PurchaseService],
   imports: [BalanceModule],
+  exports: [PurchaseService],
 })
 export class PurchaseModule {}

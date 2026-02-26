@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { FeeTypeEnum } from '@prisma/client';
 import Decimal from 'decimal.js';
-import { ToDecimalFixed } from 'src/decorator/decimal.decorator';
+import { ToDecimalFixed } from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper/dto.helper';
 
 export class TopupFeeDetailDto {

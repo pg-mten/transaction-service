@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -8,6 +9,8 @@ import {
   API_PREFIX,
   APP_NAME,
   IS_DEVELOPMENT,
+  IS_PRODUCTION,
+  NODE_ENV,
   PORT,
   VERSION,
 } from './shared/constant/global.constant';
@@ -15,8 +18,8 @@ import { logger } from './shared/constant/logger.constant';
 import { useContainer } from 'class-validator';
 import { MyLogger } from './modules/logger/logger.service';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { SERVICES } from './microservice/client.constant';
-import { MetricsMiddleware } from './middlewares/metrics.middleware';
+import { SERVICES } from 'src/shared/constant/client.constant';
+import { MetricsMiddleware } from './shared/middlewares/metrics.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -43,12 +46,12 @@ async function bootstrap() {
     .setDescription(`${APP_NAME} Service API Description`)
     .setVersion(VERSION)
     .addServer('http://localhost:3002', 'Local')
-    .addServer(`https://api.manapay.id/transaction`, 'Production') // Adjust with Server Proxy
+    .addServer(`http://103.94.238.214:3002`, 'Production') // Adjust with Server Proxy
     .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup(API_PREFIX, app, document);
+  SwaggerModule.setup(API_PREFIX + '/swag-rwz', app, document);
   // }
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,
@@ -58,12 +61,20 @@ async function bootstrap() {
     },
   });
 
+  app.enableShutdownHooks();
   await app.startAllMicroservices();
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.listen(PORT, async () => {
-    const myLogger = await app.resolve(MyLogger);
-    myLogger.log(`${APP_NAME} started listening: ${PORT}`);
-    console.log(`${APP_NAME} started listening: ${PORT}`);
-  });
+
+  if (IS_PRODUCTION)
+    await app.listen(PORT, '0.0.0.0', async () => {
+      const myLogger = await app.resolve(MyLogger);
+      myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+      console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+    });
+  else
+    await app.listen(PORT, async () => {
+      const myLogger = await app.resolve(MyLogger);
+      myLogger.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+      console.log(`${APP_NAME} [${NODE_ENV}] started listening: ${PORT}`);
+    });
 }
 bootstrap();

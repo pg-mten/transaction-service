@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
-import { ToDecimal } from 'src/decorator/decimal.decorator';
+import { DateTime } from 'luxon';
+import { ToDateTimeNullable } from 'src/shared/decorator';
+import { ToDecimal } from 'src/shared/decorator/decimal.decorator';
 
 export class CreatePurchaseCallbackSystemDto {
   @IsString()
@@ -13,22 +15,14 @@ export class CreatePurchaseCallbackSystemDto {
   @ApiProperty()
   code: string;
 
-  @IsNumber()
-  @Type(() => Number)
-  @ApiProperty()
-  merchantId: number;
-
-  @IsString()
-  @ApiProperty()
-  providerName: string;
-
-  @IsString()
-  @ApiProperty()
-  paymentMethodName: string;
-
   @IsString()
   @ApiProperty()
   status: string;
+
+  @IsOptional()
+  @ApiProperty({ nullable: true })
+  @ToDateTimeNullable()
+  paidAt: DateTime | null;
 
   @ToDecimal()
   @Type(() => Decimal)
@@ -36,6 +30,7 @@ export class CreatePurchaseCallbackSystemDto {
   @ApiProperty()
   nominal: Decimal;
 
+  @IsObject()
   @IsOptional()
   @ApiProperty()
   metadata: Record<string, unknown> | null;

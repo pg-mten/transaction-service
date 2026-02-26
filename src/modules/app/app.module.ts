@@ -1,25 +1,27 @@
-import { ClassSerializerInterceptor, Inject, Module } from '@nestjs/common';
+import { ClassSerializerInterceptor, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from '@nestjs/core';
-import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
-import { PrismaClientKnownExceptionFilter } from 'src/filter/prisma-client-known.exception.filter';
-import { ResponseExceptionFilter } from 'src/filter/response.exception.filter';
-import { InvalidRequestExceptionFilter } from 'src/filter/invalid-request.exception.filter';
-import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
-import { PrismaUserInterceptor } from 'src/interceptor/prisma-user.interceptor';
+import { CustomValidationPipe } from 'src/shared/pipe';
+import {
+  PrismaClientKnownExceptionFilter,
+  ResponseExceptionFilter,
+  InvalidRequestExceptionFilter,
+} from 'src/shared/filter';
+import {
+  ResponseInterceptor,
+} from 'src/shared/interceptor';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { TopupTransactionModule } from '../topup/topup.module';
 import { WithdrawTransactionModule } from '../withdraw/withdraw.module';
-import { DisbursementTransactionModule } from '../disbursement/disbursement.module';
+import { DisbursementModule } from '../disbursement/disbursement.module';
 import { PurchaseModule } from '../purchase/purchase.module';
 import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
-import { PRISMA_SERVICE } from '../prisma/prisma.provider';
-import { PrismaClient } from '@prisma/client';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { ApiModule } from '../api/api.module';
 
 @Module({
   imports: [
@@ -35,8 +37,11 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     PurchaseModule,
     TopupTransactionModule,
     WithdrawTransactionModule,
-    DisbursementTransactionModule,
+    DisbursementModule,
     BalanceModule,
+
+    // Merchant API
+    ApiModule,
 
     /// Web Client
     MicroserviceModule,
@@ -85,11 +90,12 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
       },
       inject: [Reflector],
     },
-    { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     {
       provide: APP_INTERCEPTOR,
-      useFactory: (prisma: PrismaClient) => new PrismaUserInterceptor(prisma),
-      inject: [PRISMA_SERVICE],
+      useFactory: (reflector: Reflector) => {
+        return new ResponseInterceptor(reflector);
+      },
+      inject: [Reflector],
     },
   ],
 })

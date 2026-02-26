@@ -6,22 +6,27 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
-import { ResponseException } from 'src/exception/response.exception';
+import { ResponseException } from 'src/shared/exception/response.exception';
 import { PUBLIC_API_KEY } from '../decorator/public.decorator';
 import { AuthInfoDto } from '../dto/auth-info.dto';
 import { SYSTEM_API_KEY } from '../decorator/system.decorator';
 import { MERCHANT_API_KEY } from '../decorator/merchant.decorator';
 import { Request } from 'express';
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly reflector: Reflector) {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly cls: ClsService,
+  ) {
     super();
   }
 
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
+    console.log('JwtAuthGuard.canActive');
     const req: Request = context.switchToHttp().getRequest();
 
     /// TODO: Temporary, Prometheus, Buatkan MetricsController dan pasang Decorator @SystemApi()
@@ -50,13 +55,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     context: ExecutionContext,
     status?: any,
   ): TUser {
-    console.log('JwtAuthGuard');
+    console.log('JwtAuthGuard.handleRequest');
     console.log({ err, user, info, context, status });
     /// TODO Sampai semua backend apps sudah implement JWT, di uncomment dulu
     if (err || !user) {
       throw ResponseException.fromHttpExecption(new UnauthorizedException());
     }
-
+    this.cls.set('authInfo', user);
     return user;
   }
 }

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { SERVICES, URL_SETTLERECON } from 'src/microservice/client.constant';
+import { SERVICES } from 'src/shared/constant/client.constant';
 import { CreateSettlementScheduleSystemDto } from './dto-system/create-settlement-schedule.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResponseDto } from 'src/shared/response.dto';
@@ -12,14 +12,14 @@ export class SettlementSettleReconClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly settleReconClient: ClientProxy,
-  ) {}
+  ) { }
 
-  private readonly cmd = SERVICES.SETTLERECON.cmd;
+  private readonly point = SERVICES.SETTLERECON.point;
 
   async schedule(body: CreateSettlementScheduleSystemDto) {
     try {
       const res = await axios.post<ResponseDto<SettlementScheduleSystemDto>>(
-        `${URL_SETTLERECON}/settlement/internal`,
+        this.point.settlement_schedule.url,
         body,
       );
       return res.data;
@@ -32,16 +32,15 @@ export class SettlementSettleReconClient {
   async scheduleTCP(body: CreateSettlementScheduleSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.settleReconClient.send<ResponseDto<SettlementScheduleSystemDto>>(
-          { cmd: this.cmd.settlement_schedule },
+        this.settleReconClient.send<SettlementScheduleSystemDto>(
+          { cmd: this.point.settlement_schedule.cmd },
           body,
         ),
       );
       return res;
     } catch (error) {
       console.log(error);
-      return this.schedule(body);
-      throw error;
+      return this.schedule(body).then((r) => r.data!);
     }
   }
 }

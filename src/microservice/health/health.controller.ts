@@ -8,7 +8,7 @@ import {
   MicroserviceHealthIndicator,
 } from '@nestjs/terminus';
 import { PrismaClient } from '@prisma/client';
-import { SERVICES } from '../client.constant';
+import { SERVICES } from '../../shared/constant/client.constant';
 import { PRISMA_SERVICE } from 'src/modules/prisma/prisma.provider';
 import { PublicApi } from '../auth/decorator/public.decorator';
 

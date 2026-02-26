@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNumber, IsString, ValidateIf } from 'class-validator';
 import { Decimal } from 'decimal.js';
-import { ToDecimal } from 'src/decorator/decimal.decorator';
+import { ToDecimal } from 'src/shared/decorator';
 
 export class CreateWithdrawTransactionDto {
   // @ApiProperty({ example: 'trx-withdraw-123456789' })
@@ -15,21 +15,21 @@ export class CreateWithdrawTransactionDto {
   // @IsNotEmpty()
   // referenceId: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  merchantId: number;
+  // @ApiProperty({ example: 1 })
+  // @IsNumber()
+  // merchantId: number;
 
-  @ApiProperty()
-  @IsString()
-  bankCode: string; // TODO TCP ke Auth
+  // @ApiProperty()
+  // @IsString()
+  // bankCode: string; // TODO TCP ke Auth
 
-  @ApiProperty()
-  @IsString()
-  bankName: string; // TODO TCP ke Auth
+  // @ApiProperty()
+  // @IsString()
+  // bankName: string; // TODO TCP ke Auth
 
-  @ApiProperty()
-  @IsString()
-  accountNumber: string; // TODO TCP ke Auth
+  // @ApiProperty()
+  // @IsString()
+  // accountNumber: string; // TODO TCP ke Auth
 
   // @ApiProperty({ example: 'INTERNAL' })
   // @IsString()
@@ -43,6 +43,10 @@ export class CreateWithdrawTransactionDto {
   // @IsOptional()
   // @IsInt()
   // agentId?: number;
+
+  @ApiProperty({ example: 1 })
+  @IsNumber()
+  userId: number;
 
   @ApiProperty({
     type: Decimal,

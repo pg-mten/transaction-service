@@ -6,6 +6,7 @@ import {
   ApiParam,
   ApiOkResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { FilterTopupDto } from './dto/filter-topup.dto';
@@ -24,6 +25,7 @@ export class TopupTransactionsController {
   constructor(private readonly service: TopupService) {}
 
   @Post()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Buat transaksi pembelian baru' })
   @ApiBody({ type: CreateTopupTransactionDto })
   async create(@Body() body: CreateTopupTransactionDto) {
@@ -32,6 +34,7 @@ export class TopupTransactionsController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
@@ -39,6 +42,7 @@ export class TopupTransactionsController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: TopupTransactionDto, isArray: true })
   async findAll(
@@ -50,6 +54,7 @@ export class TopupTransactionsController {
   }
 
   @Post('/approve')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Approve topup' })
   @ApiBody({ type: ApproveTopupTransactionDto })
   approveTopup(@Body() body: ApproveTopupTransactionDto) {
@@ -58,6 +63,7 @@ export class TopupTransactionsController {
   }
 
   @Post('/reject')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Reject topup' })
   @ApiBody({ type: RejectTopupTransactionDto })
   rejectTopup(@Body() body: RejectTopupTransactionDto) {

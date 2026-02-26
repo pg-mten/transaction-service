@@ -1,18 +1,11 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Body,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiOkResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
@@ -23,16 +16,17 @@ import { WithdrawTransactionDto } from './dto/withdraw-transaction.dto';
 import { WithdrawService } from './withdraw.service';
 import { UpdateWithdrawCallbackSystemDto } from 'src/microservice/transaction/withdraw/dto-system/update-withdraw-callback.system.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { SERVICES } from 'src/microservice/client.constant';
-import { ResponseInterceptor } from 'src/interceptor/response.interceptor';
-import { CustomValidationPipe } from 'src/pipe/custom-validation.pipe';
+import { SERVICES } from 'src/shared/constant/client.constant';
+import { CustomValidationPipe } from 'src/shared/pipe';
+import { SystemApi } from 'src/microservice/auth/decorator';
 
 @ApiTags('Transactions', 'Withdraw')
-@Controller('transactions/withdraw')
+@Controller()
 export class WithdrawTransactionsController {
   constructor(private readonly service: WithdrawService) {}
 
-  @Post()
+  @Post('transactions/withdraw')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Buat Withdraw baru' })
   @ApiBody({ type: CreateWithdrawTransactionDto })
   async create(@Body() body: CreateWithdrawTransactionDto) {
@@ -41,14 +35,16 @@ export class WithdrawTransactionsController {
     return new ResponseDto({ status: ResponseStatus.CREATED });
   }
 
-  @Get(':id/detail')
+  @Get('transactions/withdraw/:id/detail')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil detail transaksi berdasarkan ID' })
   @ApiParam({ name: 'id', description: 'UUID transaksi' })
   async findOne(@Param('id') id: number) {
     return await this.service.findOneThrow(id);
   }
 
-  @Get()
+  @Get('transactions/withdraw')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil semua transaksi (default 7 hari terakhir)' })
   @ApiOkResponse({ type: WithdrawTransactionDto, isArray: true })
   async findAll(
@@ -59,7 +55,8 @@ export class WithdrawTransactionsController {
     return this.service.findAll(pageable, filter);
   }
 
-  @Post('/internal/callback')
+  @SystemApi()
+  @Post(SERVICES.TRANSACTION.point.withdraw_callback.path)
   @ApiTags('Internal')
   @ApiOperation({
     summary:
@@ -70,8 +67,7 @@ export class WithdrawTransactionsController {
     return this.service.callback(body);
   }
 
-  @MessagePattern({ cmd: SERVICES.TRANSACTION.cmd.withdraw_callback })
-  @UseInterceptors(ResponseInterceptor)
+  @MessagePattern({ cmd: SERVICES.TRANSACTION.point.withdraw_callback.cmd })
   async callbackTCP(
     @Payload(CustomValidationPipe) payload: UpdateWithdrawCallbackSystemDto,
   ) {

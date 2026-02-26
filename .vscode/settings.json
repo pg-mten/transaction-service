@@ -1,5 +1,8 @@
 {
   "[typescript]": {
     "editor.formatOnSave": true
+  },
+  "jest.runMode": {
+    "type": "on-demand",
   }
 }
