@@ -41,7 +41,7 @@ jobs:
             docker compose up -d transaction
 
             echo "⏳ Health check"
-            sleep
+            sleep 20
 
             if [ "$(docker inspect --format='{{.State.Health.Status}}' transaction)" != "healthy" ]; then
               echo "❌ Transaction failed, rolling back"
