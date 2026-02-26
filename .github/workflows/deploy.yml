@@ -28,10 +28,10 @@ jobs:
             cd ${{ secrets.BIZNET_DEPLOY_PATH }}
 
             echo "📦 Backup old image"
-            docker tag transaction-service:latest transaction-service:rollback || true
+            docker tag backend-transaction:latest backend-transaction:rollback || true
 
             echo "⬇️ Pull code"
-            cd transaction-service
+            cd /home/user-manapay/backend/transaction-service
             git checkout release/development
             git pull origin release/development
             cd ..
@@ -41,13 +41,13 @@ jobs:
             docker compose up -d transaction
 
             echo "⏳ Health check"
-            sleep 15
+            sleep
 
-            if [ "$(docker inspect --format='{{.State.Health.Status}}' transaction-service)" != "healthy" ]; then
+            if [ "$(docker inspect --format='{{.State.Health.Status}}' transaction)" != "healthy" ]; then
               echo "❌ Transaction failed, rolling back"
               docker compose stop transaction
-              docker rm transaction-service
-              docker tag transaction-service:rollback transaction-service:latest
+              docker rm transaction
+              docker tag backend-transaction:rollback backend-transaction:latest
               docker compose up -d transaction
               exit 1
             fi

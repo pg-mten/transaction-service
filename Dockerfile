@@ -4,6 +4,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache curl wget
+
 # 🔑 Prisma BUTUH DATABASE_URL saat generate
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
@@ -43,4 +45,8 @@ RUN chown -R app:app /app
 USER app
 
 EXPOSE 3002
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://0.0.0.0:3002/api/v1/health || exit 1
+
 CMD ["node", "dist/src/main.js"]
