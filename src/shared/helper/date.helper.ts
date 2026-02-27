@@ -18,6 +18,12 @@ export class DateHelper {
     return this.now().toJSDate();
   }
 
+  static from(value: Date | string | DateTime): DateTime {
+    if (value instanceof Date) return DateTime.fromJSDate(value);
+    if (typeof value === 'string') return DateTime.fromISO(value);
+    return value;
+  }
+
   static fromISO(value: string): DateTime {
     return DateTime.fromISO(value, { zone: TIMEZONE });
   }

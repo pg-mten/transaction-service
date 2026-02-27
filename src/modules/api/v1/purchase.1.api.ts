@@ -20,9 +20,12 @@ import { ResponseException } from 'src/shared/exception';
 import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api';
 import { MerchantSignatureAuthClient } from 'src/microservice/merchant-signature/merchant-signature.auth.client';
 import { HttpMethodEnum } from 'src/shared/constant/auth.constant';
-import { DtoHelper, TransactionHelper } from 'src/shared/helper';
+import { DateHelper, DtoHelper, TransactionHelper } from 'src/shared/helper';
 import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
-import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
+import {
+  ProviderName,
+  TransactionUserRole,
+} from 'src/shared/constant/transaction.constant';
 import {
   CreatePurchaseResponseApi,
   CreatePurchaseResponseQRApi,
@@ -38,6 +41,7 @@ import { PurchaseService } from 'src/modules/purchase/purchase.service';
 import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
 import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
 import { Pageable } from 'src/shared/pagination';
+import { IS_TEST } from 'src/shared/constant/global.constant';
 
 @Injectable()
 export class Purchase1Api {
@@ -170,7 +174,7 @@ export class Purchase1Api {
     expireSecond: number;
   }) {
     try {
-      if (dto.providerName === 'PDNT1') {
+      if (dto.providerName === ProviderName.PDNT1) {
         const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
           ...dto,
         });
@@ -235,12 +239,13 @@ export class Purchase1Api {
       nominal: new Decimal(body.amount),
       expireSecond: body.expireSecond ?? 900,
     });
+    console.log({ clientData, date: DateHelper.now() });
 
     const purchase = await this.prisma.purchaseTransaction.create({
       data: {
         code: code,
         orderId: body.orderId,
-        expiresAt: clientData.expiresAt.toJSDate(),
+        expiresAt: DateHelper.from(clientData.expiresAt).toJSDate(),
         merchantId: merchantSignature.userId,
         externalId: clientData.externalId,
         nominal: body.amount,
@@ -294,24 +299,24 @@ export class Purchase1Api {
         },
       });
 
-      if (body.status === TransactionStatusEnum.SUCCESS) {
-        const purchsaeFeeDetails =
-          await tx.purchaseFeeDetail.createManyAndReturn({
-            data: this.feeDetailMapper({
-              purchaseId: purchase.id,
-              feeDto,
-            }),
-          });
-        console.log({ purchsaeFeeDetails });
+      console.log({ feeDto, purchase });
 
-        await this.createBalanceLog({
-          purchaseId: purchase.id,
-          merchantId: purchase.merchantId,
-          providerName: purchase.providerName,
-          paymentMethodName: purchase.paymentMethodName,
-          nominal: purchase.nominal,
-          feeDto: feeDto,
-        });
+      if (body.status === TransactionStatusEnum.SUCCESS) {
+        await Promise.all([
+          this.createFeeDetail({
+            purchaseId: purchase.id,
+            feeDto: feeDto,
+          }),
+
+          this.createBalanceLog({
+            purchaseId: purchase.id,
+            merchantId: purchase.merchantId,
+            providerName: purchase.providerName,
+            paymentMethodName: purchase.paymentMethodName,
+            nominal: purchase.nominal,
+            feeDto: feeDto,
+          }),
+        ]);
       }
 
       return new WebhookPayinApi({
@@ -325,6 +330,9 @@ export class Purchase1Api {
         paymentMethod: purchase.paymentMethodName,
       });
     });
+
+    if (IS_TEST) return webhookApi;
+
     const merchantSignatureUrl =
       await this.merchantSignatureClient.findMerchantUrlTCP({
         userId: userId,
@@ -381,11 +389,11 @@ export class Purchase1Api {
           transactionType: this.transactionType,
           purchaseId: dto.purchaseId,
           merchantId: dto.merchantId,
-          changeAmount: dto.nominal, // TODO Bukannya harusnya netNominal ?
-          balanceActive: lastBalanceMerchant.balanceActive?.minus(
+          changeAmount: dto.feeDto.merchantFee.netNominal,
+          balanceActive: lastBalanceMerchant.balanceActive,
+          balancePending: lastBalanceMerchant.balancePending.plus(
             dto.feeDto.merchantFee.netNominal,
           ),
-          balancePending: lastBalanceMerchant.balancePending,
         },
       }),
 
@@ -395,9 +403,7 @@ export class Purchase1Api {
           purchaseId: dto.purchaseId,
           merchantId: dto.merchantId,
           changeAmount: dto.feeDto.internalFee.nominal,
-          balanceActive: lastBalanceInternal.balanceActive?.plus(
-            dto.feeDto.internalFee.nominal,
-          ),
+          balanceActive: lastBalanceInternal.balanceActive,
           balancePending: lastBalanceInternal.balancePending,
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
@@ -425,13 +431,13 @@ export class Purchase1Api {
     ]);
   }
 
-  private feeDetailMapper({
+  private async createFeeDetail({
     purchaseId,
     feeDto,
   }: {
     purchaseId: number;
     feeDto: PurchaseFeeSystemDto;
-  }): Prisma.PurchaseFeeDetailCreateManyInput[] {
+  }) {
     const result: Prisma.PurchaseFeeDetailCreateManyInput[] = [];
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
@@ -492,7 +498,8 @@ export class Purchase1Api {
         nominal: agentFeeEach.nominal,
       });
     }
-
-    return result;
+    return this.prisma.purchaseFeeDetail.createManyAndReturn({
+      data: result,
+    });
   }
 }

@@ -18,7 +18,7 @@ export class PdnProviderClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly pdnProviderClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly point = SERVICES.SETTLERECON.point;
 

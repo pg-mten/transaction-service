@@ -12,7 +12,7 @@ export class SettlementSettleReconClient {
   constructor(
     @Inject(SERVICES.SETTLERECON.name)
     private readonly settleReconClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly point = SERVICES.SETTLERECON.point;
 
@@ -32,7 +32,7 @@ export class SettlementSettleReconClient {
   async scheduleTCP(body: CreateSettlementScheduleSystemDto) {
     try {
       const res = await firstValueFrom(
-        this.settleReconClient.send<SettlementScheduleSystemDto>(
+        this.settleReconClient.send<ResponseDto<SettlementScheduleSystemDto>>(
           { cmd: this.point.settlement_schedule.cmd },
           body,
         ),
@@ -40,7 +40,7 @@ export class SettlementSettleReconClient {
       return res;
     } catch (error) {
       console.log(error);
-      return this.schedule(body).then((r) => r.data!);
+      return this.schedule(body);
     }
   }
 }

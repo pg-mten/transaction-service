@@ -49,7 +49,7 @@ export class Disbursement1Api {
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly disbursementService: DisbursementService,
-  ) { }
+  ) {}
 
   private readonly transactionType = TransactionTypeEnum.DISBURSEMENT;
 
@@ -205,7 +205,9 @@ export class Disbursement1Api {
     const merchantSignature: MerchantSignatureValidationSystemDto =
       await this.merchantSignatureClient.signatureValidationTCP({
         headers: headers,
-        body: DtoHelper.convertDecimalToNumber(body as unknown as Record<string, unknown>),
+        body: DtoHelper.convertDecimalToNumber(
+          body as unknown as Record<string, unknown>,
+        ),
         method: HttpMethodEnum.POST,
         path: '/open/v1/payout/transfer',
       });
