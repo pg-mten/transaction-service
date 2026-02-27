@@ -404,7 +404,9 @@ export class Purchase1Api {
           merchantId: dto.merchantId,
           changeAmount: dto.feeDto.internalFee.nominal,
           balanceActive: lastBalanceInternal.balanceActive,
-          balancePending: lastBalanceInternal.balancePending,
+          balancePending: lastBalanceInternal.balancePending.plus(
+            dto.feeDto.internalFee.nominal,
+          ),
           providerName: dto.providerName,
           paymentMethodName: dto.paymentMethodName,
         },
@@ -412,19 +414,19 @@ export class Purchase1Api {
 
       this.prisma.agentBalanceLog.createMany({
         skipDuplicates: true,
-        data: dto.feeDto.agentFee.agents.map((item) => {
+        data: dto.feeDto.agentFee.agents.map((agent) => {
+          const lastBalance = lastBalanceAgents.find(
+            (a) => a.agentId === agent.id,
+          );
           return {
             transactionType: this.transactionType,
             purchaseId: dto.purchaseId,
-            agentId: item.id,
-            changeAmount: item.nominal,
-            balancePending:
-              lastBalanceAgents.find((a) => a.agentId == item.id)
-                ?.balancePending || new Decimal(0),
-            balanceActive:
-              lastBalanceAgents
-                .find((a) => a.agentId == item.id)
-                ?.balanceActive.plus(item.nominal) || new Decimal(0),
+            agentId: agent.id,
+            changeAmount: agent.nominal,
+            balancePending: (
+              lastBalance?.balancePending ?? new Decimal(0)
+            ).plus(agent.nominal),
+            balanceActive: lastBalance?.balanceActive ?? new Decimal(0),
           } as Prisma.AgentBalanceLogCreateManyInput;
         }),
       }),
@@ -493,7 +495,7 @@ export class Purchase1Api {
         purchaseId,
         type: 'AGENT',
         agentId: agentFeeEach.id,
-        feeFixed: agentFee.nominal,
+        feeFixed: agentFeeEach.nominal,
         feePercentage: agentFeeEach.feePercentage,
         nominal: agentFeeEach.nominal,
       });
