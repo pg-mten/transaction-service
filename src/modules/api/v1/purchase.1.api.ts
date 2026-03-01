@@ -302,21 +302,21 @@ export class Purchase1Api {
       console.log({ feeDto, purchase });
 
       if (body.status === TransactionStatusEnum.SUCCESS) {
-        await Promise.all([
-          this.createFeeDetail({
-            purchaseId: purchase.id,
-            feeDto: feeDto,
-          }),
+        await this.createFeeDetail({
+          tx,
+          purchaseId: purchase.id,
+          feeDto: feeDto,
+        });
 
-          this.createBalanceLog({
-            purchaseId: purchase.id,
-            merchantId: purchase.merchantId,
-            providerName: purchase.providerName,
-            paymentMethodName: purchase.paymentMethodName,
-            nominal: purchase.nominal,
-            feeDto: feeDto,
-          }),
-        ]);
+        await this.createBalanceLog({
+          tx,
+          purchaseId: purchase.id,
+          merchantId: purchase.merchantId,
+          providerName: purchase.providerName,
+          paymentMethodName: purchase.paymentMethodName,
+          nominal: purchase.nominal,
+          feeDto: feeDto,
+        });
       }
 
       return new WebhookPayinApi({
@@ -360,6 +360,7 @@ export class Purchase1Api {
   }
 
   private async createBalanceLog(dto: {
+    tx: Prisma.TransactionClient;
     purchaseId: number;
     merchantId: number;
     providerName: string;
@@ -367,76 +368,105 @@ export class Purchase1Api {
     nominal: Decimal;
     feeDto: PurchaseFeeSystemDto;
   }) {
-    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
-      (agent) => agent.id,
-    );
-    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
-      dto.merchantId,
-    );
-    const lastBalanceInternal =
-      await this.balanceService.checkBalanceInternal();
-    const lastBalanceAgents =
-      await this.balanceService.checkBalanceAgents(agentIds);
+    const agentIds: number[] = Array.from(
+      new Set(dto.feeDto.agentFee.agents.map((agent) => agent.id)),
+    ).sort((a, b) => a - b);
+
+    // Serialize shared balance chains to prevent stale baseline reads.
+    await dto.tx.$executeRaw`SELECT pg_advisory_xact_lock(30, 0)`;
+    await dto.tx
+      .$executeRaw`SELECT pg_advisory_xact_lock(10, ${dto.merchantId})`;
+    for (const agentId of agentIds) {
+      await dto.tx.$executeRaw`SELECT pg_advisory_xact_lock(20, ${agentId})`;
+    }
+
+    const lastBalanceMerchant = await dto.tx.merchantBalanceLog.findFirst({
+      where: { merchantId: dto.merchantId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+    const lastBalanceInternal = await dto.tx.internalBalanceLog.findFirst({
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+    const lastBalanceAgents = await dto.tx.agentBalanceLog.findMany({
+      where: { agentId: { in: agentIds } },
+      distinct: ['agentId'],
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: {
+        agentId: true,
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
 
     /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
     // if (lastBalanceMerchant.balanceActive <= dto.nominal) {
     //   throw new Error('Balance Tidak Mencukupi');
     // }
 
-    return Promise.all([
-      this.prisma.merchantBalanceLog.create({
-        data: {
+    await dto.tx.merchantBalanceLog.create({
+      data: {
+        transactionType: this.transactionType,
+        purchaseId: dto.purchaseId,
+        merchantId: dto.merchantId,
+        changeAmount: dto.feeDto.merchantFee.netNominal,
+        balanceActive: lastBalanceMerchant?.balanceActive ?? new Decimal(0),
+        balancePending: (
+          lastBalanceMerchant?.balancePending ?? new Decimal(0)
+        ).plus(dto.feeDto.merchantFee.netNominal),
+      },
+    });
+
+    await dto.tx.internalBalanceLog.create({
+      data: {
+        transactionType: this.transactionType,
+        purchaseId: dto.purchaseId,
+        merchantId: dto.merchantId,
+        changeAmount: dto.feeDto.internalFee.nominal,
+        balanceActive: lastBalanceInternal?.balanceActive ?? new Decimal(0),
+        balancePending: (
+          lastBalanceInternal?.balancePending ?? new Decimal(0)
+        ).plus(dto.feeDto.internalFee.nominal),
+        providerName: dto.providerName,
+        paymentMethodName: dto.paymentMethodName,
+      },
+    });
+
+    await dto.tx.agentBalanceLog.createMany({
+      skipDuplicates: true,
+      data: dto.feeDto.agentFee.agents.map((agent) => {
+        const lastBalance = lastBalanceAgents.find(
+          (a) => a.agentId === agent.id,
+        );
+        return {
           transactionType: this.transactionType,
           purchaseId: dto.purchaseId,
-          merchantId: dto.merchantId,
-          changeAmount: dto.feeDto.merchantFee.netNominal,
-          balanceActive: lastBalanceMerchant.balanceActive,
-          balancePending: lastBalanceMerchant.balancePending.plus(
-            dto.feeDto.merchantFee.netNominal,
+          agentId: agent.id,
+          changeAmount: agent.nominal,
+          balancePending: (lastBalance?.balancePending ?? new Decimal(0)).plus(
+            agent.nominal,
           ),
-        },
+          balanceActive: lastBalance?.balanceActive ?? new Decimal(0),
+        } as Prisma.AgentBalanceLogCreateManyInput;
       }),
+    });
 
-      this.prisma.internalBalanceLog.create({
-        data: {
-          transactionType: this.transactionType,
-          purchaseId: dto.purchaseId,
-          merchantId: dto.merchantId,
-          changeAmount: dto.feeDto.internalFee.nominal,
-          balanceActive: lastBalanceInternal.balanceActive,
-          balancePending: lastBalanceInternal.balancePending.plus(
-            dto.feeDto.internalFee.nominal,
-          ),
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-        },
-      }),
-
-      this.prisma.agentBalanceLog.createMany({
-        skipDuplicates: true,
-        data: dto.feeDto.agentFee.agents.map((agent) => {
-          const lastBalance = lastBalanceAgents.find(
-            (a) => a.agentId === agent.id,
-          );
-          return {
-            transactionType: this.transactionType,
-            purchaseId: dto.purchaseId,
-            agentId: agent.id,
-            changeAmount: agent.nominal,
-            balancePending: (
-              lastBalance?.balancePending ?? new Decimal(0)
-            ).plus(agent.nominal),
-            balanceActive: lastBalance?.balanceActive ?? new Decimal(0),
-          } as Prisma.AgentBalanceLogCreateManyInput;
-        }),
-      }),
-    ]);
+    return;
   }
 
   private async createFeeDetail({
+    tx,
     purchaseId,
     feeDto,
   }: {
+    tx: Prisma.TransactionClient;
     purchaseId: number;
     feeDto: PurchaseFeeSystemDto;
   }) {
@@ -500,7 +530,7 @@ export class Purchase1Api {
         nominal: agentFeeEach.nominal,
       });
     }
-    return this.prisma.purchaseFeeDetail.createManyAndReturn({
+    return tx.purchaseFeeDetail.createManyAndReturn({
       data: result,
     });
   }
