@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query, Res } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,6 +6,7 @@ import {
   ApiOkResponse,
   ApiBody,
   ApiBearerAuth,
+  ApiProduces,
 } from '@nestjs/swagger';
 import { FilterWithdrawDto } from './dto/filter-withdraw.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
@@ -19,6 +20,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { SERVICES } from 'src/shared/constant/client.constant';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import { SystemApi } from 'src/microservice/auth/decorator';
+import { Response } from 'express';
 
 @ApiTags('Transactions', 'Withdraw')
 @Controller()
@@ -53,6 +55,26 @@ export class WithdrawTransactionsController {
   ) {
     console.log({ filter, pageable });
     return this.service.findAll(pageable, filter);
+  }
+
+  @Get('transactions/withdraw/csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Ambil semua transaksi dalam format CSV (default 7 hari terakhir)',
+  })
+  @ApiProduces('text/csv')
+  async findAllCsv(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterWithdrawDto,
+    @Res() response: Response,
+  ) {
+    const csv = await this.service.findAllCsv(pageable, filter);
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="withdraw-transactions.csv"',
+    );
+    response.send(`\ufeff${csv}`);
   }
 
   @SystemApi()

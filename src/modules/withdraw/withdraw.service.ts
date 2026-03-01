@@ -32,6 +32,7 @@ import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.cl
 import { UserAuthClient } from 'src/microservice/auth/user.auth.client';
 import { ProfileBankByIdSystemDto } from 'src/microservice/auth/dto-system/profile-bank.system.dto';
 import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
+import { CsvColumn, CsvHelper } from 'src/shared/helper/csv.helper';
 
 @Injectable()
 export class WithdrawService {
@@ -463,5 +464,28 @@ export class WithdrawService {
       total,
       data: withdrawDtos,
     });
+  }
+
+  async findAllCsv(pageable: Pageable, query: FilterWithdrawDto): Promise<string> {
+    const page = await this.findAll(pageable, query);
+    const columns: CsvColumn<WithdrawTransactionDto>[] = [
+      { header: 'id', value: (item) => item.id },
+      { header: 'externalId', value: (item) => item.externalId },
+      { header: 'referenceId', value: (item) => item.referenceId },
+      { header: 'userId', value: (item) => item.userId },
+      { header: 'userRole', value: (item) => item.userRole },
+      { header: 'providerName', value: (item) => item.providerName },
+      { header: 'paymentMethodName', value: (item) => item.paymentMethodName },
+      { header: 'nominal', value: (item) => item.nominal },
+      { header: 'netNominal', value: (item) => item.netNominal },
+      { header: 'totalFeeCut', value: (item) => item.totalFeeCut },
+      { header: 'status', value: (item) => item.status },
+      { header: 'metadata', value: (item) => item.metadata },
+      { header: 'reconciliationAt', value: (item) => item.reconciliationAt },
+      { header: 'paidAt', value: (item) => item.paidAt },
+      { header: 'createdAt', value: (item) => item.createdAt },
+      { header: 'feeDetails', value: (item) => item.feeDetails },
+    ];
+    return CsvHelper.build(page.data, columns);
   }
 }

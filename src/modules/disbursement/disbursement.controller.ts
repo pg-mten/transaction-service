@@ -1,16 +1,18 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiOkResponse,
   ApiBearerAuth,
+  ApiProduces,
 } from '@nestjs/swagger';
 import { FilterDisbursementDto } from './dto/filter-disbursement.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { DisbursementService } from './disbursement.service';
 import { DisbursementTransactionDto } from './dto/disbursement-transaction.dto';
+import { Response } from 'express';
 
 @ApiTags('Transactions', 'Disbursement')
 @Controller('transactions/disbursement')
@@ -35,5 +37,25 @@ export class DisbursementTransactionsController {
   ) {
     console.log({ filter, pageable });
     return this.service.findAll(pageable, filter);
+  }
+
+  @Get('csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Ambil semua transaksi dalam format CSV (default 7 hari terakhir)',
+  })
+  @ApiProduces('text/csv')
+  async findAllCsv(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterDisbursementDto,
+    @Res() response: Response,
+  ) {
+    const csv = await this.service.findAllCsv(pageable, filter);
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="disbursement-transactions.csv"',
+    );
+    response.send(`\ufeff${csv}`);
   }
 }
