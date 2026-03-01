@@ -11,6 +11,7 @@ import { DisbursementFeeDetailDto } from './dto/disbursement-fee-detail.dto';
 import { PRISMA_SERVICE } from '../prisma/prisma.provider';
 import { ReadTransferDateRequestApi } from '../api/v1/dto-api/read-transfer-date.request.api';
 import { ReadTransferDateResponseApi } from '../api/v1/dto-api/read-transfer-date.response.api';
+import { CsvColumn, CsvHelper } from 'src/shared/helper/csv.helper';
 
 @Injectable()
 export class DisbursementService {
@@ -149,6 +150,31 @@ export class DisbursementService {
       total,
       data: disbursementDtos,
     });
+  }
+
+  async findAllCsv(
+    pageable: Pageable,
+    query: FilterDisbursementDto,
+  ): Promise<string> {
+    const page = await this.findAll(pageable, query);
+    const columns: CsvColumn<DisbursementTransactionDto>[] = [
+      { header: 'id', value: (item) => item.id },
+      { header: 'externalId', value: (item) => item.externalId },
+      { header: 'referenceId', value: (item) => item.referenceId },
+      { header: 'merchantId', value: (item) => item.merchantId },
+      { header: 'providerName', value: (item) => item.providerName },
+      { header: 'paymentMethodName', value: (item) => item.paymentMethodName },
+      { header: 'nominal', value: (item) => item.nominal },
+      { header: 'netNominal', value: (item) => item.netNominal },
+      { header: 'totalFeeCut', value: (item) => item.totalFeeCut },
+      { header: 'status', value: (item) => item.status },
+      { header: 'metadata', value: (item) => item.metadata },
+      { header: 'reconciliationAt', value: (item) => item.reconciliationAt },
+      { header: 'paidAt', value: (item) => item.paidAt },
+      { header: 'createdAt', value: (item) => item.createdAt },
+      { header: 'feeDetails', value: (item) => item.feeDetails },
+    ];
+    return CsvHelper.build(page.data, columns);
   }
 
   // private async callProvider(dto: {

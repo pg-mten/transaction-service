@@ -1,5 +1,5 @@
 // src/transactions/transactions.controller.ts
-import { Controller, Get, Param, Post, Body, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query, Res } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,6 +7,7 @@ import {
   ApiOkResponse,
   ApiBody,
   ApiBearerAuth,
+  ApiProduces,
 } from '@nestjs/swagger';
 
 import { FilterTopupDto } from './dto/filter-topup.dto';
@@ -18,6 +19,7 @@ import { CreateTopupTransactionDto } from './dto/create-topup-transaction.dto';
 import { TopupTransactionDto } from './dto/topup-transaction.dto';
 import { ApproveTopupTransactionDto } from './dto/approve-topup-transaction.dto';
 import { RejectTopupTransactionDto } from './dto/reject-topup-transaction.dto';
+import { Response } from 'express';
 
 @ApiTags('Transactions', 'Topup')
 @Controller('transactions/topup')
@@ -31,6 +33,26 @@ export class TopupTransactionsController {
   async create(@Body() body: CreateTopupTransactionDto) {
     await this.service.create(body);
     return new ResponseDto({ status: ResponseStatus.CREATED });
+  }
+
+  @Get('csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Ambil semua transaksi dalam format CSV (default 7 hari terakhir)',
+  })
+  @ApiProduces('text/csv')
+  async findAllCsv(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterTopupDto,
+    @Res() response: Response,
+  ) {
+    const csv = await this.service.findAllCsv(pageable, filter);
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="topup-transactions.csv"',
+    );
+    response.send(`\ufeff${csv}`);
   }
 
   @Get(':id')
