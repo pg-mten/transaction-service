@@ -274,62 +274,66 @@ export class Purchase1Api {
   ): Promise<WebhookPayinApi> {
     const { paymentMethodName, providerName, userId } =
       TransactionHelper.extractCode(body.code);
-    const webhookApi = await this.prisma.$transaction(async (tx) => {
-      const feeDto =
-        await this.feeCalculateClient.calculatePurchaseFeeConfigTCP({
-          merchantId: userId,
-          nominal: body.nominal,
-          paymentMethodName: paymentMethodName,
-          providerName: providerName,
-        });
-
-      const purchase = await tx.purchaseTransaction.update({
-        where: {
-          code: body.code,
-          merchantId: userId,
-          paymentMethodName,
-          providerName,
-        },
-        data: {
-          externalId: body.externalId,
-          netNominal: feeDto.merchantFee.netNominal,
-          paidAt: body.paidAt?.toJSDate() ?? null,
-          status: body.status as TransactionStatusEnum,
-          metadata: body.metadata as Prisma.InputJsonValue,
-        },
-      });
-
-      console.log({ feeDto, purchase });
-
-      if (body.status === TransactionStatusEnum.SUCCESS) {
-        await this.createFeeDetail({
-          tx,
-          purchaseId: purchase.id,
-          feeDto: feeDto,
-        });
-
-        await this.createBalanceLog({
-          tx,
-          purchaseId: purchase.id,
-          merchantId: purchase.merchantId,
-          providerName: purchase.providerName,
-          paymentMethodName: purchase.paymentMethodName,
-          nominal: purchase.nominal,
-          feeDto: feeDto,
-        });
-      }
-
-      return new WebhookPayinApi({
-        transactionId: purchase.id,
-        orderId: purchase.orderId,
-        amount: purchase.nominal,
-        netAmount: purchase.netNominal,
-        fee: purchase.nominal.minus(purchase.netNominal),
-        status: purchase.status,
-        paidAt: purchase.paidAt?.toISOString() ?? null,
-        paymentMethod: purchase.paymentMethodName,
-      });
+    const feeDto = await this.feeCalculateClient.calculatePurchaseFeeConfigTCP({
+      merchantId: userId,
+      nominal: body.nominal,
+      paymentMethodName: paymentMethodName,
+      providerName: providerName,
     });
+    const webhookApi = await this.prisma.$transaction(
+      async (tx) => {
+        const purchase = await tx.purchaseTransaction.update({
+          where: {
+            code: body.code,
+            merchantId: userId,
+            paymentMethodName,
+            providerName,
+          },
+          data: {
+            externalId: body.externalId,
+            netNominal: feeDto.merchantFee.netNominal,
+            paidAt: body.paidAt?.toJSDate() ?? null,
+            status: body.status as TransactionStatusEnum,
+            metadata: body.metadata as Prisma.InputJsonValue,
+          },
+        });
+
+        console.log({ feeDto, purchase });
+
+        if (body.status === TransactionStatusEnum.SUCCESS) {
+          await this.createFeeDetail({
+            tx,
+            purchaseId: purchase.id,
+            feeDto: feeDto,
+          });
+
+          await this.createBalanceLog({
+            tx,
+            purchaseId: purchase.id,
+            merchantId: purchase.merchantId,
+            providerName: purchase.providerName,
+            paymentMethodName: purchase.paymentMethodName,
+            nominal: purchase.nominal,
+            feeDto: feeDto,
+          });
+        }
+
+        return new WebhookPayinApi({
+          transactionId: purchase.id,
+          orderId: purchase.orderId,
+          amount: purchase.nominal,
+          netAmount: purchase.netNominal,
+          fee: purchase.nominal.minus(purchase.netNominal),
+          status: purchase.status,
+          paidAt: purchase.paidAt?.toISOString() ?? null,
+          paymentMethod: purchase.paymentMethodName,
+        });
+      },
+      {
+        maxWait: 15000,
+        timeout: 30000,
+      },
+    );
 
     if (IS_TEST) return webhookApi;
 
@@ -382,14 +386,14 @@ export class Purchase1Api {
 
     const lastBalanceMerchant = await dto.tx.merchantBalanceLog.findFirst({
       where: { merchantId: dto.merchantId },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ id: 'desc' }],
       select: {
         balanceActive: true,
         balancePending: true,
       },
     });
     const lastBalanceInternal = await dto.tx.internalBalanceLog.findFirst({
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ id: 'desc' }],
       select: {
         balanceActive: true,
         balancePending: true,
@@ -398,7 +402,7 @@ export class Purchase1Api {
     const lastBalanceAgents = await dto.tx.agentBalanceLog.findMany({
       where: { agentId: { in: agentIds } },
       distinct: ['agentId'],
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ id: 'desc' }],
       select: {
         agentId: true,
         balanceActive: true,
