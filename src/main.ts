@@ -47,6 +47,7 @@ async function bootstrap() {
     .setVersion(VERSION)
     .addServer('http://localhost:3002', 'Local')
     .addServer(`http://103.94.238.214:3002`, 'Production') // Adjust with Server Proxy
+    .addServer(`https://api.manapay.id/transaction`, 'Production DNS') // Adjust with Server Proxy
     .addBearerAuth()
     .build();
 
