@@ -37,6 +37,8 @@ import { ReadTransferDateRequestApi } from './dto-api/read-transfer-date.request
 import { DisbursementService } from 'src/modules/disbursement/disbursement.service';
 import { ReadTransferDateResponseApi } from './dto-api/read-transfer-date.response.api';
 import { WebhookPayoutApi } from './dto-api/webhook-payout.api';
+import { IS_TEST } from 'src/shared/constant/global.constant';
+import axios from 'axios';
 
 @Injectable()
 export class Disbursement1Api {
@@ -218,22 +220,38 @@ export class Disbursement1Api {
       );
     }
 
-    const balance = await this.balanceService.checkBalanceMerchant(
-      merchantSignature.userId,
-    );
-
-    if (balance.balanceActive.lessThan(body.amount)) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Balance insufficient'),
-      );
-    }
-
     const profileProvider =
       await this.profileProviderClient.findProfileProviderTCP({
         transactionType: this.transactionType,
         userId: merchantSignature.userId,
         userRole: TransactionUserRole.MERCHANT,
       });
+
+    const feeDto =
+      await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
+        merchantId: merchantSignature.userId,
+        nominal: body.amount,
+        paymentMethodName: profileProvider.paymentMethodName,
+        providerName: profileProvider.providerName,
+      });
+
+    const lastBalanceMerchant = await this.prisma.merchantBalanceLog.findFirst({
+      where: { merchantId: merchantSignature.userId },
+      orderBy: [{ id: 'desc' }],
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+
+    if (
+      !lastBalanceMerchant ||
+      lastBalanceMerchant.balanceActive.lessThan(feeDto.merchantFee.netNominal)
+    ) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Balance insufficient'),
+      );
+    }
 
     const code = TransactionHelper.createCode({
       transactionType: this.transactionType,
@@ -257,49 +275,39 @@ export class Disbursement1Api {
       return this.createFailed(clientData, body);
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const feeDto =
-        await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
-          merchantId: merchantSignature.userId,
-          nominal: clientData.nominal,
-          paymentMethodName: profileProvider.paymentMethodName,
-          providerName: profileProvider.providerName,
-        });
-
-      const disbursement = await tx.disbursementTransaction.create({
-        data: {
-          code: code,
-          orderId: body.orderId,
-          externalId: clientData.externalId,
-          merchantId: merchantSignature.userId,
-          providerName: profileProvider.providerName,
-          paymentMethodName: profileProvider.paymentMethodName,
-          recipientName: body.accountName,
-          recipientBankCode: body.bankCode,
-          recipientAccount: body.accountNumber,
-          recipientBankName: body.bankName,
-          nominal: clientData.nominal,
-          netNominal: feeDto.merchantFee.netNominal,
-          metadata: clientData.metadata as Prisma.InputJsonValue,
-          status: TransactionStatusEnum.PENDING,
-        },
-      });
-
-      return new CreateTransferResponseApi({
-        transactionId: disbursement.id,
+    const disbursement = await this.prisma.disbursementTransaction.create({
+      data: {
+        code: code,
         orderId: body.orderId,
-        amount: body.amount,
-        netAmount: disbursement.netNominal,
-        fee: feeDto.merchantFee.nominal.minus(feeDto.merchantFee.netNominal),
+        externalId: clientData.externalId,
+        merchantId: merchantSignature.userId,
+        providerName: profileProvider.providerName,
+        paymentMethodName: profileProvider.paymentMethodName,
+        recipientName: body.accountName,
+        recipientBankCode: body.bankCode,
+        recipientAccount: body.accountNumber,
+        recipientBankName: body.bankName,
+        nominal: clientData.nominal,
+        netNominal: feeDto.merchantFee.netNominal,
+        metadata: clientData.metadata as Prisma.InputJsonValue,
         status: TransactionStatusEnum.PENDING,
-        description: 'Create Transfer Bank/EWallet succesfully',
-        currency: 'IDR',
-        bankCode: body.bankCode,
-        bankName: body.bankName,
-        accountName: body.accountName,
-        accountNumber: body.accountNumber,
-        createdAt: disbursement.createdAt.toISOString(),
-      });
+      },
+    });
+
+    return new CreateTransferResponseApi({
+      transactionId: disbursement.id,
+      orderId: body.orderId,
+      amount: body.amount,
+      netAmount: disbursement.netNominal,
+      fee: feeDto.merchantFee.nominal.minus(feeDto.merchantFee.netNominal),
+      status: TransactionStatusEnum.PENDING,
+      description: 'Create Transfer Bank/EWallet succesfully',
+      currency: 'IDR',
+      bankCode: body.bankCode,
+      bankName: body.bankName,
+      accountName: body.accountName,
+      accountNumber: body.accountNumber,
+      createdAt: disbursement.createdAt.toISOString(),
     });
   }
 
@@ -347,63 +355,97 @@ export class Disbursement1Api {
   }
 
   async callback(body: UpdateDisbursementCallbackSystemDto) {
-    const codeExtract = TransactionHelper.extractCode(body.code);
-
-    return this.prisma.$transaction(async (tx) => {
-      const disbursement = await tx.disbursementTransaction.update({
-        where: {
-          code: body.code,
-          merchantId: codeExtract.userId,
-        },
-        data: {
-          status: body.status as TransactionStatusEnum,
-          paidAt: body.paidAt?.toJSDate() ?? null,
-        },
+    const { userId, paymentMethodName, providerName } =
+      TransactionHelper.extractCode(body.code);
+    const feeDto =
+      await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
+        merchantId: userId,
+        providerName: providerName,
+        paymentMethodName: paymentMethodName,
+        nominal: body.nominal,
       });
 
-      if (disbursement.status === TransactionStatusEnum.SUCCESS) {
-        const feeDto =
-          await this.feeCalculateClient.calculateDisbursementFeeConfigTCP({
+    const webhookApi = this.prisma.$transaction(
+      async (tx) => {
+        const disbursement = await tx.disbursementTransaction.update({
+          where: {
+            code: body.code,
+            merchantId: userId,
+            paymentMethodName,
+            providerName,
+          },
+          data: {
+            externalId: body.externalId,
+            netNominal: feeDto.merchantFee.netNominal,
+            status: body.status as TransactionStatusEnum,
+            paidAt: body.paidAt?.toJSDate() ?? null,
+            metadata: body.metadata as Prisma.InputJsonValue,
+          },
+        });
+        console.log({ feeDto, disbursement });
+
+        if (body.status === TransactionStatusEnum.SUCCESS) {
+          await this.createFeeDetail({
+            tx,
+            disbursementId: disbursement.id,
+            feeDto,
+          });
+
+          await this.createBalanceLog({
+            tx,
+            disbursementId: disbursement.id,
             merchantId: disbursement.merchantId,
             providerName: disbursement.providerName,
             paymentMethodName: disbursement.paymentMethodName,
             nominal: disbursement.nominal,
+            feeDto,
           });
 
-        const disbursementFeeDetails =
-          await tx.disbursementFeeDetail.createManyAndReturn({
-            data: this.feeDetailMapper({
-              disbursementId: disbursement.id,
-              feeDto,
-            }),
+          return new WebhookPayoutApi({
+            transactionId: disbursement.id,
+            orderId: disbursement.orderId,
+            amount: disbursement.nominal,
+            netAmount: disbursement.netNominal,
+            fee: disbursement.nominal.minus(disbursement.netNominal),
+            status: disbursement.status,
+            paidAt: disbursement.paidAt?.toISOString() ?? null,
+            paymentMethod: disbursement.paymentMethodName,
           });
+        }
+      },
+      { maxWait: 15_000, timeout: 30_000 },
+    );
 
-        console.log({ disbursementFeeDetails });
+    if (IS_TEST) return webhookApi;
 
-        await this.createBalanceLog({
-          disbursementId: disbursement.id,
-          merchantId: disbursement.merchantId,
-          providerName: disbursement.providerName,
-          paymentMethodName: disbursement.paymentMethodName,
-          nominal: disbursement.nominal,
-          feeDto,
-        });
+    const merchantSignatureUrl =
+      await this.merchantSignatureClient.findMerchantUrlTCP({
+        userId: userId,
+      });
 
-        return new WebhookPayoutApi({
-          transactionId: disbursement.id,
-          orderId: disbursement.orderId,
-          amount: disbursement.nominal,
-          netAmount: disbursement.netNominal,
-          fee: disbursement.nominal.minus(disbursement.netNominal),
-          status: disbursement.status,
-          paidAt: disbursement.paidAt?.toISOString() ?? null,
-          paymentMethod: disbursement.paymentMethodName,
-        });
-      }
-    });
+    if (!merchantSignatureUrl || !merchantSignatureUrl.payoutUrl) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException(
+          `Merchant Payout URL Not Found userId: ${userId}`,
+        ),
+      );
+    }
+
+    // TODO: Implement proper webhook retry mechanism (e.g. exponential backoff / queue)
+    // instead of silently swallowing delivery failures
+    try {
+      await axios.post(merchantSignatureUrl.payoutUrl, webhookApi);
+    } catch (error) {
+      console.error(
+        `[Disbursement1Api] Failed to deliver webhook to ${merchantSignatureUrl.payoutUrl}:`,
+        error?.message ?? error,
+      );
+    }
+    return webhookApi;
   }
 
   private async createBalanceLog(dto: {
+    tx: Prisma.TransactionClient;
     disbursementId: number;
     merchantId: number;
     providerName: string;
@@ -411,79 +453,112 @@ export class Disbursement1Api {
     nominal: Decimal;
     feeDto: DisbursementFeeSystemDto;
   }) {
-    const agentIds: number[] = dto.feeDto.agentFee.agents.map(
-      (agent) => agent.id,
-    );
-    const lastBalanceMerchant = await this.balanceService.checkBalanceMerchant(
-      dto.merchantId,
-    );
-    const lastBalanceInternal =
-      await this.balanceService.checkBalanceInternal();
-    const lastBalanceAgents =
-      await this.balanceService.checkBalanceAgents(agentIds);
+    const agentIds: number[] = Array.from(
+      new Set(dto.feeDto.agentFee.agents.map((agent) => agent.id)),
+    ).sort((a, b) => a - b);
 
-    /// TODO ResponseException ValidityLogic (statusCode: 419 / 422 / 400)
-    if (lastBalanceMerchant.balanceActive.lte(dto.nominal)) {
-      throw new Error('Balance Tidak Mencukupi');
+    // Serialize shared balance chains to prevent stale baseline reads.
+    await dto.tx.$executeRaw`SELECT pg_advisory_xact_lock(30, 0)`;
+    await dto.tx
+      .$executeRaw`SELECT pg_advisory_xact_lock(10, ${dto.merchantId})`;
+    for (const agentId of agentIds) {
+      await dto.tx.$executeRaw`SELECT pg_advisory_xact_lock(20, ${agentId})`;
     }
 
-    return Promise.all([
-      this.prisma.merchantBalanceLog.create({
-        data: {
-          disbursementId: dto.disbursementId,
-          merchantId: dto.merchantId,
-          changeAmount: dto.nominal,
-          balanceActive: lastBalanceMerchant.balanceActive?.minus(
-            dto.feeDto.merchantFee.netNominal,
-          ),
-          balancePending: lastBalanceMerchant.balancePending,
-          transactionType: this.transactionType,
-        },
-      }),
+    const lastBalanceMerchant = await dto.tx.merchantBalanceLog.findFirst({
+      where: { merchantId: dto.merchantId },
+      orderBy: [{ id: 'desc' }],
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+    const lastBalanceInternal = await dto.tx.internalBalanceLog.findFirst({
+      orderBy: [{ id: 'desc' }],
+      select: {
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
+    const lastBalanceAgents = await dto.tx.agentBalanceLog.findMany({
+      where: { agentId: { in: agentIds } },
+      distinct: ['agentId'],
+      orderBy: [{ id: 'desc' }],
+      select: {
+        agentId: true,
+        balanceActive: true,
+        balancePending: true,
+      },
+    });
 
-      this.prisma.internalBalanceLog.create({
-        data: {
-          disbursementId: dto.disbursementId,
-          merchantId: dto.merchantId,
-          changeAmount: dto.feeDto.internalFee.nominal,
-          balanceActive: lastBalanceInternal.balanceActive?.plus(
-            dto.feeDto.internalFee.nominal,
-          ),
-          balancePending: lastBalanceInternal.balancePending,
-          providerName: dto.providerName,
-          paymentMethodName: dto.paymentMethodName,
-          transactionType: this.transactionType,
-        },
-      }),
+    if (
+      !lastBalanceMerchant ||
+      lastBalanceMerchant.balanceActive.lessThan(
+        dto.feeDto.merchantFee.netNominal,
+      )
+    ) {
+      throw ResponseException.fromHttpExecption(
+        new BadGatewayException('Balance insufficient'),
+      );
+    }
 
-      this.prisma.agentBalanceLog.createMany({
-        skipDuplicates: true,
-        data: dto.feeDto.agentFee.agents.map((item) => {
-          return {
-            disbursementId: dto.disbursementId,
-            agentId: item.id,
-            changeAmount: item.nominal,
-            balancePending:
-              lastBalanceAgents.find((a) => a.agentId == item.id)
-                ?.balancePending || new Decimal(0),
-            balanceActive:
-              lastBalanceAgents
-                .find((a) => a.agentId == item.id)
-                ?.balanceActive.plus(item.nominal) || new Decimal(0),
-            transactionType: this.transactionType,
-          } as Prisma.AgentBalanceLogCreateManyInput;
-        }),
+    await dto.tx.merchantBalanceLog.create({
+      data: {
+        transactionType: this.transactionType,
+        disbursementId: dto.disbursementId,
+        merchantId: dto.merchantId,
+        changeAmount: dto.feeDto.merchantFee.netNominal,
+        balanceActive: lastBalanceMerchant.balanceActive?.minus(
+          dto.feeDto.merchantFee.netNominal,
+        ),
+        balancePending: lastBalanceMerchant.balancePending,
+      },
+    });
+
+    await dto.tx.internalBalanceLog.create({
+      data: {
+        transactionType: this.transactionType,
+        disbursementId: dto.disbursementId,
+        merchantId: dto.merchantId,
+        changeAmount: dto.feeDto.internalFee.nominal,
+        balanceActive: (
+          lastBalanceInternal?.balanceActive ?? new Decimal(0)
+        )?.plus(dto.feeDto.internalFee.nominal),
+        balancePending: lastBalanceInternal?.balancePending ?? new Decimal(0),
+        providerName: dto.providerName,
+        paymentMethodName: dto.paymentMethodName,
+      },
+    });
+
+    await dto.tx.agentBalanceLog.createMany({
+      skipDuplicates: true,
+      data: dto.feeDto.agentFee.agents.map((agent) => {
+        const lastBalance = lastBalanceAgents.find(
+          (a) => a.agentId === agent.id,
+        );
+        return {
+          transactionType: this.transactionType,
+          disbursementId: dto.disbursementId,
+          agentId: agent.id,
+          changeAmount: agent.nominal,
+          balancePending: lastBalance?.balancePending ?? new Decimal(0),
+          balanceActive: (lastBalance?.balanceActive ?? new Decimal(0)).plus(
+            agent.nominal,
+          ),
+        } as Prisma.AgentBalanceLogCreateManyInput;
       }),
-    ]);
+    });
   }
 
-  private feeDetailMapper({
+  private async createFeeDetail({
+    tx,
     disbursementId,
     feeDto,
   }: {
+    tx: Prisma.TransactionClient;
     disbursementId: number;
     feeDto: DisbursementFeeSystemDto;
-  }): Prisma.DisbursementFeeDetailCreateManyInput[] {
+  }) {
     const result: Prisma.DisbursementFeeDetailCreateManyInput[] = [];
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
@@ -545,6 +620,8 @@ export class Disbursement1Api {
       });
     }
 
-    return result;
+    return tx.disbursementFeeDetail.createManyAndReturn({
+      data: result,
+    });
   }
 }

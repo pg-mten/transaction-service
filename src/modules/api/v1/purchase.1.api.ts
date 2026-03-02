@@ -330,8 +330,8 @@ export class Purchase1Api {
         });
       },
       {
-        maxWait: 15000,
-        timeout: 30000,
+        maxWait: 15_000,
+        timeout: 30_000,
       },
     );
 
