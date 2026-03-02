@@ -24,7 +24,7 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-ENV NODE_ENV=production
+ENV NODE_ENV=test
 
 COPY --from=builder /app/package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
