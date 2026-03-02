@@ -1,17 +1,19 @@
 // src/transactions/transactions.controller.ts
-import { Controller, Get, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Param, Body, Query, Res } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiOkResponse,
   ApiBearerAuth,
+  ApiProduces,
 } from '@nestjs/swagger';
 import { FilterPurchaseDto } from './dto/filter-purchase.dto';
 import { Pagination } from 'src/shared/pagination/pagination.decorator';
 import { Pageable } from 'src/shared/pagination/pagination';
 import { PurchaseTransactionDto } from './dto/purchase-transaction.dto';
 import { PurchaseService } from './purchase.service';
+import { Response } from 'express';
 
 @ApiTags('Transactions', 'Purchase')
 @Controller('transactions/purchase')
@@ -37,5 +39,25 @@ export class PurchaseController {
   ) {
     console.log({ filter, pageable });
     return this.purchaseService.findAll(pageable, filter);
+  }
+
+  @Get('csv')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Ambil semua transaksi dalam format CSV (default 7 hari terakhir)',
+  })
+  @ApiProduces('text/csv')
+  async findAllCsv(
+    @Pagination() pageable: Pageable,
+    @Query() filter: FilterPurchaseDto,
+    @Res() response: Response,
+  ) {
+    const csv = await this.purchaseService.findAllCsv(pageable, filter);
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="purchase-transactions.csv"',
+    );
+    response.send(`\ufeff${csv}`);
   }
 }

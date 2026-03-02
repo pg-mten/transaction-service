@@ -7,7 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   MerchantSignatureHeader,
   MerchantSignatureHeaderDto,
@@ -26,8 +26,16 @@ import { Disbursement1Api } from './disbursement.1.api';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
 import { Pageable, Pagination } from 'src/shared/pagination';
+import { CreatePurchaseResponseApi } from './dto-api/create-purchase.response.api';
+import { WebhookPayinApi } from './dto-api/webhook-payin.api';
+import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
+import { BalanceResponseApi } from './dto-api/balance.response.api';
+import { CreateTransferResponseApi } from './dto-api/create-transfer.response.api';
+import { WebhookPayoutApi } from './dto-api/webhook-payout.api';
+import { ReadTransferDateResponseApi } from './dto-api/read-transfer-date.response.api';
 
 @Controller()
+@ApiTags('Merchant API', 'Api 1')
 @SkipReponseInterceptor()
 export class Api1Controller {
   constructor(
@@ -41,8 +49,8 @@ export class Api1Controller {
    */
   @Post('/open/v1/payin/purchase')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Create a new purchase transaction (API)' })
+  @ApiResponse({ type: CreatePurchaseResponseApi })
   createQRIS(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Body() body: CreatePurchaseRequestApi,
@@ -53,9 +61,10 @@ export class Api1Controller {
 
   @SystemApi()
   @Post(SERVICES.TRANSACTION.point.purchase_callback.path)
-  @ApiTags('Merchant API', 'Internal')
+  @ApiTags('Internal')
   @ApiOperation({ summary: ' Callback Payin' })
   @ApiBody({ type: CreatePurchaseCallbackSystemDto })
+  @ApiResponse({ type: WebhookPayinApi })
   async callbackPayin(@Body() body: CreatePurchaseCallbackSystemDto) {
     return this.purchaseApi.callback(body);
   }
@@ -69,10 +78,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payin/purchase/:transactionId')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Payin Transaction Detail by Transaction ID',
   })
+  @ApiResponse({ type: ReadPurchaseResponseApi })
   findPurchaseByTransactionId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('transactionId', ParseIntPipe) transactionId: number,
@@ -82,10 +91,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payin/order/:orderId')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Payin Transaction Detail by Order ID',
   })
+  @ApiResponse({ type: ReadPurchaseResponseApi })
   findPurchaseByOrderId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('orderId') orderId: string,
@@ -95,10 +104,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payin/date')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Payin Transaction Detail by Paid Date',
   })
+  @ApiResponse({ type: ReadPurchaseResponseApi })
   findPurchaseByDate(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Pagination() pageable: Pageable,
@@ -112,8 +121,8 @@ export class Api1Controller {
    */
   @Get('/open/v1/payout/balance')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({ summary: 'Check current wallet balance (API)' })
+  @ApiResponse({ type: BalanceResponseApi })
   async balance(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
   ) {
@@ -126,10 +135,10 @@ export class Api1Controller {
    */
   @Post('/open/v1/payout/transfer')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Create a new Payout Transfer to bank/ewallet account (API)',
   })
+  @ApiResponse({ type: CreateTransferResponseApi })
   async createTransfer(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Body() body: CreateTransferRequestApi,
@@ -140,12 +149,13 @@ export class Api1Controller {
 
   @SystemApi()
   @Post(SERVICES.TRANSACTION.point.disbursement_callback.path)
-  @ApiTags('Merchant API', 'Internal')
+  @ApiTags('Internal')
   @ApiOperation({
     summary:
       'Pengubahan status berdasarkan external id dan code dari provider services',
   })
   @ApiBody({ type: UpdateDisbursementCallbackSystemDto })
+  @ApiResponse({ type: WebhookPayoutApi })
   callbackPayout(@Body() body: UpdateDisbursementCallbackSystemDto) {
     return this.disbursementApi.callback(body);
   }
@@ -159,10 +169,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payout/transfer/:transactionId')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Transfer Transaction Detail by Transaction ID',
   })
+  @ApiResponse({ type: ReadTransferDateResponseApi })
   findTransferByTransactionId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('transactionId', ParseIntPipe) transactionId: number,
@@ -172,10 +182,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payout/order/:orderId')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Transfer Transaction Detail by Order ID',
   })
+  @ApiResponse({ type: ReadTransferDateResponseApi })
   findTransferByOrderId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Param('orderId') orderId: string,
@@ -185,10 +195,10 @@ export class Api1Controller {
 
   @Get('/open/v1/payout/date')
   @MerchantApi()
-  @ApiTags('Merchant API')
   @ApiOperation({
     summary: 'Get Transfer Transaction Detail by Paid Date',
   })
+  @ApiResponse({ type: ReadTransferDateResponseApi })
   findTransferByDate(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Pagination() pageable: Pageable,

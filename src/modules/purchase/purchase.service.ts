@@ -12,6 +12,7 @@ import { PurchaseFeeDetailDto } from './dto/purchase-fee-detail.dto';
 import { UpdateStatusPurchaseTransactionDto } from './dto/update-transaction-status.dto';
 import { ReadPurchaseDateRequestApi } from '../api/v1/dto-api/read-purchase-date.request.api';
 import { ReadPurchaseDateResponseApi } from '../api/v1/dto-api/read-purchase-date.response.api';
+import { CsvColumn, CsvHelper } from 'src/shared/helper/csv.helper';
 
 @Injectable()
 export class PurchaseService {
@@ -144,6 +145,29 @@ export class PurchaseService {
       total,
       data: purchaseDtos,
     });
+  }
+
+  async findAllCsv(pageable: Pageable, query: FilterPurchaseDto): Promise<string> {
+    const page = await this.findAll(pageable, query);
+    const columns: CsvColumn<PurchaseTransactionDto>[] = [
+      { header: 'id', value: (item) => item.id },
+      { header: 'externalId', value: (item) => item.externalId },
+      { header: 'referenceId', value: (item) => item.referenceId },
+      { header: 'merchantId', value: (item) => item.merchantId },
+      { header: 'providerName', value: (item) => item.providerName },
+      { header: 'paymentMethodName', value: (item) => item.paymentMethodName },
+      { header: 'nominal', value: (item) => item.nominal },
+      { header: 'netNominal', value: (item) => item.netNominal },
+      { header: 'totalFeeCut', value: (item) => item.totalFeeCut },
+      { header: 'status', value: (item) => item.status },
+      { header: 'metadata', value: (item) => item.metadata },
+      { header: 'settlementAt', value: (item) => item.settlementAt },
+      { header: 'reconciliationAt', value: (item) => item.reconciliationAt },
+      { header: 'paidAt', value: (item) => item.paidAt },
+      { header: 'createdAt', value: (item) => item.createdAt },
+      { header: 'feeDetails', value: (item) => item.feeDetails },
+    ];
+    return CsvHelper.build(page.data, columns);
   }
 
   /// TODO Buat apa ?
