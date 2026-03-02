@@ -299,7 +299,9 @@ export class Disbursement1Api {
       orderId: body.orderId,
       amount: body.amount,
       netAmount: disbursement.netNominal,
-      fee: feeDto.merchantFee.nominal.minus(feeDto.merchantFee.netNominal),
+      fee: new Decimal(feeDto.merchantFee.nominal).minus(
+        feeDto.merchantFee.netNominal,
+      ),
       status: TransactionStatusEnum.PENDING,
       description: 'Create Transfer Bank/EWallet succesfully',
       currency: 'IDR',
@@ -502,13 +504,21 @@ export class Disbursement1Api {
       );
     }
 
+    console.log({
+      lastBalanceMerchant: lastBalanceMerchant,
+      merchantFee: dto.feeDto.merchantFee,
+      selisih: lastBalanceMerchant.balanceActive.minus(
+        dto.feeDto.merchantFee.netNominal,
+      ),
+    });
+
     await dto.tx.merchantBalanceLog.create({
       data: {
         transactionType: this.transactionType,
         disbursementId: dto.disbursementId,
         merchantId: dto.merchantId,
         changeAmount: dto.feeDto.merchantFee.netNominal,
-        balanceActive: lastBalanceMerchant.balanceActive?.minus(
+        balanceActive: lastBalanceMerchant.balanceActive.minus(
           dto.feeDto.merchantFee.netNominal,
         ),
         balancePending: lastBalanceMerchant.balancePending,
