@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DateTime } from 'luxon';
-import { ToDateTime } from 'src/shared/decorator';
+import { ToDateTime, ToDateTimeJsDate } from 'src/shared/decorator';
 import { DtoHelper } from 'src/shared/helper';
 
 export class CreatePurchaseResponseQRApi {
@@ -19,7 +19,7 @@ export class CreatePurchaseResponseQRApi {
     format: 'date-time',
     example: '2026-02-04T03:15:30.123Z',
   })
-  @ToDateTime()
+  @ToDateTimeJsDate()
   expiresAt: DateTime;
 }
 
