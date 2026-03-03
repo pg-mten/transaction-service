@@ -9,9 +9,7 @@ import {
   ResponseExceptionFilter,
   InvalidRequestExceptionFilter,
 } from 'src/shared/filter';
-import {
-  ResponseInterceptor,
-} from 'src/shared/interceptor';
+import { ResponseInterceptor } from 'src/shared/interceptor';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../logger/logger.module';
 import { TopupTransactionModule } from '../topup/topup.module';
@@ -22,13 +20,14 @@ import { BalanceModule } from '../balance/balance.module';
 import { MicroserviceModule } from 'src/microservice/microservice.module';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { ApiModule } from '../api/api.module';
+import { NODE_ENV } from 'src/shared/constant/global.constant';
 
 @Module({
   imports: [
     /// System COnfiguration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV}`, `.env`],
+      envFilePath: [`.env.${NODE_ENV}`, `.env`],
     }),
     PrismaModule,
     LoggerModule,
