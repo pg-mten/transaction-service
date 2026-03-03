@@ -6,10 +6,10 @@ export class MerchantSystemDto {
     DtoHelper.assign(this, data);
   }
   @ApiProperty({ type: Number })
-  merchantId: number;
+  userId: number;
 
   @ApiProperty({ type: Number })
-  userId: number;
+  profileId: number;
 
   @ApiProperty({ type: String })
   email: string;
