@@ -282,6 +282,8 @@ describe('WithdrawService', () => {
         externalId: 'ext-1',
         status: TransactionStatusEnum.SUCCESS,
         paidAt: null,
+        nominal: new Decimal(50000),
+        metadata: null,
       };
 
       const updatedWithdraw = {
@@ -356,6 +358,8 @@ describe('WithdrawService', () => {
         externalId: 'ext-1',
         status: TransactionStatusEnum.PENDING,
         paidAt: null,
+        nominal: new Decimal(50000),
+        metadata: null,
       };
 
       const updatedWithdraw = {
