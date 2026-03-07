@@ -11,13 +11,22 @@ export interface MerchantSignatureHeaderDto {
 export const MerchantSignatureHeader = createParamDecorator(
   (_: unknown, ctx: ExecutionContext): MerchantSignatureHeaderDto => {
     const request = ctx.switchToHttp().getRequest();
-    const headers = request.headers;
+    const headers = request.headers as Record<
+      string,
+      string | string[] | undefined
+    >;
+    const getHeaderValue = (key: string): string => {
+      const value = headers[key];
+      if (Array.isArray(value)) return value[0] || '';
+      return value || '';
+    };
+
     return {
-      xClientId: headers['x-client-id'],
-      xTimestamp: headers['x-timestamp'],
-      xNonce: headers['x-nonce'],
-      xSignature: headers['x-signature'],
-      xSignAlg: headers['x-sign-alg'],
+      xClientId: getHeaderValue('x-client-id'),
+      xTimestamp: getHeaderValue('x-timestamp'),
+      xNonce: getHeaderValue('x-nonce'),
+      xSignature: getHeaderValue('x-signature'),
+      xSignAlg: getHeaderValue('x-sign-alg'),
     };
   },
 );

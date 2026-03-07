@@ -1,9 +1,10 @@
 import {
   Inject,
-  BadGatewayException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -54,7 +55,7 @@ export class Purchase1Api {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly purchaseService: PurchaseService,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
@@ -72,7 +73,7 @@ export class Purchase1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -96,7 +97,7 @@ export class Purchase1Api {
         if (error.code === 'P2025')
           throw ResponseException.fromHttpExecption(
             new NotFoundException(
-              `Purchase with transaction id ${transactionId} not found`,
+              `Purchase with transaction ID ${transactionId} not found`,
             ),
           );
     }
@@ -113,7 +114,7 @@ export class Purchase1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -137,7 +138,7 @@ export class Purchase1Api {
         if (error.code === 'P2025')
           throw ResponseException.fromHttpExecption(
             new NotFoundException(
-              `Purchase with order id ${orderId} not found`,
+              `Purchase with order ID ${orderId} not found`,
             ),
           );
     }
@@ -158,7 +159,7 @@ export class Purchase1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
     const merchantId = merchantSignature.userId;
@@ -187,7 +188,9 @@ export class Purchase1Api {
         return clientData;
       } else
         throw ResponseException.fromHttpExecption(
-          new BadGatewayException('Provider Name Not Found'),
+          new NotFoundException(
+            `Provider with name ${dto.providerName} is not supported`,
+          ),
         );
     } catch (error) {
       console.log(error);
@@ -214,7 +217,7 @@ export class Purchase1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -344,8 +347,8 @@ export class Purchase1Api {
 
     if (!merchantSignatureUrl || !merchantSignatureUrl.payinUrl) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException(
-          `Merchant Payin URL Not Found userId: ${userId}`,
+        new BadRequestException(
+          `Merchant payin URL not found for user ID: ${userId}`,
         ),
       );
     }
@@ -478,7 +481,7 @@ export class Purchase1Api {
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
-        new UnprocessableEntityException('Some of the response is null'),
+        new UnprocessableEntityException('Some response fields are null'),
         {
           merchantFee,
           agentFee,

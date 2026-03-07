@@ -21,6 +21,7 @@ import { PdnProviderClient } from './provider/pdn/pdn.provider.client';
 import { RolesGuard } from './auth/guard/roles.guard';
 import { ProfileProviderConfigClient } from './config/profile-provider.config.client';
 import { MerchantSignatureAuthClient } from './merchant-signature/merchant-signature.auth.client';
+import { MerchantSignatureHeadersGuard } from './auth/guard/merchant-signature-headers.guard';
 
 @Global()
 @Module({
@@ -63,6 +64,10 @@ import { MerchantSignatureAuthClient } from './merchant-signature/merchant-signa
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: MerchantSignatureHeadersGuard,
     },
   ],
 

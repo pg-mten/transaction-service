@@ -1,9 +1,11 @@
 import {
   BadGatewayException,
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -69,7 +71,7 @@ export class Disbursement1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -93,7 +95,7 @@ export class Disbursement1Api {
         if (error.code === 'P2025')
           throw ResponseException.fromHttpExecption(
             new NotFoundException(
-              `Transfer with transaction id ${transactionId} not found`,
+              `Transfer with transaction ID ${transactionId} not found`,
             ),
           );
     }
@@ -110,7 +112,7 @@ export class Disbursement1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -134,7 +136,7 @@ export class Disbursement1Api {
         if (error.code === 'P2025')
           throw ResponseException.fromHttpExecption(
             new NotFoundException(
-              `Transfer with order id ${orderId} not found`,
+              `Transfer with order ID ${orderId} not found`,
             ),
           );
     }
@@ -155,7 +157,7 @@ export class Disbursement1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -192,7 +194,9 @@ export class Disbursement1Api {
         return clientData;
       } else
         throw ResponseException.fromHttpExecption(
-          new BadGatewayException('Provider Name Not Found'),
+          new NotFoundException(
+            `Provider with name ${body.providerName} is not supported`,
+          ),
         );
     } catch (error) {
       console.log(error);
@@ -216,7 +220,7 @@ export class Disbursement1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
@@ -427,8 +431,8 @@ export class Disbursement1Api {
 
     if (!merchantSignatureUrl || !merchantSignatureUrl.payoutUrl) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException(
-          `Merchant Payout URL Not Found userId: ${userId}`,
+        new BadRequestException(
+          `Merchant payout URL not found for user ID: ${userId}`,
         ),
       );
     }
@@ -573,7 +577,7 @@ export class Disbursement1Api {
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
       throw ResponseException.fromHttpExecption(
-        new UnprocessableEntityException('Some of the response is null'),
+        new UnprocessableEntityException('Some response fields are null'),
         {
           merchantFee,
           agentFee,

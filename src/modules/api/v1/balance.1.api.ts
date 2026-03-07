@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { BalanceService } from 'src/modules/balance/balance.service';
 import { BalanceResponseApi } from './dto-api/balance.response.api';
 import { MerchantSignatureAuthClient } from 'src/microservice/merchant-signature/merchant-signature.auth.client';
@@ -25,7 +25,7 @@ export class Balance1Api {
 
     if (!merchantSignature || !merchantSignature.isValid) {
       throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
+        new UnauthorizedException('Merchant signature is not valid'),
       );
     }
 
