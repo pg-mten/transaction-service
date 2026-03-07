@@ -6,10 +6,10 @@ export class AgentSystemDto {
     DtoHelper.assign(this, data);
   }
   @ApiProperty({ type: Number })
-  agentId: number;
+  userId: number;
 
   @ApiProperty({ type: Number })
-  userId: number;
+  profileId: number;
 
   @ApiProperty({ type: String })
   email: string;
