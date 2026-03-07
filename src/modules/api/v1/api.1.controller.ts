@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Query,
 } from '@nestjs/common';
@@ -19,12 +18,13 @@ import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/pu
 import { SERVICES } from 'src/shared/constant/client.constant';
 import { SkipReponseInterceptor } from 'src/shared/interceptor';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CustomValidationPipe } from 'src/shared/pipe';
+import { CustomValidationPipe, ParseIntegerPipe } from 'src/shared/pipe';
 import { Balance1Api } from './balance.1.api';
 import { CreateTransferRequestApi } from './dto-api/create-transfer.request.api';
 import { Disbursement1Api } from './disbursement.1.api';
 import { UpdateDisbursementCallbackSystemDto } from 'src/microservice/transaction/disbursement/dto-system/update-disbursement-callback.system.dto';
 import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
+import { ReadTransferDateRequestApi } from './dto-api/read-transfer-date.request.api';
 import { Pageable, Pagination } from 'src/shared/pagination';
 import { CreatePurchaseResponseApi } from './dto-api/create-purchase.response.api';
 import { WebhookPayinApi } from './dto-api/webhook-payin.api';
@@ -84,7 +84,7 @@ export class Api1Controller {
   @ApiResponse({ type: ReadPurchaseResponseApi })
   findPurchaseByTransactionId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
-    @Param('transactionId', ParseIntPipe) transactionId: number,
+    @Param('transactionId', ParseIntegerPipe) transactionId: number,
   ) {
     return this.purchaseApi.findByTransactionId(headers, transactionId);
   }
@@ -175,7 +175,7 @@ export class Api1Controller {
   @ApiResponse({ type: ReadTransferDateResponseApi })
   findTransferByTransactionId(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
-    @Param('transactionId', ParseIntPipe) transactionId: number,
+    @Param('transactionId', ParseIntegerPipe) transactionId: number,
   ) {
     return this.disbursementApi.findByTransactionId(headers, transactionId);
   }
@@ -202,7 +202,7 @@ export class Api1Controller {
   findTransferByDate(
     @MerchantSignatureHeader() headers: MerchantSignatureHeaderDto,
     @Pagination() pageable: Pageable,
-    @Query() filter: ReadPurchaseDateRequestApi,
+    @Query() filter: ReadTransferDateRequestApi,
   ) {
     return this.disbursementApi.findByPaidDate(headers, pageable, filter);
   }

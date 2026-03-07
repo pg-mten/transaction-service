@@ -1,7 +1,33 @@
-import { HttpStatus, Injectable, ValidationPipe } from '@nestjs/common';
+import { Injectable, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
-import { InvalidRequestException } from 'src/shared/exception/invalid-request.exception';
-import { ResponseDto, ResponseStatus } from 'src/shared/response.dto';
+import { ApiError } from 'src/shared/exception';
+
+function flattenValidationErrors(
+  validationErrors: ValidationError[],
+  parentPath = '',
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+
+  validationErrors.forEach((validationError) => {
+    const path = parentPath
+      ? `${parentPath}.${validationError.property}`
+      : validationError.property;
+    const firstConstraint = Object.values(validationError.constraints ?? {})[0];
+
+    if (firstConstraint) {
+      fields[path] = firstConstraint;
+    }
+
+    if (validationError.children && validationError.children.length > 0) {
+      Object.assign(
+        fields,
+        flattenValidationErrors(validationError.children, path),
+      );
+    }
+  });
+
+  return fields;
+}
 
 @Injectable()
 export class CustomValidationPipe extends ValidationPipe {
@@ -11,26 +37,9 @@ export class CustomValidationPipe extends ValidationPipe {
       // forbidNonWhitelisted: true,
       transform: true,
       exceptionFactory: (validationErrors: ValidationError[]) => {
-        console.log('CustomValidationPipe');
-        const error: Record<string, string> = {};
-
-        validationErrors.forEach((validationError: ValidationError) => {
-          console.log({ validationError });
-          const errorMsg = Object.values(validationError.constraints || {})[0]; // Get the first error message
-          error[validationError.property] = errorMsg;
-        });
-
-        console.log(error);
-
-        // return new InvalidRequestException(error, 'Request Validation failed');
-        const responseDto = new ResponseDto<null>({
-          statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-          status: ResponseStatus.ERROR,
-          message: 'Request Validation Failed',
-          error: error,
-        });
-
-        throw new InvalidRequestException(responseDto);
+        throw ApiError.validationFailed(
+          flattenValidationErrors(validationErrors),
+        );
       },
     });
   }

@@ -10,6 +10,8 @@ import { ProviderWithdrawSystemDto } from '../provider-withdraw.system.dto';
 import { ProviderPurchaseSystemDto } from '../provider-purchase.system.dto';
 import { InacashDisbursementRequestSystemDto } from './dto-system/inacash-disbursement.request.system.dto';
 import { ProviderDisbursementSystemDto } from '../provider-disbursement.system.dto';
+import { DependencyErrorHelper } from 'src/shared/helper';
+import { DependencyErrorContext } from 'src/shared/exception';
 
 @Injectable()
 export class InacashProviderClient {
@@ -26,26 +28,30 @@ export class InacashProviderClient {
         this.point.inacash_purchase_qris.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.inacashPurchaseProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.inacashPurchaseProvider,
+      );
     }
   }
 
   async purchaseQRISTCP(body: InacashCreatePurchaseQrisRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.inacashProviderClient.send<ProviderPurchaseSystemDto>(
           { cmd: this.point.inacash_purchase_qris.cmd },
           body,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.purchaseQRIS(body).then((r) => r.data!);
-    }
+        ),
+      () => this.purchaseQRIS(body),
+      DependencyErrorContext.settlerecon.inacashPurchaseProvider,
+    );
   }
 
   async withdraw(body: InacashWithdrawRequestSystemDto) {
@@ -54,26 +60,30 @@ export class InacashProviderClient {
         this.point.inacash_withdraw.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.inacashWithdrawProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.inacashWithdrawProvider,
+      );
     }
   }
 
   async withdrawTCP(body: InacashWithdrawRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.inacashProviderClient.send<ProviderWithdrawSystemDto>(
           { cmd: this.point.inacash_withdraw.cmd },
           body,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.withdraw(body).then((r) => r.data!);
-    }
+        ),
+      () => this.withdraw(body),
+      DependencyErrorContext.settlerecon.inacashWithdrawProvider,
+    );
   }
 
   async disbursement(body: InacashDisbursementRequestSystemDto) {
@@ -82,24 +92,28 @@ export class InacashProviderClient {
         this.point.inacash_disbursement.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.inacashDisbursementProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.inacashDisbursementProvider,
+      );
     }
   }
 
   async disbursementTCP(body: InacashDisbursementRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.inacashProviderClient.send<
           ProviderDisbursementSystemDto
         >({ cmd: this.point.inacash_disbursement.cmd }, body),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.disbursement(body).then((r) => r.data!);
-    }
+        ),
+      () => this.disbursement(body),
+      DependencyErrorContext.settlerecon.inacashDisbursementProvider,
+    );
   }
 }

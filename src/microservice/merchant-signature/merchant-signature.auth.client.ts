@@ -8,6 +8,8 @@ import { MerchantSignatureValidationSystemDto } from './merchant-signature-valid
 import { firstValueFrom } from 'rxjs';
 import { FilterMerchantUrlSystemDto } from './filter-merchant-url.system.dto';
 import { MerchantUrlSystemDto } from './merchant-url.system.dto';
+import { DependencyErrorHelper } from 'src/shared/helper';
+import { DependencyErrorContext } from 'src/shared/exception';
 
 @Injectable()
 export class MerchantSignatureAuthClient {
@@ -25,29 +27,32 @@ export class MerchantSignatureAuthClient {
       const res = await axios.get<
         ResponseDto<MerchantSignatureValidationSystemDto>
       >(this.point.merchant_signature_validation.url, { params: filter });
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.auth.merchantSignatureValidation,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.auth.merchantSignatureValidation,
+      );
     }
   }
 
   async signatureValidationTCP(
     filter: FilterMerchantSignatureValidationSystemDto,
   ) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.authClient.send<MerchantSignatureValidationSystemDto>(
           { cmd: this.point.merchant_signature_validation.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.signatureValidation(filter);
-      throw error;
-    }
+        ),
+      () => this.signatureValidation(filter),
+      DependencyErrorContext.auth.merchantSignatureValidation,
+    );
   }
 
   async findMerchantUrl(filter: FilterMerchantUrlSystemDto) {
@@ -58,26 +63,29 @@ export class MerchantSignatureAuthClient {
           params: filter,
         },
       );
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.auth.merchantUrlLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.auth.merchantUrlLookup,
+      );
     }
   }
 
   async findMerchantUrlTCP(filter: FilterMerchantUrlSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.authClient.send<MerchantUrlSystemDto>(
           { cmd: this.point.merchant_signature_url.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.findMerchantUrl(filter);
-      throw error;
-    }
+        ),
+      () => this.findMerchantUrl(filter),
+      DependencyErrorContext.auth.merchantUrlLookup,
+    );
   }
 }

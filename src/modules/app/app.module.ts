@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, Reflector } from '@nestjs/core';
 import { CustomValidationPipe } from 'src/shared/pipe';
 import {
+  AllExceptionsFilter,
   PrismaClientKnownExceptionFilter,
   ResponseExceptionFilter,
   InvalidRequestExceptionFilter,
@@ -61,13 +62,10 @@ import { NODE_ENV } from 'src/shared/constant/global.constant';
     },
 
     /// FILTER
-    // {
-    //   provide: APP_FILTER, // Lowest priority
-    //   useFactory: (httpAdapterHost: HttpAdapterHost) => {
-    //     return new AllExceptionsFilter(httpAdapterHost);
-    //   },
-    //   inject: [HttpAdapterHost],
-    // },
+    {
+      provide: APP_FILTER, // Lowest priority
+      useClass: AllExceptionsFilter,
+    },
     {
       provide: APP_FILTER,
       useClass: PrismaClientKnownExceptionFilter,

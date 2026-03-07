@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { ResponseException } from 'src/shared/exception';
+import { ApiError } from 'src/shared/exception';
 import { MERCHANT_API_KEY } from '../decorator/merchant.decorator';
 
 const REQUIRED_SIGNATURE_HEADERS = [
@@ -42,13 +42,7 @@ export class MerchantSignatureHeadersGuard implements CanActivate {
     });
 
     if (missingHeaders.length > 0) {
-      throw ResponseException.fromHttpExecption(
-        new BadRequestException('Missing required merchant signature headers'),
-        {
-          code: 'MISSING_SIGNATURE_HEADERS',
-          missingHeaders,
-        },
-      );
+      throw ApiError.missingSignatureHeaders([...missingHeaders]);
     }
 
     return true;

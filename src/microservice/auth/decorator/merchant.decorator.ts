@@ -32,7 +32,7 @@ export const MerchantApi = () =>
     ...MERCHANT_SIGNATURE_HEADERS.map((header) =>
       ApiHeader({
         ...header,
-        required: false,
+        required: true,
       }),
     ),
   );
