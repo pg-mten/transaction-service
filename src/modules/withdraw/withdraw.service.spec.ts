@@ -14,6 +14,7 @@ import { ResponseException } from 'src/shared/exception';
 
 describe('WithdrawService', () => {
   let service: WithdrawService;
+  const CODE = '1772001455392WTBPDNT1-1-ABCDE';
 
   const mockPrismaService = {
     $transaction: jest.fn(),
@@ -242,7 +243,7 @@ describe('WithdrawService', () => {
         profileProviderData,
       );
 
-      const failedCode = `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`;
+      const failedCode = CODE;
       mockPdn.withdrawTCP.mockResolvedValue({
         code: failedCode,
         status: TransactionStatusEnum.FAILED,
@@ -278,7 +279,7 @@ describe('WithdrawService', () => {
   describe('callback', () => {
     it('should update status and create balance logs on SUCCESS callback', async () => {
       const callbackDto = {
-        code: `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`,
+        code: CODE,
         externalId: 'ext-1',
         status: TransactionStatusEnum.SUCCESS,
         paidAt: null,
@@ -354,7 +355,7 @@ describe('WithdrawService', () => {
 
     it('should only update status on non-SUCCESS callback', async () => {
       const callbackDto = {
-        code: `${Date.now()}-1-WITHDRAW-PDN-TRANSFERBANK-abc123`,
+        code: CODE,
         externalId: 'ext-1',
         status: TransactionStatusEnum.PENDING,
         paidAt: null,
