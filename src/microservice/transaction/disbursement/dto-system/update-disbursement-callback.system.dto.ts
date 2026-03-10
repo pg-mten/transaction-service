@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import Decimal from 'decimal.js';
 import { DateTime } from 'luxon';
-import { ToDateTime } from 'src/shared/decorator';
+import { ToDateTimeNullable } from 'src/shared/decorator';
 import { ToDecimal } from 'src/shared/decorator/decimal.decorator';
 
 export class UpdateDisbursementCallbackSystemDto {
@@ -19,8 +19,9 @@ export class UpdateDisbursementCallbackSystemDto {
   @ApiProperty()
   status: string;
 
+  @IsOptional()
   @ApiProperty({ nullable: true })
-  @ToDateTime()
+  @ToDateTimeNullable()
   paidAt: DateTime | null;
 
   @ToDecimal()
