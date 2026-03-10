@@ -1,6 +1,8 @@
+import { UnprocessableEntityException } from '@nestjs/common';
 import { DateHelper } from './date.helper';
 import { DateTime } from 'luxon';
 import { UuidHelper } from './uuid.helper';
+import { ApiError } from 'src/shared/exception';
 import {
   PaymentMethodName,
   ProviderName,
@@ -38,20 +40,29 @@ export class TransactionHelper {
 
   static extractCode(code: string): CodeTransaction {
     // For Example: 1772001455392DTFPDNT1-13-[random]
+    const match = code.match(
+      /^(\d{13})([A-Z0-9])([A-Z0-9]{2})([A-Z0-9]{5})-(\d+)(?:-([A-Za-z0-9]+))?$/,
+    );
 
-    const date = code.slice(0, 13); // 1772001455392
-    const transactionType = code.slice(13, 14); // D
-    const paymentMethodName = code.slice(14, 16); // TF
-    const providerName = code.slice(16, 21); // PDNT1
-    const userId = code.split('-')[1]; // 13
-    const random = code.split('-')[2]; // [random]
-    console.log({ random });
+    if (!match) {
+      throw ApiError.callbackCodeInvalid();
+    }
+
+    const [, date, transactionType, paymentMethodName, providerName, userId] =
+      match;
+    const parsedUserId = Number(userId);
+    const parsedDate = DateHelper.fromMs(date);
+
+    if (!Number.isInteger(parsedUserId) || !parsedDate.isValid) {
+      throw ApiError.callbackCodeInvalid();
+    }
+
     return {
-      userId: Number(userId),
+      userId: parsedUserId,
       transactionType: this.transactionType(transactionType),
       providerName: this.providerName(providerName),
       paymentMethodName: this.paymentMethodName(paymentMethodName),
-      date: DateHelper.fromMs(date),
+      date: parsedDate,
     };
   }
 

@@ -12,6 +12,8 @@ import { ProviderPurchaseSystemDto } from '../provider-purchase.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { ProviderWithdrawSystemDto } from '../provider-withdraw.system.dto';
 import { ProviderDisbursementSystemDto } from '../provider-disbursement.system.dto';
+import { DependencyErrorHelper } from 'src/shared/helper';
+import { DependencyErrorContext } from 'src/shared/exception';
 
 @Injectable()
 export class PdnProviderClient {
@@ -28,26 +30,30 @@ export class PdnProviderClient {
         this.point.pdn_purchase_qris.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.pdnPurchaseProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.pdnPurchaseProvider,
+      );
     }
   }
 
   async purchaseQRISTCP(body: PdnCreatePurchaseQrisRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.pdnProviderClient.send<ProviderPurchaseSystemDto>(
           { cmd: this.point.pdn_purchase_qris.cmd },
           body,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.purchaseQRIS(body).then((r) => r.data!);
-    }
+        ),
+      () => this.purchaseQRIS(body),
+      DependencyErrorContext.settlerecon.pdnPurchaseProvider,
+    );
   }
 
   async withdraw(body: PdnWithdrawRequestSystemDto) {
@@ -56,26 +62,30 @@ export class PdnProviderClient {
         this.point.pdn_withdraw.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.pdnWithdrawProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.pdnWithdrawProvider,
+      );
     }
   }
 
   async withdrawTCP(body: PdnWithdrawRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.pdnProviderClient.send<ProviderWithdrawSystemDto>(
           { cmd: this.point.pdn_withdraw.cmd },
           body,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.withdraw(body).then((r) => r.data!);
-    }
+        ),
+      () => this.withdraw(body),
+      DependencyErrorContext.settlerecon.pdnWithdrawProvider,
+    );
   }
 
   async disbursement(body: PdnDisbursementRequestSystemDto) {
@@ -84,25 +94,29 @@ export class PdnProviderClient {
         this.point.pdn_disbursement.url,
         body,
       );
-      return res.data;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.settlerecon.pdnDisbursementProvider,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.settlerecon.pdnDisbursementProvider,
+      );
     }
   }
 
   async disbursementTCP(body: PdnDisbursementRequestSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.pdnProviderClient.send<ProviderDisbursementSystemDto>(
           { cmd: this.point.pdn_disbursement.cmd },
           body,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.disbursement(body).then((r) => r.data!);
-    }
+        ),
+      () => this.disbursement(body),
+      DependencyErrorContext.settlerecon.pdnDisbursementProvider,
+    );
   }
 }

@@ -1,9 +1,12 @@
 import {
-  BadGatewayException,
+  BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -17,7 +20,7 @@ import { MerchantSignatureHeaderDto } from 'src/microservice/merchant-signature/
 import { HttpMethodEnum } from 'src/shared/constant/auth.constant';
 
 import { BalanceService } from 'src/modules/balance/balance.service';
-import { ResponseException } from 'src/shared/exception';
+import { ApiError } from 'src/shared/exception';
 import { ProfileProviderConfigClient } from 'src/microservice/config/profile-provider.config.client';
 import { TransactionUserRole } from 'src/shared/constant/transaction.constant';
 import { DtoHelper, TransactionHelper } from 'src/shared/helper';
@@ -68,15 +71,17 @@ export class Disbursement1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     try {
-      const disbursement = await this.disbursementService.findOneUniqueThrow({
-        id: transactionId,
-      });
+      const disbursement =
+        await this.prisma.disbursementTransaction.findFirstOrThrow({
+          where: {
+            id: transactionId,
+            merchantId: merchantSignature.userId,
+          },
+        });
 
       return new ReadTransferDateResponseApi({
         transactionId: disbursement.id,
@@ -91,11 +96,8 @@ export class Disbursement1Api {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError)
         if (error.code === 'P2025')
-          throw ResponseException.fromHttpExecption(
-            new NotFoundException(
-              `Transfer with transaction id ${transactionId} not found`,
-            ),
-          );
+          throw ApiError.disbursementNotFound('transaction ID', transactionId);
+      throw error;
     }
   }
 
@@ -109,15 +111,17 @@ export class Disbursement1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     try {
-      const disbursement = await this.disbursementService.findOneUniqueThrow({
-        orderId: orderId,
-      });
+      const disbursement =
+        await this.prisma.disbursementTransaction.findFirstOrThrow({
+          where: {
+            orderId,
+            merchantId: merchantSignature.userId,
+          },
+        });
 
       return new ReadTransferDateResponseApi({
         transactionId: disbursement.id,
@@ -132,11 +136,8 @@ export class Disbursement1Api {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError)
         if (error.code === 'P2025')
-          throw ResponseException.fromHttpExecption(
-            new NotFoundException(
-              `Transfer with order id ${orderId} not found`,
-            ),
-          );
+          throw ApiError.disbursementNotFound('order ID', orderId);
+      throw error;
     }
   }
 
@@ -154,9 +155,10 @@ export class Disbursement1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
+    }
+    if (filter.from.toMillis() > filter.to.toMillis()) {
+      throw ApiError.dateRangeInvalid();
     }
 
     const merchantId = merchantSignature.userId;
@@ -190,10 +192,7 @@ export class Disbursement1Api {
 
         const clientData = clientRes;
         return clientData;
-      } else
-        throw ResponseException.fromHttpExecption(
-          new BadGatewayException('Provider Name Not Found'),
-        );
+      } else throw ApiError.unsupportedProvider(body.providerName);
     } catch (error) {
       console.log(error);
       throw error;
@@ -215,9 +214,7 @@ export class Disbursement1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     const profileProvider =
@@ -248,9 +245,7 @@ export class Disbursement1Api {
       !lastBalanceMerchant ||
       lastBalanceMerchant.balanceActive.lessThan(feeDto.merchantFee.netNominal)
     ) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Balance insufficient'),
-      );
+      throw ApiError.insufficientMerchantBalance();
     }
 
     const code = TransactionHelper.createCode({
@@ -272,27 +267,43 @@ export class Disbursement1Api {
 
     const clientDataStatus = clientData.status as TransactionStatusEnum;
     if (clientDataStatus === TransactionStatusEnum.FAILED) {
-      return this.createFailed(clientData, body);
+      const failedDisbursement = await this.createFailed(clientData, body);
+      throw ApiError.providerRejected('Transfer was rejected by the provider', {
+        transactionId: failedDisbursement.id,
+        externalId: failedDisbursement.externalId,
+        providerStatus: clientData.status,
+      });
     }
 
-    const disbursement = await this.prisma.disbursementTransaction.create({
-      data: {
-        code: code,
-        orderId: body.orderId,
-        externalId: clientData.externalId,
-        merchantId: merchantSignature.userId,
-        providerName: profileProvider.providerName,
-        paymentMethodName: profileProvider.paymentMethodName,
-        recipientName: body.accountName,
-        recipientBankCode: body.bankCode,
-        recipientAccount: body.accountNumber,
-        recipientBankName: body.bankName,
-        nominal: clientData.nominal,
-        netNominal: feeDto.merchantFee.netNominal,
-        metadata: clientData.metadata as Prisma.InputJsonValue,
-        status: TransactionStatusEnum.PENDING,
-      },
-    });
+    let disbursement;
+    try {
+      disbursement = await this.prisma.disbursementTransaction.create({
+        data: {
+          code: code,
+          orderId: body.orderId,
+          externalId: clientData.externalId,
+          merchantId: merchantSignature.userId,
+          providerName: profileProvider.providerName,
+          paymentMethodName: profileProvider.paymentMethodName,
+          recipientName: body.accountName,
+          recipientBankCode: body.bankCode,
+          recipientAccount: body.accountNumber,
+          recipientBankName: body.bankName,
+          nominal: clientData.nominal,
+          netNominal: feeDto.merchantFee.netNominal,
+          metadata: clientData.metadata as Prisma.InputJsonValue,
+          status: TransactionStatusEnum.PENDING,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw ApiError.orderIdConflict('Transfer', body.orderId);
+      }
+      throw error;
+    }
 
     return new CreateTransferResponseApi({
       transactionId: disbursement.id,
@@ -320,7 +331,7 @@ export class Disbursement1Api {
     const { userId, providerName, paymentMethodName } =
       TransactionHelper.extractCode(clientData.code);
 
-    const disbursement = await this.prisma.disbursementTransaction.create({
+    return this.prisma.disbursementTransaction.create({
       data: {
         code: clientData.code,
         orderId: body.orderId,
@@ -338,22 +349,6 @@ export class Disbursement1Api {
         status: TransactionStatusEnum.FAILED,
       },
     });
-
-    return new CreateTransferResponseApi({
-      transactionId: disbursement.id,
-      orderId: body.orderId,
-      amount: body.amount,
-      netAmount: new Decimal(0),
-      fee: new Decimal(0),
-      status: TransactionStatusEnum.FAILED,
-      description: 'Create Transfer Bank/EWallet failed',
-      currency: 'IDR',
-      bankCode: body.bankCode,
-      bankName: body.bankName,
-      accountName: body.accountName,
-      accountNumber: body.accountNumber,
-      createdAt: disbursement.createdAt.toISOString(),
-    });
   }
 
   async callback(body: UpdateDisbursementCallbackSystemDto) {
@@ -367,41 +362,44 @@ export class Disbursement1Api {
         nominal: body.nominal,
       });
 
-    const webhookApi = this.prisma.$transaction(
-      async (tx) => {
-        const disbursement = await tx.disbursementTransaction.update({
-          where: {
-            code: body.code,
-            merchantId: userId,
-            paymentMethodName,
-            providerName,
-          },
-          data: {
-            externalId: body.externalId,
-            netNominal: feeDto.merchantFee.netNominal,
-            status: body.status as TransactionStatusEnum,
-            paidAt: body.paidAt?.toJSDate() ?? null,
-            metadata: body.metadata as Prisma.InputJsonValue,
-          },
-        });
-        console.log({ feeDto, disbursement });
-
-        if (body.status === TransactionStatusEnum.SUCCESS) {
-          await this.createFeeDetail({
-            tx,
-            disbursementId: disbursement.id,
-            feeDto,
+    let webhookApi: WebhookPayoutApi;
+    try {
+      webhookApi = await this.prisma.$transaction(
+        async (tx) => {
+          const disbursement = await tx.disbursementTransaction.update({
+            where: {
+              code: body.code,
+              merchantId: userId,
+              paymentMethodName,
+              providerName,
+            },
+            data: {
+              externalId: body.externalId,
+              netNominal: feeDto.merchantFee.netNominal,
+              status: body.status as TransactionStatusEnum,
+              paidAt: body.paidAt?.toJSDate() ?? null,
+              metadata: body.metadata as Prisma.InputJsonValue,
+            },
           });
+          console.log({ feeDto, disbursement });
 
-          await this.createBalanceLog({
-            tx,
-            disbursementId: disbursement.id,
-            merchantId: disbursement.merchantId,
-            providerName: disbursement.providerName,
-            paymentMethodName: disbursement.paymentMethodName,
-            nominal: disbursement.nominal,
-            feeDto,
-          });
+          if (body.status === TransactionStatusEnum.SUCCESS) {
+            await this.createFeeDetail({
+              tx,
+              disbursementId: disbursement.id,
+              feeDto,
+            });
+
+            await this.createBalanceLog({
+              tx,
+              disbursementId: disbursement.id,
+              merchantId: disbursement.merchantId,
+              providerName: disbursement.providerName,
+              paymentMethodName: disbursement.paymentMethodName,
+              nominal: disbursement.nominal,
+              feeDto,
+            });
+          }
 
           return new WebhookPayoutApi({
             transactionId: disbursement.id,
@@ -413,10 +411,18 @@ export class Disbursement1Api {
             paidAt: disbursement.paidAt?.toISOString() ?? null,
             paymentMethod: disbursement.paymentMethodName,
           });
-        }
-      },
-      { maxWait: 15_000, timeout: 30_000 },
-    );
+        },
+        { maxWait: 15_000, timeout: 30_000 },
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw ApiError.disbursementNotFound('callback code', `'${body.code}'`);
+      }
+      throw error;
+    }
 
     if (IS_TEST) return webhookApi;
 
@@ -426,11 +432,10 @@ export class Disbursement1Api {
       });
 
     if (!merchantSignatureUrl || !merchantSignatureUrl.payoutUrl) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException(
-          `Merchant Payout URL Not Found userId: ${userId}`,
-        ),
+      console.warn(
+        `[Disbursement1Api] Merchant payout URL not found for user ID ${userId}`,
       );
+      return webhookApi;
     }
 
     // TODO: Implement proper webhook retry mechanism (e.g. exponential backoff / queue)
@@ -499,9 +504,7 @@ export class Disbursement1Api {
         dto.feeDto.merchantFee.netNominal,
       )
     ) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Balance insufficient'),
-      );
+      throw ApiError.insufficientMerchantBalance();
     }
 
     console.log({
@@ -572,15 +575,12 @@ export class Disbursement1Api {
     const result: Prisma.DisbursementFeeDetailCreateManyInput[] = [];
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
-      throw ResponseException.fromHttpExecption(
-        new UnprocessableEntityException('Some of the response is null'),
-        {
-          merchantFee,
-          agentFee,
-          providerFee,
-          internalFee,
-        },
-      );
+      throw ApiError.feeConfigInvalid({
+        merchantFee,
+        agentFee,
+        providerFee,
+        internalFee,
+      });
     }
 
     /**

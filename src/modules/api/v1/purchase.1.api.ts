@@ -1,9 +1,12 @@
 import {
   Inject,
-  BadGatewayException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
+  BadRequestException,
+  ConflictException,
+  InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Prisma,
@@ -16,7 +19,7 @@ import { InacashProviderClient } from 'src/microservice/provider/inacash/inacash
 import { PdnProviderClient } from 'src/microservice/provider/pdn/pdn.provider.client';
 import { PrismaClient } from '@prisma/client';
 import { PRISMA_SERVICE } from 'src/modules/prisma/prisma.provider';
-import { ResponseException } from 'src/shared/exception';
+import { ApiError } from 'src/shared/exception';
 import { CreatePurchaseRequestApi } from './dto-api/create-purchase.request.api';
 import { MerchantSignatureAuthClient } from 'src/microservice/merchant-signature/merchant-signature.auth.client';
 import { HttpMethodEnum } from 'src/shared/constant/auth.constant';
@@ -54,7 +57,7 @@ export class Purchase1Api {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly purchaseService: PurchaseService,
-  ) {}
+  ) { }
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
@@ -71,14 +74,15 @@ export class Purchase1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     try {
-      const purchase = await this.purchaseService.findOneUniqueThrow({
-        id: transactionId,
+      const purchase = await this.prisma.purchaseTransaction.findFirstOrThrow({
+        where: {
+          id: transactionId,
+          merchantId: merchantSignature.userId,
+        },
       });
 
       return new ReadPurchaseResponseApi({
@@ -94,11 +98,8 @@ export class Purchase1Api {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError)
         if (error.code === 'P2025')
-          throw ResponseException.fromHttpExecption(
-            new NotFoundException(
-              `Purchase with transaction id ${transactionId} not found`,
-            ),
-          );
+          throw ApiError.purchaseNotFound('transaction ID', transactionId);
+      throw error;
     }
   }
 
@@ -112,14 +113,15 @@ export class Purchase1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     try {
-      const purchase = await this.purchaseService.findOneUniqueThrow({
-        orderId: orderId,
+      const purchase = await this.prisma.purchaseTransaction.findFirstOrThrow({
+        where: {
+          orderId,
+          merchantId: merchantSignature.userId,
+        },
       });
 
       return new ReadPurchaseResponseApi({
@@ -135,11 +137,8 @@ export class Purchase1Api {
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError)
         if (error.code === 'P2025')
-          throw ResponseException.fromHttpExecption(
-            new NotFoundException(
-              `Purchase with order id ${orderId} not found`,
-            ),
-          );
+          throw ApiError.purchaseNotFound('order ID', orderId);
+      throw error;
     }
   }
 
@@ -157,9 +156,10 @@ export class Purchase1Api {
       });
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
+    }
+    if (filter.from.toMillis() > filter.to.toMillis()) {
+      throw ApiError.dateRangeInvalid();
     }
     const merchantId = merchantSignature.userId;
 
@@ -185,10 +185,7 @@ export class Purchase1Api {
         });
         const clientData = clientRes;
         return clientData;
-      } else
-        throw ResponseException.fromHttpExecption(
-          new BadGatewayException('Provider Name Not Found'),
-        );
+      } else throw ApiError.unsupportedProvider(dto.providerName);
     } catch (error) {
       console.log(error);
       throw error;
@@ -213,9 +210,7 @@ export class Purchase1Api {
     // merchantSignature.nmid
 
     if (!merchantSignature || !merchantSignature.isValid) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException('Merchant Signature Not Valid'),
-      );
+      throw ApiError.invalidMerchantSignature();
     }
 
     const profileProvider =
@@ -241,20 +236,31 @@ export class Purchase1Api {
     });
     console.log({ clientData, date: DateHelper.now() });
 
-    const purchase = await this.prisma.purchaseTransaction.create({
-      data: {
-        code: code,
-        orderId: body.orderId,
-        expiresAt: DateHelper.from(clientData.expiresAt).toJSDate(),
-        merchantId: merchantSignature.userId,
-        externalId: clientData.externalId,
-        nominal: body.amount,
-        netNominal: new Decimal(0),
-        paymentMethodName: profileProvider.paymentMethodName,
-        providerName: profileProvider.providerName,
-        status: TransactionStatusEnum.PENDING,
-      },
-    });
+    let purchase;
+    try {
+      purchase = await this.prisma.purchaseTransaction.create({
+        data: {
+          code: code,
+          orderId: body.orderId,
+          expiresAt: DateHelper.from(clientData.expiresAt).toJSDate(),
+          merchantId: merchantSignature.userId,
+          externalId: clientData.externalId,
+          nominal: body.amount,
+          netNominal: new Decimal(0),
+          paymentMethodName: profileProvider.paymentMethodName,
+          providerName: profileProvider.providerName,
+          status: TransactionStatusEnum.PENDING,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw ApiError.orderIdConflict('Purchase', body.orderId);
+      }
+      throw error;
+    }
 
     return new CreatePurchaseResponseApi({
       transactionId: purchase.id,
@@ -280,60 +286,71 @@ export class Purchase1Api {
       paymentMethodName: paymentMethodName,
       providerName: providerName,
     });
-    const webhookApi = await this.prisma.$transaction(
-      async (tx) => {
-        const purchase = await tx.purchaseTransaction.update({
-          where: {
-            code: body.code,
-            merchantId: userId,
-            paymentMethodName,
-            providerName,
-          },
-          data: {
-            externalId: body.externalId,
-            netNominal: feeDto.merchantFee.netNominal,
-            paidAt: body.paidAt?.toJSDate() ?? null,
-            status: body.status as TransactionStatusEnum,
-            metadata: body.metadata as Prisma.InputJsonValue,
-          },
-        });
-
-        console.log({ feeDto, purchase });
-
-        if (body.status === TransactionStatusEnum.SUCCESS) {
-          await this.createFeeDetail({
-            tx,
-            purchaseId: purchase.id,
-            feeDto: feeDto,
+    let webhookApi: WebhookPayinApi;
+    try {
+      webhookApi = await this.prisma.$transaction(
+        async (tx) => {
+          const purchase = await tx.purchaseTransaction.update({
+            where: {
+              code: body.code,
+              merchantId: userId,
+              paymentMethodName,
+              providerName,
+            },
+            data: {
+              externalId: body.externalId,
+              netNominal: feeDto.merchantFee.netNominal,
+              paidAt: body.paidAt?.toJSDate() ?? null,
+              status: body.status as TransactionStatusEnum,
+              metadata: body.metadata as Prisma.InputJsonValue,
+            },
           });
 
-          await this.createBalanceLog({
-            tx,
-            purchaseId: purchase.id,
-            merchantId: purchase.merchantId,
-            providerName: purchase.providerName,
-            paymentMethodName: purchase.paymentMethodName,
-            nominal: purchase.nominal,
-            feeDto: feeDto,
-          });
-        }
+          console.log({ feeDto, purchase });
 
-        return new WebhookPayinApi({
-          transactionId: purchase.id,
-          orderId: purchase.orderId,
-          amount: purchase.nominal,
-          netAmount: purchase.netNominal,
-          fee: purchase.nominal.minus(purchase.netNominal),
-          status: purchase.status,
-          paidAt: purchase.paidAt?.toISOString() ?? null,
-          paymentMethod: purchase.paymentMethodName,
-        });
-      },
-      {
-        maxWait: 15_000,
-        timeout: 30_000,
-      },
-    );
+          if (body.status === TransactionStatusEnum.SUCCESS) {
+            await this.createFeeDetail({
+              tx,
+              purchaseId: purchase.id,
+              feeDto: feeDto,
+            });
+
+            await this.createBalanceLog({
+              tx,
+              purchaseId: purchase.id,
+              merchantId: purchase.merchantId,
+              providerName: purchase.providerName,
+              paymentMethodName: purchase.paymentMethodName,
+              nominal: purchase.nominal,
+              feeDto: feeDto,
+            });
+          }
+
+          return new WebhookPayinApi({
+            transactionId: purchase.id,
+            orderId: purchase.orderId,
+            amount: purchase.nominal,
+            netAmount: purchase.netNominal,
+            fee: purchase.nominal.minus(purchase.netNominal),
+            status: purchase.status,
+            paidAt: purchase.paidAt?.toISOString() ?? null,
+            paymentMethod: purchase.paymentMethodName,
+          });
+        },
+        {
+          maxWait: 15_000,
+          timeout: 30_000,
+        },
+      );
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw ApiError.purchaseNotFound('callback code', `'${body.code}'`);
+      }
+      throw error;
+    }
 
     if (IS_TEST) return webhookApi;
 
@@ -343,11 +360,10 @@ export class Purchase1Api {
       });
 
     if (!merchantSignatureUrl || !merchantSignatureUrl.payinUrl) {
-      throw ResponseException.fromHttpExecption(
-        new BadGatewayException(
-          `Merchant Payin URL Not Found userId: ${userId}`,
-        ),
+      console.warn(
+        `[Purchase1Api] Merchant payin URL not found for user ID ${userId}`,
       );
+      return webhookApi;
     }
 
     // TODO: Implement proper webhook retry mechanism (e.g. exponential backoff / queue)
@@ -477,15 +493,12 @@ export class Purchase1Api {
     const result: Prisma.PurchaseFeeDetailCreateManyInput[] = [];
     const { merchantFee, agentFee, providerFee, internalFee } = feeDto;
     if (!merchantFee || !agentFee || !providerFee || !internalFee) {
-      throw ResponseException.fromHttpExecption(
-        new UnprocessableEntityException('Some of the response is null'),
-        {
-          merchantFee,
-          agentFee,
-          providerFee,
-          internalFee,
-        },
-      );
+      throw ApiError.feeConfigInvalid({
+        merchantFee,
+        agentFee,
+        providerFee,
+        internalFee,
+      });
     }
 
     /**

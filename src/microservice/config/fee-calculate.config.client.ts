@@ -12,6 +12,8 @@ import { TopupFeeSystemDto } from './dto-transaction-system/topup-fee.system.dto
 import { FilterDisbursementFeeSystemDto } from './dto-transaction-system/filter-disbursement-fee.system.dto';
 import { DisbursementFeeSystemDto } from './dto-transaction-system/disbursement-fee.system.dto';
 import { SERVICES } from 'src/shared/constant/client.constant';
+import { DependencyErrorHelper } from 'src/shared/helper';
+import { DependencyErrorContext } from 'src/shared/exception';
 
 @Injectable()
 export class FeeCalculateConfigClient {
@@ -33,27 +35,30 @@ export class FeeCalculateConfigClient {
           params: filter,
         },
       );
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.config.purchaseFeeLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.config.purchaseFeeLookup,
+      );
     }
   }
 
   async calculatePurchaseFeeConfigTCP(filter: FilterPurchaseFeeSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.configClient.send<PurchaseFeeSystemDto>(
           { cmd: this.point.calculate_fee_purchase.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.error(error);
-      return this.calculatePurchaseFeeConfig(filter);
-      throw error;
-    }
+        ),
+      () => this.calculatePurchaseFeeConfig(filter),
+      DependencyErrorContext.config.purchaseFeeLookup,
+    );
   }
 
   /**
@@ -67,27 +72,30 @@ export class FeeCalculateConfigClient {
           params: filter,
         },
       );
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.config.withdrawFeeLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.config.withdrawFeeLookup,
+      );
     }
   }
 
   async calculateWithdrawFeeConfigTCP(filter: FilterWithdrawFeeSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.configClient.send<WithdrawFeeSystemDto>(
           { cmd: this.point.calculate_fee_withdraw.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.error(error);
-      return this.calculateWithdrawFeeConfig(filter);
-      throw error;
-    }
+        ),
+      () => this.calculateWithdrawFeeConfig(filter),
+      DependencyErrorContext.config.withdrawFeeLookup,
+    );
   }
 
   /**
@@ -101,28 +109,30 @@ export class FeeCalculateConfigClient {
           params: filter,
         },
       );
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.config.topupFeeLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.config.topupFeeLookup,
+      );
     }
   }
 
   async calculateTopupFeeConfigTCP(filter: FilterTopupFeeSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.configClient.send<TopupFeeSystemDto>(
           { cmd: this.point.calculate_fee_topup.cmd },
           filter,
         ),
-      );
-      console.log({ res });
-      return res;
-    } catch (error) {
-      console.error(error);
-      return this.calculateTopupFeeConfig(filter);
-      throw error;
-    }
+        ),
+      () => this.calculateTopupFeeConfig(filter),
+      DependencyErrorContext.config.topupFeeLookup,
+    );
   }
 
   /**
@@ -136,28 +146,31 @@ export class FeeCalculateConfigClient {
           params: filter,
         },
       );
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.config.disbursementFeeLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.config.disbursementFeeLookup,
+      );
     }
   }
 
   async calculateDisbursementFeeConfigTCP(
     filter: FilterDisbursementFeeSystemDto,
   ) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.configClient.send<DisbursementFeeSystemDto>(
           { cmd: this.point.calculate_fee_disbursement.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.error(error);
-      return this.calculateDisbursementFeeConfig(filter);
-      throw error;
-    }
+        ),
+      () => this.calculateDisbursementFeeConfig(filter),
+      DependencyErrorContext.config.disbursementFeeLookup,
+    );
   }
 }

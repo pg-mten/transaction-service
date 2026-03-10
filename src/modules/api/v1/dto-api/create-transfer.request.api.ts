@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsDefined, IsIn, IsOptional, IsString } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimal } from 'src/shared/decorator';
 
@@ -10,7 +10,7 @@ export class CreateTransferRequestApi {
     example: '10000.00',
   })
   @Type(() => Decimal)
-  @ValidateIf((o) => o.nominal !== undefined)
+  @IsDefined()
   @ToDecimal()
   amount: Decimal;
 
@@ -42,5 +42,6 @@ export class CreateTransferRequestApi {
 
   @ApiProperty({ type: String })
   @IsString()
+  @IsIn(['IDR'])
   currency: string;
 }

@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsDefined, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import Decimal from 'decimal.js';
 import { ToDecimal } from 'src/shared/decorator';
+import { PaymentMethodName } from 'src/shared/constant/transaction.constant';
 
 export class CreatePurchaseRequestApi {
   @ApiProperty({
@@ -10,7 +11,7 @@ export class CreatePurchaseRequestApi {
     example: '10000.00',
   })
   @Type(() => Decimal)
-  @ValidateIf((o) => o.nominal !== undefined)
+  @IsDefined()
   @ToDecimal()
   amount: Decimal;
 
@@ -25,14 +26,18 @@ export class CreatePurchaseRequestApi {
 
   @ApiProperty({ type: String })
   @IsString()
+  @IsIn(Object.values(PaymentMethodName))
   paymentMethod: string; // QRIS, VIRTUALACCOUNT, DIRRECTEWALLET, TRANSFERBANK, TRANSFEREWALLET
 
   @ApiProperty({ type: String })
   @IsString()
+  @IsIn(['IDR'])
   currency: string;
 
   @ApiProperty({ type: Number, required: false })
   @IsInt()
   @IsOptional()
+  @Min(60)
+  @Max(86400)
   expireSecond: number | null;
 }

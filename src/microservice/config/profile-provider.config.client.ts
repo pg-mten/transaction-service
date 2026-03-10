@@ -6,6 +6,8 @@ import { ResponseDto } from 'src/shared/response.dto';
 import { ProfileProviderSystemDto } from './dto-system/profile-provider.system.dto';
 import { firstValueFrom } from 'rxjs';
 import { FilterProfileProviderSystemDto } from './dto-system/filter-profile-provider.system.dto';
+import { DependencyErrorHelper } from 'src/shared/helper';
+import { DependencyErrorContext } from 'src/shared/exception';
 
 @Injectable()
 export class ProfileProviderConfigClient {
@@ -20,29 +22,32 @@ export class ProfileProviderConfigClient {
     try {
       const res = await axios.get<ResponseDto<ProfileProviderSystemDto>>(
         this.point.find_profile_provider.url,
-        { data: filter },
+        { params: filter },
       );
 
-      return res.data.data!;
+      return DependencyErrorHelper.ensureData(
+        res.data.data,
+        DependencyErrorContext.config.providerProfileLookup,
+      );
     } catch (error) {
-      console.log(error);
-      throw error;
+      DependencyErrorHelper.throwFromError(
+        error,
+        DependencyErrorContext.config.providerProfileLookup,
+      );
     }
   }
 
   async findProfileProviderTCP(filter: FilterProfileProviderSystemDto) {
-    try {
-      const res = await firstValueFrom(
+    return DependencyErrorHelper.withFallback(
+      () =>
+        firstValueFrom(
         this.configClient.send<ProfileProviderSystemDto>(
           { cmd: this.point.find_profile_provider.cmd },
           filter,
         ),
-      );
-      return res;
-    } catch (error) {
-      console.log(error);
-      return this.findProfileProvider(filter);
-      throw error;
-    }
+        ),
+      () => this.findProfileProvider(filter),
+      DependencyErrorContext.config.providerProfileLookup,
+    );
   }
 }
