@@ -19,7 +19,7 @@ model TopUpTransaction {
   code              String                @unique @default(uuid())
   merchantId        Int                   @db.Integer
   externalId        String?
-  referenceId       String                @unique //reff id from bank
+  referenceId       String                @unique /// reff id from bank
   nominal           Decimal @db.Decimal(18,2)
   netNominal        Decimal @db.Decimal(18,2)
   status            TransactionStatusEnum @default(PENDING)
@@ -32,11 +32,11 @@ model TopUpTransaction {
   settlementAt      DateTime?
   reconciliationAt  DateTime?
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   merchantBalanceLog MerchantBalanceLog[]
@@ -58,11 +58,11 @@ model TopupFeeDetail {
   feeFixed      Decimal @db.Decimal(10,2)
   feePercentage Decimal @db.Decimal(10,2)
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   topUpTransation TopUpTransaction @relation(fields: [topupId], references: [id], onDelete: Cascade)
@@ -89,11 +89,11 @@ model WithdrawTransaction {
   metadata          Json? 	@db.Json
   reconciliationAt DateTime?
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   // Relasi
@@ -116,11 +116,11 @@ model WithdrawFeeDetail {
   feeFixed      Decimal @db.Decimal(10,2)
   feePercentage Decimal @db.Decimal(10,2)
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   withdrawTransaction WithdrawTransaction @relation(fields: [withdrawId], references: [id], onDelete: Cascade)
@@ -151,11 +151,11 @@ model DisbursementTransaction {
   metadata          Json? 	@db.Json
   reconciliationAt  DateTime?
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   // Relasi
@@ -178,11 +178,11 @@ model DisbursementFeeDetail {
   feeFixed       Decimal @db.Decimal(10,2)
   feePercentage  Decimal @db.Decimal(10,2)
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   disbursementTransaction DisbursementTransaction @relation(fields: [disbursementId], references: [id], onDelete: Cascade)
@@ -212,11 +212,11 @@ model PurchaseTransaction {
   settlementAt     DateTime?
   reconciliationAt DateTime?
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   // Relasi
@@ -241,11 +241,11 @@ model PurchaseFeeDetail {
   feeFixed      Decimal
   feePercentage Decimal
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   // Relasi
@@ -264,11 +264,11 @@ model WebhookLog {
   receivedAt      DateTime            @default(now())
   transactionType TransactionTypeEnum
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   PurchaseTransaction   PurchaseTransaction? @relation(fields: [purchaseTransactionId], references: [id])
@@ -287,11 +287,11 @@ model TransactionAudit {
   changedAt       DateTime              @default(now())
   transactionType TransactionTypeEnum
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   @@index([transactionId])
@@ -310,11 +310,11 @@ model MerchantBalanceLog {
   balancePending  Decimal @db.Decimal(18,2)
   transactionType TransactionTypeEnum
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   topupTransaction        TopUpTransaction?        @relation(fields: [topupId], references: [id], onDelete: SetNull)
@@ -342,11 +342,11 @@ model AgentBalanceLog {
   balancePending  Decimal @db.Decimal(18,2)
   transactionType TransactionTypeEnum
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   topupTransaction        TopUpTransaction?        @relation(fields: [topupId], references: [id], onDelete: SetNull)
@@ -376,11 +376,11 @@ model InternalBalanceLog {
   providerName      String
   paymentMethodName String
 
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
-  updatedAt DateTime? @updatedAt()
+  updatedAt DateTime? @db.Timestamptz(3)
   updatedBy Int?      @db.Integer()
-  deletedAt DateTime? @db.Timestamp()
+  deletedAt DateTime? @db.Timestamptz(3)
   deletedBy Int?      @db.Integer()
 
   topupTransaction        TopUpTransaction?        @relation(fields: [topupId], references: [id], onDelete: SetNull)
