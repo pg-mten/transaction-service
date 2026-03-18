@@ -15,22 +15,22 @@ datasource db {
 }
 
 model TopUpTransaction {
-  id                BigInt                   @id @default(autoincrement()) @db.BigInt
+  id                BigInt                @id @default(autoincrement()) @db.BigInt
   code              String                @unique @default(uuid())
   merchantId        Int                   @db.Integer
   externalId        String?
   referenceId       String                @unique /// reff id from bank
-  nominal           Decimal @db.Decimal(18,2)
-  netNominal        Decimal @db.Decimal(18,2)
+  nominal           Decimal               @db.Decimal(18, 2)
+  netNominal        Decimal               @db.Decimal(18, 2)
   status            TransactionStatusEnum @default(PENDING)
   providerName      String
   paymentMethodName String //transfer_bank, virtual_account
   receiptImage      String
 
-  paidAt            DateTime?
-  metadata          Json? 	@db.Json
-  settlementAt      DateTime?
-  reconciliationAt  DateTime?
+  paidAt           DateTime?
+  metadata         Json?     @db.Json
+  settlementAt     DateTime?
+  reconciliationAt DateTime?
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
@@ -50,13 +50,13 @@ model TopUpTransaction {
 }
 
 model TopupFeeDetail {
-  id            BigInt         @id @default(autoincrement()) @db.BigInt
-  agentId       Int?  @db.Integer
-  topupId       BigInt @db.BigInt
+  id            BigInt      @id @default(autoincrement()) @db.BigInt
+  agentId       Int?        @db.Integer
+  topupId       BigInt      @db.BigInt
   type          FeeTypeEnum
-  nominal       Decimal @db.Decimal(18,2)
-  feeFixed      Decimal @db.Decimal(10,2)
-  feePercentage Decimal @db.Decimal(10,2)
+  nominal       Decimal     @db.Decimal(18, 2)
+  feeFixed      Decimal     @db.Decimal(10, 2)
+  feePercentage Decimal     @db.Decimal(10, 2)
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
@@ -72,21 +72,21 @@ model TopupFeeDetail {
 }
 
 model WithdrawTransaction {
-  id          BigInt     @id @default(autoincrement()) @db.BigInt
+  id          BigInt  @id @default(autoincrement()) @db.BigInt
   code        String  @unique @default(uuid())
   externalId  String?
-  userId      Int @db.Integer
+  userId      Int     @db.Integer
   userRole    String
   referenceId String  @unique //reff id from bank
 
   providerName      String
   paymentMethodName String // transfer_bank, virtual_account, dll
-  nominal    Decimal @db.Decimal(18,2)
-  netNominal Decimal @db.Decimal(18,2) // nominal setelah dikenakan fee
-  status     TransactionStatusEnum @default(PENDING)
+  nominal           Decimal               @db.Decimal(18, 2)
+  netNominal        Decimal               @db.Decimal(18, 2) // nominal setelah dikenakan fee
+  status            TransactionStatusEnum @default(PENDING)
 
-  paidAt            DateTime?
-  metadata          Json? 	@db.Json
+  paidAt           DateTime?
+  metadata         Json?     @db.Json
   reconciliationAt DateTime?
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
@@ -108,13 +108,13 @@ model WithdrawTransaction {
 }
 
 model WithdrawFeeDetail {
-  id            BigInt         @id @default(autoincrement()) @db.BigInt
-  agentId       Int? @db.Integer
-  withdrawId    BigInt @db.BigInt
+  id            BigInt      @id @default(autoincrement()) @db.BigInt
+  agentId       Int?        @db.Integer
+  withdrawId    BigInt      @db.BigInt
   type          FeeTypeEnum
-  nominal       Decimal @db.Decimal(18,2)
-  feeFixed      Decimal @db.Decimal(10,2)
-  feePercentage Decimal @db.Decimal(10,2)
+  nominal       Decimal     @db.Decimal(18, 2)
+  feeFixed      Decimal     @db.Decimal(10, 2)
+  feePercentage Decimal     @db.Decimal(10, 2)
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
@@ -130,25 +130,25 @@ model WithdrawFeeDetail {
 }
 
 model DisbursementTransaction {
-  id          BigInt     @id @default(autoincrement()) @db.BigInt
+  id          BigInt  @id @default(autoincrement()) @db.BigInt
   code        String  @unique @default(uuid())
   orderId     String  @unique
   externalId  String?
   referenceId String?
-  merchantId  Int @db.Integer
+  merchantId  Int     @db.Integer
 
   providerName      String
   recipientName     String // bisa merchant, agent, atau pihak ketiga
   recipientBankCode String
   recipientBankName String?
   recipientAccount  String
-  nominal           Decimal @db.Decimal(18,2)
-  netNominal        Decimal @db.Decimal(18,2)
+  nominal           Decimal               @db.Decimal(18, 2)
+  netNominal        Decimal               @db.Decimal(18, 2)
   status            TransactionStatusEnum @default(PENDING)
 
   paidAt            DateTime?
   paymentMethodName String
-  metadata          Json? 	@db.Json
+  metadata          Json?     @db.Json
   reconciliationAt  DateTime?
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
@@ -170,13 +170,13 @@ model DisbursementTransaction {
 }
 
 model DisbursementFeeDetail {
-  id             BigInt         @id @default(autoincrement()) @db.BigInt
-  agentId        Int? @db.Integer
-  disbursementId BigInt @db.BigInt
+  id             BigInt      @id @default(autoincrement()) @db.BigInt
+  agentId        Int?        @db.Integer
+  disbursementId BigInt      @db.BigInt
   type           FeeTypeEnum
-  nominal        Decimal @db.Decimal(18,2)
-  feeFixed       Decimal @db.Decimal(10,2)
-  feePercentage  Decimal @db.Decimal(10,2)
+  nominal        Decimal     @db.Decimal(18, 2)
+  feeFixed       Decimal     @db.Decimal(10, 2)
+  feePercentage  Decimal     @db.Decimal(10, 2)
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
   createdBy Int?      @db.Integer()
@@ -192,23 +192,23 @@ model DisbursementFeeDetail {
 }
 
 model PurchaseTransaction {
-  id          BigInt     @id @default(autoincrement()) @db.BigInt
+  id          BigInt  @id @default(autoincrement()) @db.BigInt
   code        String  @unique
   orderId     String  @unique
   referenceId String?
   externalId  String
-  merchantId  Int @db.Integer
+  merchantId  Int     @db.Integer
   nmid        String?
 
   providerName      String
   paymentMethodName String
-  nominal           Decimal @db.Decimal(18,2)
-  netNominal        Decimal @db.Decimal(18,2)
+  nominal           Decimal               @db.Decimal(18, 2)
+  netNominal        Decimal               @db.Decimal(18, 2)
   status            TransactionStatusEnum @default(PENDING)
 
   paidAt           DateTime?
   expiresAt        DateTime
-  metadata         Json? 	@db.Json
+  metadata         Json?     @db.Json
   settlementAt     DateTime?
   reconciliationAt DateTime?
 
@@ -233,9 +233,9 @@ model PurchaseTransaction {
 }
 
 model PurchaseFeeDetail {
-  id            BigInt         @id @default(autoincrement()) @db.BigInt
-  agentId       Int? @db.Integer
-  purchaseId    BigInt @db.BigInt
+  id            BigInt      @id @default(autoincrement()) @db.BigInt
+  agentId       Int?        @db.Integer
+  purchaseId    BigInt      @db.BigInt
   type          FeeTypeEnum
   nominal       Decimal
   feeFixed      Decimal
@@ -256,10 +256,10 @@ model PurchaseFeeDetail {
 }
 
 model WebhookLog {
-  id              BigInt                 @id @default(autoincrement()) @db.BigInt
-  transactionId   BigInt @db.BigInt
+  id              BigInt              @id @default(autoincrement()) @db.BigInt
+  transactionId   BigInt              @db.BigInt
   source          String // e.g. midtrans, xendit
-  payload         Json 	@db.Json
+  payload         Json                @db.Json
   rawSignature    String?
   receivedAt      DateTime            @default(now())
   transactionType TransactionTypeEnum
@@ -272,15 +272,15 @@ model WebhookLog {
   deletedBy Int?      @db.Integer()
 
   PurchaseTransaction   PurchaseTransaction? @relation(fields: [purchaseTransactionId], references: [id])
-  purchaseTransactionId Int?
+  purchaseTransactionId BigInt?
 
   @@index([source])
   @@schema("transaction")
 }
 
 model TransactionAudit {
-  id              BigInt                   @id @default(autoincrement()) @db.BigInt
-  transactionId   BigInt @db.BigInt
+  id              BigInt                @id @default(autoincrement()) @db.BigInt
+  transactionId   BigInt                @db.BigInt
   oldStatus       TransactionStatusEnum
   newStatus       TransactionStatusEnum
   source          String // "webhook", "admin", etc
@@ -299,15 +299,15 @@ model TransactionAudit {
 }
 
 model MerchantBalanceLog {
-  id              BigInt                 @id @default(autoincrement()) @db.BigInt
-  topupId         BigInt? @db.BigInt
-  purchaseId      BigInt? @db.BigInt
-  withdrawId      BigInt? @db.BigInt
-  disbursementId  BigInt? @db.BigInt
-  merchantId      Int @db.Integer
-  changeAmount    Decimal @db.Decimal(18,2) /// nominal perubahan (positif / negatif)
-  balanceActive   Decimal @db.Decimal(18,2) /// saldo akhir merchant setelah perubahan
-  balancePending  Decimal @db.Decimal(18,2)
+  id              BigInt              @id @default(autoincrement()) @db.BigInt
+  topupId         BigInt?             @db.BigInt
+  purchaseId      BigInt?             @db.BigInt
+  withdrawId      BigInt?             @db.BigInt
+  disbursementId  BigInt?             @db.BigInt
+  merchantId      Int                 @db.Integer
+  changeAmount    Decimal             @db.Decimal(18, 2) /// nominal perubahan (positif / negatif)
+  balanceActive   Decimal             @db.Decimal(18, 2) /// saldo akhir merchant setelah perubahan
+  balancePending  Decimal             @db.Decimal(18, 2)
   transactionType TransactionTypeEnum
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
@@ -331,15 +331,15 @@ model MerchantBalanceLog {
 }
 
 model AgentBalanceLog {
-  id              BigInt                 @id @default(autoincrement()) @db.BigInt
-  topupId         BigInt? @db.BigInt
-  purchaseId      BigInt? @db.BigInt
-  withdrawId      BigInt? @db.BigInt
-  disbursementId  BigInt? @db.BigInt
-  agentId         Int @db.Integer
-  changeAmount    Decimal @db.Decimal(18,2) /// nominal perubahan (positif / negatif)
-  balanceActive   Decimal @db.Decimal(18,2) /// saldo akhir merchant setelah perubahan
-  balancePending  Decimal @db.Decimal(18,2)
+  id              BigInt              @id @default(autoincrement()) @db.BigInt
+  topupId         BigInt?             @db.BigInt
+  purchaseId      BigInt?             @db.BigInt
+  withdrawId      BigInt?             @db.BigInt
+  disbursementId  BigInt?             @db.BigInt
+  agentId         Int                 @db.Integer
+  changeAmount    Decimal             @db.Decimal(18, 2) /// nominal perubahan (positif / negatif)
+  balanceActive   Decimal             @db.Decimal(18, 2) /// saldo akhir merchant setelah perubahan
+  balancePending  Decimal             @db.Decimal(18, 2)
   transactionType TransactionTypeEnum
 
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
@@ -363,15 +363,15 @@ model AgentBalanceLog {
 }
 
 model InternalBalanceLog {
-  id                BigInt                 @id @default(autoincrement()) @db.BigInt
-  topupId           BigInt? @db.BigInt
-  purchaseId        BigInt? @db.BigInt
-  withdrawId        BigInt? @db.BigInt
-  disbursementId    BigInt? @db.BigInt
-  merchantId        Int? @db.Integer
-  changeAmount    Decimal @db.Decimal(18,2) /// nominal perubahan (positif / negatif)
-  balanceActive   Decimal @db.Decimal(18,2) /// saldo akhir merchant setelah perubahan
-  balancePending  Decimal @db.Decimal(18,2)
+  id                BigInt              @id @default(autoincrement()) @db.BigInt
+  topupId           BigInt?             @db.BigInt
+  purchaseId        BigInt?             @db.BigInt
+  withdrawId        BigInt?             @db.BigInt
+  disbursementId    BigInt?             @db.BigInt
+  merchantId        Int?                @db.Integer
+  changeAmount      Decimal             @db.Decimal(18, 2) /// nominal perubahan (positif / negatif)
+  balanceActive     Decimal             @db.Decimal(18, 2) /// saldo akhir merchant setelah perubahan
+  balancePending    Decimal             @db.Decimal(18, 2)
   transactionType   TransactionTypeEnum
   providerName      String
   paymentMethodName String
