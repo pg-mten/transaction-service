@@ -44,8 +44,8 @@ model TopUpTransaction {
   internalBalanceLog InternalBalanceLog[]
   feeDetails         TopupFeeDetail[]
 
-  @@index([referenceId])
-  @@index([merchantId])
+  @@index([createdAt])
+  @@index([merchantId, createdAt])
   @@schema("transaction")
 }
 
@@ -102,8 +102,8 @@ model WithdrawTransaction {
   AgentBalanceLog    AgentBalanceLog[]
   InternalBalanceLog InternalBalanceLog[]
 
-  @@index([userId])
-  @@index([status])
+  @@index([createdAt])
+  @@index([userId, createdAt])
   @@schema("transaction")
 }
 
@@ -164,8 +164,9 @@ model DisbursementTransaction {
   AgentBalanceLog    AgentBalanceLog[]
   InternalBalanceLog InternalBalanceLog[]
 
-  @@index([providerName])
-  @@index([status])
+  @@index([createdAt])
+  @@index([merchantId, createdAt])
+  @@index([merchantId, paidAt])
   @@schema("transaction")
 }
 
@@ -226,9 +227,11 @@ model PurchaseTransaction {
   AgentBalanceLog    AgentBalanceLog[]
   InternalBalanceLog InternalBalanceLog[]
 
-  @@index([merchantId])
-  @@index([providerName])
-  @@index([status])
+  @@index([createdAt])
+  @@index([merchantId, createdAt])
+  @@index([merchantId, paidAt])
+  @@index([merchantId, status, settlementAt, id])
+  @@index([status, settlementAt, reconciliationAt, createdAt])
   @@schema("transaction")
 }
 
@@ -322,7 +325,7 @@ model MerchantBalanceLog {
   withdrawTransaction     WithdrawTransaction?     @relation(fields: [withdrawId], references: [id], onDelete: SetNull)
   disbursementTransaction DisbursementTransaction? @relation(fields: [disbursementId], references: [id], onDelete: SetNull)
 
-  @@index([merchantId])
+  @@index([merchantId, createdAt])
   @@index([topupId])
   @@index([purchaseId])
   @@index([withdrawId])
@@ -354,7 +357,7 @@ model AgentBalanceLog {
   withdrawTransaction     WithdrawTransaction?     @relation(fields: [withdrawId], references: [id], onDelete: SetNull)
   disbursementTransaction DisbursementTransaction? @relation(fields: [disbursementId], references: [id], onDelete: SetNull)
 
-  @@index([agentId])
+  @@index([agentId, createdAt])
   @@index([topupId])
   @@index([purchaseId])
   @@index([withdrawId])
@@ -392,6 +395,7 @@ model InternalBalanceLog {
   @@index([purchaseId])
   @@index([withdrawId])
   @@index([disbursementId])
+  @@index([providerName, createdAt])
   @@schema("transaction")
 }
 
