@@ -1,13 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-  BadRequestException,
-  ConflictException,
-  InternalServerErrorException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   Prisma,
   TransactionStatusEnum,
@@ -36,7 +27,6 @@ import {
 import { FeeCalculateConfigClient } from 'src/microservice/config/fee-calculate.config.client';
 import { CreatePurchaseCallbackSystemDto } from 'src/microservice/transaction/purchase/dto-system/create-purchase-callback.system.dto';
 import { PurchaseFeeSystemDto } from 'src/microservice/config/dto-transaction-system/purchase-fee.system.dto';
-import { BalanceService } from 'src/modules/balance/balance.service';
 import axios from 'axios';
 import { WebhookPayinApi } from './dto-api/webhook-payin.api';
 import { MerchantSignatureValidationSystemDto } from 'src/microservice/merchant-signature/merchant-signature-validation.system.dto';
@@ -45,6 +35,7 @@ import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
 import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
 import { Pageable } from 'src/shared/pagination';
 import { IS_TEST } from 'src/shared/constant/global.constant';
+import { ZipayProviderClient } from 'src/microservice/provider/zipay/zipay.provider.client';
 
 @Injectable()
 export class Purchase1Api {
@@ -55,9 +46,9 @@ export class Purchase1Api {
     private readonly pdnProviderClient: PdnProviderClient,
     private readonly profileProviderClient: ProfileProviderConfigClient,
     private readonly feeCalculateClient: FeeCalculateConfigClient,
-    private readonly balanceService: BalanceService,
     private readonly purchaseService: PurchaseService,
-  ) { }
+    private readonly zipayProviderClient: ZipayProviderClient,
+  ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
@@ -176,6 +167,11 @@ export class Purchase1Api {
     try {
       if (dto.providerName === ProviderName.PDNT1) {
         const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
+          ...dto,
+        });
+        return clientRes;
+      } else if (dto.providerName === ProviderName.ZIPAY) {
+        const clientRes = await this.zipayProviderClient.purchaseQRISTCP({
           ...dto,
         });
         return clientRes;

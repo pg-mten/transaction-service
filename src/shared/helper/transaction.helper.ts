@@ -1,4 +1,3 @@
-import { UnprocessableEntityException } from '@nestjs/common';
 import { DateHelper } from './date.helper';
 import { DateTime } from 'luxon';
 import { UuidHelper } from './uuid.helper';
@@ -90,12 +89,14 @@ export class TransactionHelper {
   static providerNameMapper(providerName: ProviderName): string {
     if (ProviderName.INTERNAL === providerName) return 'INTER';
     if (ProviderName.PDNT1 === providerName) return 'PDNT1';
+    if (ProviderName.ZIPAY === providerName) return 'ZIPAY';
     return '0';
   }
 
   static providerName(value: string): ProviderName {
     if (value === 'INTER') return ProviderName.INTERNAL;
     if (value === 'PDNT1') return ProviderName.PDNT1;
+    if (value === 'ZIPAY') return ProviderName.ZIPAY;
     return ProviderName.INTERNAL;
   }
 

@@ -148,6 +148,11 @@ export const SERVICES = {
         path: 'provider/pdn/internal/disbursement',
         url: `${URL_SETTLERECON}/provider/pdn/internal/disbursement`,
       },
+      zipay_purchase_qris: {
+        cmd: 'zipay_purchase_qris',
+        path: 'provider/zipay/internal/qris',
+        url: `${URL_SETTLERECON}/provider/zipay/internal/qris`,
+      },
     },
   },
 };
