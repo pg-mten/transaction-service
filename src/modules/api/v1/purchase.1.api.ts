@@ -36,6 +36,7 @@ import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request
 import { Pageable } from 'src/shared/pagination';
 import { IS_TEST } from 'src/shared/constant/global.constant';
 import { ZipayProviderClient } from 'src/microservice/provider/zipay/zipay.provider.client';
+import { PakaidonkProviderClient } from 'src/microservice/provider/pakaidonk/pakaidonk.provider.client';
 
 @Injectable()
 export class Purchase1Api {
@@ -48,6 +49,7 @@ export class Purchase1Api {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly purchaseService: PurchaseService,
     private readonly zipayProviderClient: ZipayProviderClient,
+    private readonly pakaidonkProviderClient: PakaidonkProviderClient,
   ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
@@ -163,9 +165,25 @@ export class Purchase1Api {
     providerName: string;
     nominal: Decimal;
     expireSecond: number;
+    orderId: string;
+    credentials: Record<string, unknown> | null;
   }) {
     try {
-      if (dto.providerName === ProviderName.PDNT1) {
+      if (dto.providerName === ProviderName.PAKAIDONK) {
+        if (!dto.credentials || !dto.credentials[ProviderName.PAKAIDONK])
+          throw ApiError.unsupportedProvider(dto.providerName);
+        const pakaidonk = dto.credentials[ProviderName.PAKAIDONK] as Record<
+          string,
+          string
+        >;
+        const clientRes = await this.pakaidonkProviderClient.purchaseQRISTCP({
+          ...dto,
+          pakaidonkMerchantId: pakaidonk['pakaidonkMerchantId'],
+          pakaidonkStoreId: pakaidonk['pakaidonkStoreId'],
+          pakaidonkTerminalId: pakaidonk['pakaidonkTerminalId'],
+        });
+        return clientRes;
+      } else if (dto.providerName === ProviderName.PDNT1) {
         const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
           ...dto,
         });
@@ -175,7 +193,7 @@ export class Purchase1Api {
           ...dto,
         });
         return clientRes;
-      } else if (dto.providerName === 'INACASH') {
+      } else if (dto.providerName === ProviderName.INACASH) {
         const clientRes = await this.inacashProviderClient.purchaseQRISTCP({
           ...dto,
         });
@@ -229,6 +247,8 @@ export class Purchase1Api {
       providerName: profileProvider.providerName,
       nominal: new Decimal(body.amount),
       expireSecond: body.expireSecond ?? 900,
+      orderId: body.orderId,
+      credentials: merchantSignature.credentials,
     });
     console.log({ clientData, date: DateHelper.now() });
 

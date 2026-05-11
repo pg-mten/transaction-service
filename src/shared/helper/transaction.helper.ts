@@ -22,23 +22,25 @@ export class TransactionHelper {
     userId,
     providerName,
     paymentMethodName,
-  }: Omit<CodeTransaction, 'date'>): string {
+    length = 30,
+  }: Omit<CodeTransaction, 'date'> & { length?: number }): string {
     const tt = this.transactionTypeMapper(transactionType);
     const pn = this.providerNameMapper(providerName);
     const pmn = this.paymentMethodNameMapper(paymentMethodName);
+    const nowMs = DateHelper.nowMs();
 
     // const code = `${userId}-${tt}-${pn}-${pmn}`;
     // const code = `${DateHelper.nowMs()}-${userId}-${tt}-${pmn}-${pn}`;
-    const code = `${DateHelper.nowMs()}${tt}${pmn}${pn}-${userId}`;
+    const code = `${nowMs}${tt}${pmn}${pn}-${userId}`;
 
-    if (code.length >= 29) return code;
+    if (code.length >= length - 1) return code;
 
     const random = UuidHelper.generateRandomCode();
-    return `${code}-${random.slice(0, 30 - code.length - 1)}`;
+    return `${code}-${random.slice(0, length - code.length - 1)}`;
   }
 
   static extractCode(code: string): CodeTransaction {
-    // For Example: 1772001455392DTFPDNT1-13-[random]
+    // For Example: 1772001455392DTBPDNT1-13-[random]
     const match = code.match(
       /^(\d{13})([A-Z0-9])([A-Z0-9]{2})([A-Z0-9]{5})-(\d+)(?:-([A-Za-z0-9]+))?$/,
     );
@@ -90,6 +92,7 @@ export class TransactionHelper {
     if (ProviderName.INTERNAL === providerName) return 'INTER';
     if (ProviderName.PDNT1 === providerName) return 'PDNT1';
     if (ProviderName.ZIPAY === providerName) return 'ZIPAY';
+    if (ProviderName.PAKAIDONK === providerName) return 'PKDNK';
     return '0';
   }
 
@@ -97,8 +100,9 @@ export class TransactionHelper {
     if (value === 'INTER') return ProviderName.INTERNAL;
     if (value === 'PDNT1') return ProviderName.PDNT1;
     if (value === 'ZIPAY') return ProviderName.ZIPAY;
+    if (value === 'PKDNK') return ProviderName.PAKAIDONK;
     return ProviderName.INTERNAL;
-  }
+  } /// Pakaidonk
 
   /**
    * MUST BE 2 CHARACTER

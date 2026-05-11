@@ -74,13 +74,15 @@ export const DependencyErrorContext = {
     } satisfies DependencyFailureContext,
     purchaseFeeLookup: {
       dependency: 'Config service purchase fee lookup',
-      unavailableMessage: 'Config service is unavailable for purchase fee lookup',
+      unavailableMessage:
+        'Config service is unavailable for purchase fee lookup',
       missingCode: ApiErrorCode.FEE_CONFIG_INVALID,
       missingMessage: 'Purchase fee configuration is not available',
     } satisfies DependencyFailureContext,
     withdrawFeeLookup: {
       dependency: 'Config service withdraw fee lookup',
-      unavailableMessage: 'Config service is unavailable for withdraw fee lookup',
+      unavailableMessage:
+        'Config service is unavailable for withdraw fee lookup',
       missingCode: ApiErrorCode.FEE_CONFIG_INVALID,
       missingMessage: 'Withdraw fee configuration is not available',
     } satisfies DependencyFailureContext,
@@ -122,6 +124,10 @@ export const DependencyErrorContext = {
     pdnDisbursementProvider: {
       dependency: 'Settlerecon PDN disbursement provider',
       unavailableMessage: 'PDN disbursement provider is unavailable',
+    } satisfies DependencyFailureContext,
+    pakaidonkPurchaseProvider: {
+      dependency: 'Settlerecon Pakaidonk purchase provider',
+      invalidResponseMessage: 'Pakaidonk provider is unavailable',
     } satisfies DependencyFailureContext,
   },
 } as const;
@@ -254,7 +260,10 @@ export class ApiError {
     });
   }
 
-  static purchaseNotFound(identifierLabel: string, identifier: string | number) {
+  static purchaseNotFound(
+    identifierLabel: string,
+    identifier: string | number,
+  ) {
     return this.response({
       statusCode: HttpStatus.NOT_FOUND,
       message: `Purchase with ${identifierLabel} ${identifier} not found`,

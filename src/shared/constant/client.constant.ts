@@ -153,6 +153,11 @@ export const SERVICES = {
         path: 'provider/zipay/internal/qris',
         url: `${URL_SETTLERECON}/provider/zipay/internal/qris`,
       },
+      pakaidonk_purchase_qris: {
+        cmd: 'pakaidonk_purchase_qris',
+        path: 'provider/pakaidonk/internal/qris',
+        url: `${URL_SETTLERECON}/provider/pakaidonk/internal/qris`,
+      },
     },
   },
 };

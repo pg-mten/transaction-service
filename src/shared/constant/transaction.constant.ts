@@ -6,8 +6,10 @@ export enum TransactionUserRole {
 
 export const ProviderName = {
   INTERNAL: 'INTERNAL',
+  INACASH: 'INACASH',
   PDNT1: 'PDNT1',
   ZIPAY: 'ZIPAY',
+  PAKAIDONK: 'PAKAIDONK',
 };
 
 export type ProviderName = (typeof ProviderName)[keyof typeof ProviderName];

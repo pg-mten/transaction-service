@@ -17,4 +17,7 @@ export class MerchantSignatureValidationSystemDto {
 
   @ApiProperty({ type: String })
   nmid: string | null;
+
+  @ApiProperty({ type: Object })
+  credentials: Record<string, unknown> | null;
 }

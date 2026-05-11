@@ -23,6 +23,7 @@ import { ProfileProviderConfigClient } from './config/profile-provider.config.cl
 import { MerchantSignatureAuthClient } from './merchant-signature/merchant-signature.auth.client';
 import { MerchantSignatureHeadersGuard } from './auth/guard/merchant-signature-headers.guard';
 import { ZipayProviderClient } from './provider/zipay/zipay.provider.client';
+import { PakaidonkProviderClient } from './provider/pakaidonk/pakaidonk.provider.client';
 
 @Global()
 @Module({
@@ -40,6 +41,7 @@ import { ZipayProviderClient } from './provider/zipay/zipay.provider.client';
     ProfileProviderConfigClient,
     MerchantSignatureAuthClient,
     ZipayProviderClient,
+    PakaidonkProviderClient,
   ],
   providers: [
     /// Register Client
@@ -56,6 +58,7 @@ import { ZipayProviderClient } from './provider/zipay/zipay.provider.client';
     ProfileProviderConfigClient,
     MerchantSignatureAuthClient,
     ZipayProviderClient,
+    PakaidonkProviderClient,
 
     /// TODO Non aktifkan dulu bolooo
     JwtStrategy,
