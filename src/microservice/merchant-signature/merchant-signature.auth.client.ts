@@ -16,7 +16,7 @@ export class MerchantSignatureAuthClient {
   constructor(
     @Inject(SERVICES.AUTH.name)
     private readonly authClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly point = SERVICES.AUTH.point;
 
@@ -45,10 +45,10 @@ export class MerchantSignatureAuthClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.authClient.send<MerchantSignatureValidationSystemDto>(
-          { cmd: this.point.merchant_signature_validation.cmd },
-          filter,
-        ),
+          this.authClient.send<MerchantSignatureValidationSystemDto>(
+            { cmd: this.point.merchant_signature_validation.cmd },
+            filter,
+          ),
         ),
       () => this.signatureValidation(filter),
       DependencyErrorContext.auth.merchantSignatureValidation,
@@ -79,10 +79,10 @@ export class MerchantSignatureAuthClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.authClient.send<MerchantUrlSystemDto>(
-          { cmd: this.point.merchant_signature_url.cmd },
-          filter,
-        ),
+          this.authClient.send<MerchantUrlSystemDto>(
+            { cmd: this.point.merchant_signature_url.cmd },
+            filter,
+          ),
         ),
       () => this.findMerchantUrl(filter),
       DependencyErrorContext.auth.merchantUrlLookup,

@@ -26,9 +26,6 @@ export class ProviderPurchaseSystemDto {
   @ApiProperty()
   code: string;
 
-  @ApiProperty()
-  productCode: string;
-
   @ApiProperty({})
   @ToDateTimeJsDate()
   expiresAt: DateTime;

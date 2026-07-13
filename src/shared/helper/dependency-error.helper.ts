@@ -63,7 +63,9 @@ export class DependencyErrorHelper {
 
     if (axios.isAxiosError(error)) {
       const upstreamStatus =
-        typeof error.response?.status === 'number' ? error.response.status : null;
+        typeof error.response?.status === 'number'
+          ? error.response.status
+          : null;
       const upstreamCode =
         typeof error.response?.data?.error?.code === 'string'
           ? error.response.data.error.code
@@ -76,7 +78,10 @@ export class DependencyErrorHelper {
         ...context.details,
       };
 
-      if (context.missingCode && (upstreamStatus === 404 || upstreamCode === context.missingCode)) {
+      if (
+        context.missingCode &&
+        (upstreamStatus === 404 || upstreamCode === context.missingCode)
+      ) {
         throw ApiError.response({
           statusCode: context.missingStatusCode ?? HttpStatus.FAILED_DEPENDENCY,
           message:
@@ -102,8 +107,7 @@ export class DependencyErrorHelper {
           message:
             context.unavailableMessage ??
             `${context.dependency} is currently unavailable`,
-          code:
-            context.unavailableCode ?? ApiErrorCode.DEPENDENCY_UNAVAILABLE,
+          code: context.unavailableCode ?? ApiErrorCode.DEPENDENCY_UNAVAILABLE,
           details: baseDetails,
         });
       }
@@ -114,7 +118,8 @@ export class DependencyErrorHelper {
           context.invalidResponseMessage ??
           `Invalid response received from ${context.dependency}`,
         code:
-          context.invalidResponseCode ?? ApiErrorCode.DEPENDENCY_INVALID_RESPONSE,
+          context.invalidResponseCode ??
+          ApiErrorCode.DEPENDENCY_INVALID_RESPONSE,
         details: baseDetails,
       });
     }

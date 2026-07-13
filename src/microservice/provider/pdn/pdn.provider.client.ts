@@ -46,10 +46,10 @@ export class PdnProviderClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.pdnProviderClient.send<ProviderPurchaseSystemDto>(
-          { cmd: this.point.pdn_purchase_qris.cmd },
-          body,
-        ),
+          this.pdnProviderClient.send<ProviderPurchaseSystemDto>(
+            { cmd: this.point.pdn_purchase_qris.cmd },
+            body,
+          ),
         ),
       () => this.purchaseQRIS(body),
       DependencyErrorContext.settlerecon.pdnPurchaseProvider,
@@ -78,10 +78,10 @@ export class PdnProviderClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.pdnProviderClient.send<ProviderWithdrawSystemDto>(
-          { cmd: this.point.pdn_withdraw.cmd },
-          body,
-        ),
+          this.pdnProviderClient.send<ProviderWithdrawSystemDto>(
+            { cmd: this.point.pdn_withdraw.cmd },
+            body,
+          ),
         ),
       () => this.withdraw(body),
       DependencyErrorContext.settlerecon.pdnWithdrawProvider,
@@ -110,10 +110,10 @@ export class PdnProviderClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.pdnProviderClient.send<ProviderDisbursementSystemDto>(
-          { cmd: this.point.pdn_disbursement.cmd },
-          body,
-        ),
+          this.pdnProviderClient.send<ProviderDisbursementSystemDto>(
+            { cmd: this.point.pdn_disbursement.cmd },
+            body,
+          ),
         ),
       () => this.disbursement(body),
       DependencyErrorContext.settlerecon.pdnDisbursementProvider,

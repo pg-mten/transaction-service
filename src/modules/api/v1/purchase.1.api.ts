@@ -45,6 +45,7 @@ import { ReadPurchaseResponseApi } from './dto-api/read-purchase.response.api';
 import { ReadPurchaseDateRequestApi } from './dto-api/read-purchase-date.request.api';
 import { Pageable } from 'src/shared/pagination';
 import { IS_TEST } from 'src/shared/constant/global.constant';
+import { PakaidonkProviderClient } from 'src/microservice/provider/pakaidonk/pakaidonk.provider.client';
 
 @Injectable()
 export class Purchase1Api {
@@ -57,7 +58,8 @@ export class Purchase1Api {
     private readonly feeCalculateClient: FeeCalculateConfigClient,
     private readonly balanceService: BalanceService,
     private readonly purchaseService: PurchaseService,
-  ) { }
+    private readonly pakaidonkProviderClient: PakaidonkProviderClient,
+  ) {}
 
   private readonly transactionType = TransactionTypeEnum.PURCHASE;
 
@@ -172,9 +174,18 @@ export class Purchase1Api {
     providerName: string;
     nominal: Decimal;
     expireSecond: number;
+    orderId: string;
   }) {
     try {
-      if (dto.providerName === ProviderName.PDNT1) {
+      if (dto.providerName === ProviderName.PAKAIDONK) {
+        const clientRes = await this.pakaidonkProviderClient.purchaseQRISTCP({
+          ...dto,
+          pakaidonkMerchantId: 'PDN0000026481',
+          pakaidonkStoreId: 'ID1026515583445',
+          pakaidonkTerminalId: '0424172410708435',
+        });
+        return clientRes;
+      } else if (dto.providerName === ProviderName.PDNT1) {
         const clientRes = await this.pdnProviderClient.purchaseQRISTCP({
           ...dto,
         });
@@ -233,6 +244,7 @@ export class Purchase1Api {
       providerName: profileProvider.providerName,
       nominal: new Decimal(body.amount),
       expireSecond: body.expireSecond ?? 900,
+      orderId: body.orderId,
     });
     console.log({ clientData, date: DateHelper.now() });
 

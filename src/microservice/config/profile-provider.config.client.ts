@@ -14,7 +14,7 @@ export class ProfileProviderConfigClient {
   constructor(
     @Inject(SERVICES.CONFIG.name)
     private readonly configClient: ClientProxy,
-  ) { }
+  ) {}
 
   private readonly point = SERVICES.CONFIG.point;
 
@@ -41,10 +41,10 @@ export class ProfileProviderConfigClient {
     return DependencyErrorHelper.withFallback(
       () =>
         firstValueFrom(
-        this.configClient.send<ProfileProviderSystemDto>(
-          { cmd: this.point.find_profile_provider.cmd },
-          filter,
-        ),
+          this.configClient.send<ProfileProviderSystemDto>(
+            { cmd: this.point.find_profile_provider.cmd },
+            filter,
+          ),
         ),
       () => this.findProfileProvider(filter),
       DependencyErrorContext.config.providerProfileLookup,

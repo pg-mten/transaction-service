@@ -22,7 +22,7 @@ register.registerMetric(httpRequestErrors);
 export class MetricsMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const end = httpRequestDuration.startTimer({
-      service: process.env.APP_NAME || 'transaction-service',
+      service: process.env.APP_NAME || 'settlerecon-service',
       method: req.method,
       route: req.route?.path || req.path,
     });
